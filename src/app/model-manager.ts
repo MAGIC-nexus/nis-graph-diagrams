@@ -178,8 +178,10 @@ export class ModelService {
     processors: Map<bigint, Processor> = new Map<bigint, Processor>();
     interfaceTypes: Map<bigint, InterfaceType> = new Map<bigint, InterfaceType>();
     interfaces: Map<bigint, Interface> = new Map<bigint, Interface>();
-    // Find relationships related to a given ID, which can be either origin or destination
-    relationships: Map<bigint, Set<bigint>> = new Map<bigint, Set<bigint>>(); // The "string" is a concatenation of (RelationshipType, originId, destinationId)
+    // Set of Relationships (their IDs) related to a given ID
+    // IDs can be from: Processors, InterfaceTypes and Interfaces
+    // Logically a Relationship will appear in two of the elements of the Map (we always will have an origin and a destination)
+    relationships: Map<bigint, Set<bigint>> = new Map<bigint, Set<bigint>>();
 
     constructor() {
         this.nextId = 1n;
@@ -253,7 +255,7 @@ export class ModelService {
     }
     // Import JSON encoding a list of Pandas DataFrames coming from a NIS worksheet
     importFromNISFormat(s) {
-        // TODO While importing, obtain the highest ID number to initialize "this.nextId"
+        // TODO While importing, obtain the highest ID to initialize "this.nextId"
     }
 
     // ----------------------------------------------------------------------------------
