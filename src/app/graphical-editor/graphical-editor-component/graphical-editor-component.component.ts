@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { TreeNode } from 'angular-tree-component';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -6,6 +8,9 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./graphical-editor-component.component.css']
 })
 export class GraphicalEditorComponentComponent implements OnInit {
+
+  @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
+  parentSubject:Subject<any> = new Subject();
 
   nodes = [
     {
@@ -78,6 +83,35 @@ export class GraphicalEditorComponentComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+  }
+
+
+  setAttributeParentTreeNode(node: TreeNode) {
+
+    if (node.level == 1) {
+      return "none";
+    } else if (node.level > 1) {
+      
+      let nodeParent = node;
+      for(let i = node.level; i > 1; i--) {
+        nodeParent = nodeParent.parent;
+      }
+
+      switch(nodeParent.id) {
+        case 1:
+          return "Diagrams"
+        case 2:
+          return "Processors"
+        case 3:
+          return "InterfaceTypes"
+      }
+    }
+
+    return "";
+  }
+
+  TreeToggleExpanded(event) {
+    this.parentSubject.next('toogleExpanded');
   }
 
 }

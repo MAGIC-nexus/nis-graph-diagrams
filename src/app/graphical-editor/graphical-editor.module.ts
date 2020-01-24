@@ -35,7 +35,7 @@ import { TreeModule } from "angular-tree-component";
     MatTabsModule
   ],
   exports: [
-      // GraphicalEditorComponentComponent,
+      GraphicalEditorComponentComponent,
       // InterfacetypesDiagramComponentComponent,
       // ProcessorsDiagramComponentComponent
   ],

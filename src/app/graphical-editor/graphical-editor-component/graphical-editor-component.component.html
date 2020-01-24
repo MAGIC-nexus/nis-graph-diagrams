@@ -4,7 +4,13 @@
       Filter
       <input id="filter" placeholder="filter nodes"/>
       <button mat-flat-button>Clear Filter</button>
-      <tree-root [nodes]="nodes" [options]="options"></tree-root>
+      <div id="container-tree-root">
+      <tree-root (toggleExpanded)="TreeToggleExpanded($event)" #treeRoot [nodes]="nodes" [options]="options">
+        <ng-template #treeNodeTemplate let-node let-index="index">
+          <span [attr.data-node-parent]="setAttributeParentTreeNode(node)">{{node.data.name}}</span>
+        </ng-template>
+      </tree-root>
+      </div>
     </as-split-area>
     <as-split-area size="80" fxLayout="column" fxLayoutAlign="stretch">
       <mat-toolbar fxFlex="64px" color="primary">
@@ -42,7 +48,7 @@
                 <mat-icon matListIcon>close</mat-icon>
               </button>
             </ng-template>
-            <app-processors-diagram-component></app-processors-diagram-component>
+            <app-processors-diagram-component [parentSubject]="parentSubject"></app-processors-diagram-component>
             <!--      <div #graphContainer2 id="graphContainer2"></div>-->
           </mat-tab>
         </mat-tab-group>

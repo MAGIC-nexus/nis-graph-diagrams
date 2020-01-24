@@ -1,4 +1,5 @@
-import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input} from '@angular/core';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -9,10 +10,12 @@ import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
 
   @ViewChild('graphContainer2',  {static: true }) graphContainer2: ElementRef;
+  @Input() parentSubject:Subject<any>;
 
   constructor() { }
 
   ngOnInit() {
+    
   }
 
   ngAfterViewInit() {
@@ -30,6 +33,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       graph2.getModel().endUpdate();
       new mxHierarchicalLayout(graph2).execute(graph2.getDefaultParent());
     }
+
+    this.parentSubject.subscribe(event => {
+      if (event == "Expanded") {
+
+      }
+    });
   }
+
+  
 
 }
