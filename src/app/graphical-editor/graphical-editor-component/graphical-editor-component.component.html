@@ -5,7 +5,8 @@
       <input id="filter" placeholder="filter nodes"/>
       <button mat-flat-button>Clear Filter</button>
       <div id="container-tree-root">
-      <tree-root (toggleExpanded)="TreeToggleExpanded($event)" #treeRoot [nodes]="nodes" [options]="options">
+      <tree-root (toggleExpanded)="TreeToggleExpanded($event)"
+      #treeRoot [nodes]="nodes" [options]="options">
         <ng-template #treeNodeTemplate let-node let-index="index">
           <span [attr.data-node-parent]="setAttributeParentTreeNode(node)">{{node.data.name}}</span>
         </ng-template>

@@ -468,3 +468,10 @@ declare class mxGraph {
   destroy();
 
 }
+
+declare class mxGraphHandler {
+
+
+  shouldRemoveCellsFromParent;
+
+}
