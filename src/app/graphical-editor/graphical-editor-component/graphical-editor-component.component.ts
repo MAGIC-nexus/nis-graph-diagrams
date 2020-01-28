@@ -2,15 +2,6 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { TreeNode, IActionMapping, TREE_ACTIONS } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 
-const actionMapping:IActionMapping = {
-  mouse: {
-    mouseOver: (tree, node, $event) => {
-      $event.preventDefault();
-      console.log(`mouseOver ${node.data.name}`);
-    },
-  }
-}
-
 @Component({
   selector: 'app-graphical-editor-component',
   templateUrl: './graphical-editor-component.component.html',
@@ -19,7 +10,7 @@ const actionMapping:IActionMapping = {
 export class GraphicalEditorComponentComponent implements OnInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
-  parentSubject:Subject<any> = new Subject();
+  parentSubject:Subject<{name: string, data: any}> = new Subject();
 
   nodes = [
     {
@@ -88,7 +79,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   ];
   options = {
-    actionMapping
   };
 
   
@@ -122,13 +112,12 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
     return "";
   }
-
-  TreeToggleExpanded(event) {
-    this.parentSubject.next('toogleExpanded');
-  }
-
-  TreeEvent(event) {
-    console.log(event);
+  
+  mouseOverTree(event : Event) {
+    this.parentSubject.next({
+      name:"mouseOverTree",
+      data: event.target
+    });
   }
 
 }

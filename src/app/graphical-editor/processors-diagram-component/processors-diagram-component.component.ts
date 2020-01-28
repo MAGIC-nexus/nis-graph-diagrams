@@ -162,45 +162,38 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private eventsTree() {
 
-    // this.parentSubject.subscribe(event => {
+    this.parentSubject.subscribe((event: { name: string, data: any }) => {
 
-    //   if (event == "toogleExpanded") {
+      switch (event.name) {
+        case "mouseOverTree":
+          if (event.data.getAttribute("data-node-parent") == "InterfaceTypes") {
+            console.log(event.data);
+            let clone = event.data.cloneNode(true);
+            event.data.parentNode.replaceChild(clone, event.data);
 
-    //     let containerTree = document.getElementById("container-tree-root");
-    //     let spansContainerTree = containerTree.getElementsByTagName("span");
-    //     for (let i = 0; i < spansContainerTree.length; i++) {
-    //       if (spansContainerTree[i].getAttribute("data-node-parent") == "InterfaceTypes") {
-    //         console.log(spansContainerTree[i]);
+            var funct = function (graph, evt, cell) {
 
-    //         let clone = spansContainerTree[i].cloneNode(true);
-    //         spansContainerTree[i].parentNode.replaceChild(clone,spansContainerTree[i]);
+              graph.stopEditing(false);
+              let pt: mxPoint = graph.getPointForEvent(evt);
+              let cellTarget = graph.getCellAt(pt.x, pt.y);
 
-    //         var funct = function (graph, evt, cell) {
+              graph.getModel().beginUpdate();
 
-    //           graph.stopEditing(false);
-    //           let pt: mxPoint = graph.getPointForEvent(evt);
-    //           let cellTarget = graph.getCellAt(pt.x, pt.y);
-    //           console.log(spansContainerTree[i].innerHTML);
+              let doc = mxUtils.createXmlDocument();
+              let prueba = doc.createElement('in');
 
-    //           graph.getModel().beginUpdate();
+              let v2 = graph.insertVertex(cellTarget, null, prueba, 1, 0.5, 30, 30,
+                'fontSize=9;shape=ellipse;resizable=0;');
+              v2.geometry.offset = new mxPoint(-15, -15);
+              v2.geometry.relative = true;
+              graph.getModel().endUpdate();
 
-    //           let doc = mxUtils.createXmlDocument();
-    //           let prueba = doc.createElement('in');
-
-    //           prueba.setAttribute('name', 'in');
-    //           let v2 = graph.insertVertex(cellTarget, null, prueba, 1, 0.5, 30, 30,
-    //             'fontSize=9;shape=ellipse;resizable=0;');
-    //           v2.geometry.offset = new mxPoint(-15, -15);
-    //           v2.geometry.relative = true;
-    //           graph.getModel().endUpdate();
-
-    //         }
-
-    //         mxUtils.makeDraggable(spansContainerTree[i], this.graph2, funct);
-    //       }
-    //     }
-    //   }
-    // });
+            }
+            mxUtils.makeDraggable(clone, this.graph2, funct);
+          }
+          break;
+      }
+    });
   }
 
 }
