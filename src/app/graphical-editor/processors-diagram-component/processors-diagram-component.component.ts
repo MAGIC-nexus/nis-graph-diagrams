@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
 
   @ViewChild('graphContainer2', { static: true }) graphContainer2: ElementRef;
-  @Input() parentSubject: Subject<any>;
+  @Input() treeProccesorSubject: Subject<any>;
 
   private graph2;
 
@@ -27,7 +27,10 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       const parent = this.graph2.getDefaultParent();
       this.graph2.getModel().beginUpdate();
 
-      const vertex1 = this.graph2.insertVertex(parent, '1', 'Vertex 3', 0, 0, 200, 80);
+      let doc = mxUtils.createXmlDocument();
+      let proccesor = doc.createElement('proccesor');
+
+      const vertex1 = this.graph2.insertVertex(parent, '1', proccesor, 0, 0, 200, 80);
       const vertex2 = this.graph2.insertVertex(parent, '2', 'Vertex 4', 0, 0, 200, 80);
 
       this.graph2.insertEdge(parent, '', '', vertex1, vertex2);
@@ -162,31 +165,32 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private eventsTree() {
 
-    this.parentSubject.subscribe((event: { name: string, data: any }) => {
+    this.treeProccesorSubject.subscribe((event: { name: string, data: any }) => {
 
       switch (event.name) {
         case "mouseOverTree":
           if (event.data.getAttribute("data-node-parent") == "InterfaceTypes") {
-            console.log(event.data);
             let clone = event.data.cloneNode(true);
             event.data.parentNode.replaceChild(clone, event.data);
 
             var funct = function (graph, evt, cell) {
-
-              graph.stopEditing(false);
+              
               let pt: mxPoint = graph.getPointForEvent(evt);
               let cellTarget = graph.getCellAt(pt.x, pt.y);
+              if (cellTarget != null && cellTarget.value.nodeName == "proccesor") {
+                graph.stopEditing(false);
 
-              graph.getModel().beginUpdate();
+                graph.getModel().beginUpdate();
 
-              let doc = mxUtils.createXmlDocument();
-              let prueba = doc.createElement('in');
+                let doc = mxUtils.createXmlDocument();
+                let prueba = doc.createElement('in');
 
-              let v2 = graph.insertVertex(cellTarget, null, prueba, 1, 0.5, 30, 30,
-                'fontSize=9;shape=ellipse;resizable=0;');
-              v2.geometry.offset = new mxPoint(-15, -15);
-              v2.geometry.relative = true;
-              graph.getModel().endUpdate();
+                let v2 = graph.insertVertex(cellTarget, null, prueba, 1, 0.5, 30, 30,
+                  'fontSize=9;shape=ellipse;resizable=0;');
+                v2.geometry.offset = new mxPoint(-15, -15);
+                v2.geometry.relative = true;
+                graph.getModel().endUpdate();
+              }
 
             }
             mxUtils.makeDraggable(clone, this.graph2, funct);

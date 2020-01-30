@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 export class GraphicalEditorComponentComponent implements OnInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
-  parentSubject:Subject<{name: string, data: any}> = new Subject();
+  treeProccesorSubject:Subject<{name: string, data: any}> = new Subject();
 
   nodes = [
     {
@@ -114,7 +114,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
   
   mouseOverTree(event : Event) {
-    this.parentSubject.next({
+    this.treeProccesorSubject.next({
       name:"mouseOverTree",
       data: event.target
     });
