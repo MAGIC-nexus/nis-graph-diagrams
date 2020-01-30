@@ -93,6 +93,7 @@ declare class mxImage {
 declare class mxEvent {
   static ADD: any;
   static REMOVE: any;
+  static readonly DOUBLE_CLICK : string;
 }
 
 declare class mxMouseEvent {

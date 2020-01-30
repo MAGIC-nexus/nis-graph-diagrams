@@ -89,6 +89,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    this.draggableModal();
   }
 
 
@@ -122,6 +123,45 @@ export class GraphicalEditorComponentComponent implements OnInit {
       name:"mouseOverTree",
       data: event.target
     });
+  }
+
+  draggableModal() {
+    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("header-modal");
+    for (let i = 0; i < headersModal.length; i++) {
+      console.log(headersModal[i]);
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      headersModal[i].onmousedown = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+    
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        headersModal[i].parentElement.style.top = (headersModal[i].parentElement.offsetTop - pos2) + "px";
+        headersModal[i].parentElement.style.left = (headersModal[i].parentElement.offsetLeft - pos1) + "px";
+      }
+    
+      function closeDragElement() {
+        // stop moving when mouse button is released:
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
   }
 
 }
