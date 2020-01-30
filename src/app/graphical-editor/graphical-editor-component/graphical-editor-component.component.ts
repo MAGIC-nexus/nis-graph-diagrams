@@ -11,10 +11,13 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   treeProccesorSubject:Subject<{name: string, data: any}> = new Subject();
+  private readonly ID_DIAGRAMS = -3;
+  private readonly ID_PROCESSOR = -2;
+  private readonly ID_INTERFACETYPES = -1;
 
   nodes = [
     {
-      id: 1,
+      id: this.ID_DIAGRAMS,
       name: 'Diagrams',
       description: "<test attribute>",
       children: [
@@ -23,7 +26,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       ]
     },
     {
-      id: 2,
+      id: this.ID_PROCESSOR,
       name: 'Processors',
       children: [
         {
@@ -63,7 +66,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       ]
     },
     {
-      id: 3,
+      id: this.ID_INTERFACETYPES,
       name: 'InterfaceTypes',
       children: [
         { id: 35, name: 'Food' },
@@ -91,9 +94,10 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   setAttributeParentTreeNode(node: TreeNode) {
 
-    if (node.level == 1) {
+    if (node.level == this.ID_DIAGRAMS || node.level == this.ID_INTERFACETYPES 
+      || node.level == this.ID_PROCESSOR) {
       return "none";
-    } else if (node.level > 1) {
+    } else if (node.level >= 1) {
       
       let nodeParent = node;
       for(let i = node.level; i > 1; i--) {
@@ -101,11 +105,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
       }
 
       switch(nodeParent.id) {
-        case 1:
+        case this.ID_DIAGRAMS:
           return "Diagrams"
-        case 2:
+        case this.ID_PROCESSOR:
           return "Processors"
-        case 3:
+        case this.ID_INTERFACETYPES:
           return "InterfaceTypes"
       }
     }

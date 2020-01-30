@@ -183,9 +183,12 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
                 graph.getModel().beginUpdate();
 
                 let doc = mxUtils.createXmlDocument();
-                let prueba = doc.createElement('in');
+                let port = doc.createElement('port');
+                port.setAttribute('name', 'in');
+                console.log(event.data.getAttribute("data-node-id"));
+                port.setAttribute('id', event.data.getAttribute("data-node-id"));
 
-                let v2 = graph.insertVertex(cellTarget, null, prueba, 1, 0.5, 30, 30,
+                let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
                   'fontSize=9;shape=ellipse;resizable=0;');
                 v2.geometry.offset = new mxPoint(-15, -15);
                 v2.geometry.relative = true;
