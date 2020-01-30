@@ -134,4 +134,11 @@ declare class mxPoint {
 
 }
 
+declare class mxUtils {
+  
+  static makeDraggable(elementDrag, graph, func);
+  static createXmlDocument();
+  static convertPoint(graph, x, y);
+}
+
 /******************      Util end      **************/

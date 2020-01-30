@@ -2,9 +2,14 @@
   <as-split direction="horizontal">
     <as-split-area size="20">
       Filter
-      <input id="filter" placeholder="filter nodes"/>
+      <input id="filter" placeholder="filter nodes" />
       <button mat-flat-button>Clear Filter</button>
-      <tree-root [nodes]="nodes" [options]="options"></tree-root>
+      <tree-root #treeRoot [nodes]="nodes" [options]="options">
+        <ng-template #treeNodeTemplate let-node let-index="index">
+          <span (mouseover)="mouseOverTree($event)" [attr.data-node-id]="node.data.id"
+            [attr.data-node-parent]="setAttributeParentTreeNode(node)">{{node.data.name}}</span>
+        </ng-template>
+      </tree-root>
     </as-split-area>
     <as-split-area size="80" fxLayout="column" fxLayoutAlign="stretch">
       <mat-toolbar fxFlex="64px" color="primary">
@@ -21,13 +26,12 @@
         </mat-toolbar-row>
       </mat-toolbar>
       <div fxFlex style="border: 2px solid red;">
-        <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto"
-                       style="border: 1px solid orange">
+        <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
           <mat-tab>
             <ng-template mat-tab-label>
-              <mat-icon >thumb_up</mat-icon>
+              <mat-icon>thumb_up</mat-icon>
               Interface Types diagram #1
-              <button mat-icon-button >
+              <button mat-icon-button>
                 <mat-icon matListIcon>close</mat-icon>
               </button>
             </ng-template>
@@ -38,11 +42,11 @@
           <mat-tab>
             <ng-template mat-tab-label>
               Processors diagram #1
-              <button mat-icon-button >
+              <button mat-icon-button>
                 <mat-icon matListIcon>close</mat-icon>
               </button>
             </ng-template>
-            <app-processors-diagram-component></app-processors-diagram-component>
+            <app-processors-diagram-component [treeProccesorSubject]="treeProccesorSubject"></app-processors-diagram-component>
             <!--      <div #graphContainer2 id="graphContainer2"></div>-->
           </mat-tab>
         </mat-tab-group>

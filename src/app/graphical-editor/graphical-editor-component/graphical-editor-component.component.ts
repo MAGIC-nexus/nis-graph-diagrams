@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { TreeNode, IActionMapping, TREE_ACTIONS } from 'angular-tree-component';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -7,9 +9,15 @@ import { Component, OnInit } from '@angular/core';
 })
 export class GraphicalEditorComponentComponent implements OnInit {
 
+  @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
+  treeProccesorSubject:Subject<{name: string, data: any}> = new Subject();
+  private readonly ID_DIAGRAMS = -3;
+  private readonly ID_PROCESSOR = -2;
+  private readonly ID_INTERFACETYPES = -1;
+
   nodes = [
     {
-      id: 1,
+      id: this.ID_DIAGRAMS,
       name: 'Diagrams',
       description: "<test attribute>",
       children: [
@@ -18,7 +26,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       ]
     },
     {
-      id: 2,
+      id: this.ID_PROCESSOR,
       name: 'Processors',
       children: [
         {
@@ -58,7 +66,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       ]
     },
     {
-      id: 3,
+      id: this.ID_INTERFACETYPES,
       name: 'InterfaceTypes',
       children: [
         { id: 35, name: 'Food' },
@@ -73,11 +81,47 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
 
   ];
-  options = {};
+  options = {
+  };
+
+  
 
   constructor() { }
 
   ngOnInit() {
+  }
+
+
+  setAttributeParentTreeNode(node: TreeNode) {
+
+    if (node.level == this.ID_DIAGRAMS || node.level == this.ID_INTERFACETYPES 
+      || node.level == this.ID_PROCESSOR) {
+      return "none";
+    } else if (node.level >= 1) {
+      
+      let nodeParent = node;
+      for(let i = node.level; i > 1; i--) {
+        nodeParent = nodeParent.parent;
+      }
+
+      switch(nodeParent.id) {
+        case this.ID_DIAGRAMS:
+          return "Diagrams"
+        case this.ID_PROCESSOR:
+          return "Processors"
+        case this.ID_INTERFACETYPES:
+          return "InterfaceTypes"
+      }
+    }
+
+    return "";
+  }
+  
+  mouseOverTree(event : Event) {
+    this.treeProccesorSubject.next({
+      name:"mouseOverTree",
+      data: event.target
+    });
   }
 
 }
