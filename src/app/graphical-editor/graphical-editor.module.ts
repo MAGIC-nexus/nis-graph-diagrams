@@ -10,14 +10,14 @@ import {
 } from '@angular/material';  // Material components
 
 import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
-import { NzButtonModule } from 'ng-zorro-antd/button';
 
 import { GraphicalEditorComponentComponent } from './graphical-editor-component/graphical-editor-component.component';
 import { InterfacetypesDiagramComponentComponent } from './interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 import { ProcessorsDiagramComponentComponent } from './processors-diagram-component/processors-diagram-component.component';
-import {MatTabsModule} from "@angular/material/tabs";
+import { MatTabsModule } from "@angular/material/tabs";
 import { AngularSplitModule } from 'angular-split'; // https://bertrandg.github.io/angular-split/#/
 import { TreeModule } from "angular-tree-component";
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -36,6 +36,7 @@ import { TreeModule } from "angular-tree-component";
     MatDialogModule,
     MatButtonModule,
     MatTabsModule,
+    HttpClientModule,
 
     NgZorroAntdModule,
   ],

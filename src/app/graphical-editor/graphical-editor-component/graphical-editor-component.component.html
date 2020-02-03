@@ -62,17 +62,9 @@
   <ng-template #formProcessorContent>
     <form nz-form>
       <nz-form-item>
-        <nz-form-control nzErrorTip="Please input your username!">
-          <nz-input-group nzPrefixIcon="user">
-            <input type="text" nz-input formControlName="userName" placeholder="Username" />
-          </nz-input-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-control nzErrorTip="Please input your Password!">
-          <nz-input-group nzPrefixIcon="lock">
-            <input type="password" nz-input formControlName="password" placeholder="Password" />
-          </nz-input-group>
+        <nz-form-label [nzSpan]="3" nzFor="test">Test</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Please input your username!">
+          <input id="testFormProcessor" type="text" nz-input formControlName="test" />
         </nz-form-control>
       </nz-form-item>
     </form>
