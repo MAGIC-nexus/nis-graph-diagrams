@@ -10,10 +10,7 @@ import { Subject } from 'rxjs';
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
 
   @ViewChild('graphContainer2', { static: true }) graphContainer2: ElementRef;
-  @Input() treeProccesorSubject: Subject<any>;
-
-  //Form Processor
-  isVisible = false;
+  @Input() proccesorSubject: Subject<{name: string, data: any}>;
 
   private graph2 : mxGraph;
 
@@ -32,6 +29,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
       let doc = mxUtils.createXmlDocument();
       let proccesor = doc.createElement("processor");
+      proccesor.setAttribute("id", 2);
 
       const vertex1 = this.graph2.insertVertex(parent, '1', proccesor, 0, 0, 200, 80);
       const vertex2 = this.graph2.insertVertex(parent, '2', 'Vertex 4', 0, 0, 200, 80);
@@ -43,7 +41,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     }
 
     this.overrideMethodsGraphPorts();
-    this.eventsTree();
+    this.eventsProcessorSubject();
     this.graphMouseEvent();
 
   }
@@ -166,9 +164,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     new mxRubberband(graph);
   }
 
-  private eventsTree() {
+  private eventsProcessorSubject() {
 
-    this.treeProccesorSubject.subscribe((event: { name: string, data: any }) => {
+    this.proccesorSubject.subscribe(event => {
 
       switch (event.name) {
         case "mouseOverTree":
@@ -188,7 +186,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
                 let doc = mxUtils.createXmlDocument();
                 let port = doc.createElement('port');
                 port.setAttribute('name', 'in');
-                console.log(event.data.getAttribute("data-node-id"));
                 port.setAttribute('id', event.data.getAttribute("data-node-id"));
 
                 let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
@@ -214,12 +211,21 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let cellTarget = evt.getProperty('cell');
 
     if(cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-      this.showFormProcessor();
+      this.showFormProcessor(cellTarget.getAttribute("id"));
     }
   }
 
-  showFormProcessor() {
-    
+  private showFormProcessor(cellId) {
+    this.proccesorSubject.next({
+      name: "showFormProcessor",
+      data: { 
+        processorId: cellId,
+      },
+    })
+  }
+
+  eventFormAfterOpen() {
+
   }
 
 }

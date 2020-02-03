@@ -46,7 +46,7 @@
                 <mat-icon matListIcon>close</mat-icon>
               </button>
             </ng-template>
-            <app-processors-diagram-component [treeProccesorSubject]="treeProccesorSubject">
+            <app-processors-diagram-component [proccesorSubject]="proccesorSubject">
             </app-processors-diagram-component>
             <!--      <div #graphContainer2 id="graphContainer2"></div>-->
           </mat-tab>
@@ -54,18 +54,24 @@
       </div>
     </as-split-area>
   </as-split>
-  <div class="modal"></div>
-  <div class="modal-form" id="modal-form-processor">
-    <div class="header-modal">
-      <span class="close-modal">&times;</span>
-      <div>Modal Header</div>
-    </div>
-    <div class="modal-body">
-      <p>Some text in the Modal Body</p>
-      <p>Some other text...</p>
-    </div>
-    <div class="modal-footer">
 
-    </div>
-  </div>
+  <!-- Modal Processor -->
+  <ng-template #formProcessorTitle>
+    <span>Form Processor</span>
+  </ng-template>
+  <ng-template #formProcessorContent>
+    <p>some contents...</p>
+    <p>some contents...</p>
+    <p>some contents...</p>
+    <p>some contents...</p>
+    <p>some contents...</p>
+  </ng-template>
+  <ng-template #formProcessorFooter>
+    <button nz-button nzType="danger">
+      Cancel
+    </button>
+    <button nz-button nzType="primary">
+      Confirm
+    </button>
+  </ng-template>
 </div>

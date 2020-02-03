@@ -1,6 +1,7 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { TreeNode, IActionMapping, TREE_ACTIONS } from 'angular-tree-component';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, TemplateRef } from '@angular/core';
+import { TreeNode } from 'angular-tree-component';
 import { Subject } from 'rxjs';
+import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -10,10 +11,17 @@ import { Subject } from 'rxjs';
 export class GraphicalEditorComponentComponent implements OnInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
-  treeProccesorSubject:Subject<{name: string, data: any}> = new Subject();
+  proccesorSubject:Subject<{name: string, data: any}> = new Subject();
   private readonly ID_DIAGRAMS = -3;
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
+
+  //Form Processor
+  private formProcessorModal : NzModalRef
+  private proccesorIdForm : string;
+  @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle:TemplateRef<any>;
+  @ViewChild('formProcessorContent', { static: false }) formProcessorContent:TemplateRef<any>;
+  @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
 
   nodes = [
     {
@@ -86,49 +94,40 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   
 
-  constructor() { }
+  constructor(private modalService : NzModalService) { }
 
   ngOnInit() {
-    this.draggableModal();
+    this.eventsProcessorSubject();
   }
 
-
-  setAttributeParentTreeNode(node: TreeNode) {
-
-    if (node.level == this.ID_DIAGRAMS || node.level == this.ID_INTERFACETYPES 
-      || node.level == this.ID_PROCESSOR) {
-      return "none";
-    } else if (node.level >= 1) {
-      
-      let nodeParent = node;
-      for(let i = node.level; i > 1; i--) {
-        nodeParent = nodeParent.parent;
+  private eventsProcessorSubject() {
+    this.proccesorSubject.subscribe( (event) => {
+      switch(event.name) {
+        case "showFormProcessor":
+          this.showFormProcessor(event.data.processorId);
       }
+    })
+  }
 
-      switch(nodeParent.id) {
-        case this.ID_DIAGRAMS:
-          return "Diagrams"
-        case this.ID_PROCESSOR:
-          return "Processors"
-        case this.ID_INTERFACETYPES:
-          return "InterfaceTypes"
-      }
+  showFormProcessor(id : string) {
+
+    if (this.proccesorIdForm != undefined && this.proccesorIdForm != id) {
+      this.proccesorIdForm = id;
     }
 
-    return "";
-  }
-  
-  mouseOverTree(event : Event) {
-    this.treeProccesorSubject.next({
-      name:"mouseOverTree",
-      data: event.target
+    this.formProcessorModal = this.modalService.create({
+      nzTitle: this.formProcessorTitle,
+      nzContent: this.formProcessorContent,
+      nzFooter: this.formProcessorFooter,
+    });
+    this.formProcessorModal.afterOpen.subscribe( () => {
+      this.draggableModal();
     });
   }
 
-  draggableModal() {
-    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("header-modal");
+  private draggableModal() {
+    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("ant-modal-header");
     for (let i = 0; i < headersModal.length; i++) {
-      console.log(headersModal[i]);
       var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
       headersModal[i].onmousedown = dragMouseDown;
 
@@ -162,6 +161,38 @@ export class GraphicalEditorComponentComponent implements OnInit {
         document.onmousemove = null;
       }
     }
+  }
+
+  setAttributeParentTreeNode(node: TreeNode) {
+
+    if (node.level == this.ID_DIAGRAMS || node.level == this.ID_INTERFACETYPES 
+      || node.level == this.ID_PROCESSOR) {
+      return "none";
+    } else if (node.level >= 1) {
+      
+      let nodeParent = node;
+      for(let i = node.level; i > 1; i--) {
+        nodeParent = nodeParent.parent;
+      }
+
+      switch(nodeParent.id) {
+        case this.ID_DIAGRAMS:
+          return "Diagrams"
+        case this.ID_PROCESSOR:
+          return "Processors"
+        case this.ID_INTERFACETYPES:
+          return "InterfaceTypes"
+      }
+    }
+
+    return "";
+  }
+  
+  mouseOverTree(event : Event) {
+    this.proccesorSubject.next({
+      name:"mouseOverTree",
+      data: event.target
+    });
   }
 
 }
