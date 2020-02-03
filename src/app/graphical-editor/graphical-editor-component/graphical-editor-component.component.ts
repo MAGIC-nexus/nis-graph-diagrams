@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, TemplateRef } from '@angular/core';
-import { TreeNode } from 'angular-tree-component';
+import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 
@@ -22,6 +22,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle:TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent:TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
+
+  actionMappingTree : IActionMapping = {
+    mouse: {
+      dblClick: (tree, node, $event) => {
+        console.log(node);
+      }
+    }
+  }
 
   nodes = [
     {
@@ -90,6 +98,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   ];
   options = {
+    actionMapping: this.actionMappingTree,
   };
 
   
@@ -122,6 +131,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
     });
     this.formProcessorModal.afterOpen.subscribe( () => {
       this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
     });
   }
 
