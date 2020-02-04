@@ -22,11 +22,21 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              { "glob": "**/*", "input": "./node_modules/mxgraph/javascript/src", "output": "/assets/mxgraph" }
+              { 
+                "glob": "**/*", 
+                "input": "./node_modules/mxgraph/javascript/src", 
+                "output": "/assets/mxgraph"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/@ant-design/icons-angular/src/inline-svg/",
+                "output": "/assets/"
+              }
             ],
             "styles": [
               "src/styles.css",
-              "node_modules/jquery-ui-dist/jquery-ui.min.css"
+              "node_modules/jquery-ui-dist/jquery-ui.min.css",
+              "node_modules/ng-zorro-antd/ng-zorro-antd.min.css"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",

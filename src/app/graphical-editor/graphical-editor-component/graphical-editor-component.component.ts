@@ -1,6 +1,7 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { TreeNode, IActionMapping, TREE_ACTIONS } from 'angular-tree-component';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, TemplateRef } from '@angular/core';
+import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
+import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -10,10 +11,25 @@ import { Subject } from 'rxjs';
 export class GraphicalEditorComponentComponent implements OnInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
-  treeProccesorSubject:Subject<{name: string, data: any}> = new Subject();
+  proccesorSubject:Subject<{name: string, data: any}> = new Subject();
   private readonly ID_DIAGRAMS = -3;
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
+
+  //Form Processor
+  private formProcessorModal : NzModalRef
+  private proccesorIdForm : string;
+  @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle:TemplateRef<any>;
+  @ViewChild('formProcessorContent', { static: false }) formProcessorContent:TemplateRef<any>;
+  @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
+
+  actionMappingTree : IActionMapping = {
+    mouse: {
+      dblClick: (tree, node, $event) => {
+        console.log(node);
+      }
+    }
+  }
 
   nodes = [
     {
@@ -82,15 +98,84 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   ];
   options = {
+    actionMapping: this.actionMappingTree,
   };
 
   
 
-  constructor() { }
+  constructor(private modalService : NzModalService) { }
 
   ngOnInit() {
+    this.eventsProcessorSubject();
   }
 
+  private eventsProcessorSubject() {
+    this.proccesorSubject.subscribe( (event) => {
+      switch(event.name) {
+        case "showFormProcessor":
+          this.showFormProcessor(event.data.processorId);
+      }
+    })
+  }
+
+  showFormProcessor(id : string) {
+
+    if (this.proccesorIdForm != undefined && this.proccesorIdForm != id) {
+      this.proccesorIdForm = id;
+    }
+
+    this.formProcessorModal = this.modalService.create({
+      nzTitle: this.formProcessorTitle,
+      nzContent: this.formProcessorContent,
+      nzFooter: this.formProcessorFooter,
+    });
+    this.formProcessorModal.afterOpen.subscribe( () => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  private draggableModal() {
+    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("ant-modal-header");
+    for (let i = 0; i < headersModal.length; i++) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      headersModal[i].onmousedown = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+    
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        headersModal[i].parentElement.style.top = (headersModal[i].parentElement.offsetTop - pos2) + "px";
+        headersModal[i].parentElement.style.left = (headersModal[i].parentElement.offsetLeft - pos1) + "px";
+      }
+    
+      function closeDragElement() {
+        // stop moving when mouse button is released:
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+  }
 
   setAttributeParentTreeNode(node: TreeNode) {
 
@@ -118,7 +203,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
   
   mouseOverTree(event : Event) {
-    this.treeProccesorSubject.next({
+    this.proccesorSubject.next({
       name:"mouseOverTree",
       data: event.target
     });

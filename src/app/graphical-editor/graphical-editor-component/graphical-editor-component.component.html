@@ -46,11 +46,35 @@
                 <mat-icon matListIcon>close</mat-icon>
               </button>
             </ng-template>
-            <app-processors-diagram-component [treeProccesorSubject]="treeProccesorSubject"></app-processors-diagram-component>
+            <app-processors-diagram-component [proccesorSubject]="proccesorSubject">
+            </app-processors-diagram-component>
             <!--      <div #graphContainer2 id="graphContainer2"></div>-->
           </mat-tab>
         </mat-tab-group>
       </div>
     </as-split-area>
   </as-split>
+
+  <!-- Modal Processor -->
+  <ng-template #formProcessorTitle>
+    <span class="title-modal">Form Processor</span>
+  </ng-template>
+  <ng-template #formProcessorContent>
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="3" nzFor="test">Test</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Please input your username!">
+          <input id="testFormProcessor" type="text" nz-input formControlName="test" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-template>
+  <ng-template #formProcessorFooter>
+    <button nz-button nzType="danger">
+      Cancel
+    </button>
+    <button nz-button nzType="primary">
+      Confirm
+    </button>
+  </ng-template>
 </div>

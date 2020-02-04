@@ -121,6 +121,7 @@ declare class mxGraph {
   alreadyConnectedResource;
   containsValidationErrorsResource;
   collapseExpandResource;
+  graphHandler;
   getTooltipForCell(cell);
   init(container);
   createHandlers(container);
@@ -466,6 +467,7 @@ declare class mxGraph {
   fireMouseEvent(evtName, me, sender);
   fireGestureEvent(evt, cell);
   destroy();
+  addListener(event : string, func : (sender, evt) => any);
 
 }
 
