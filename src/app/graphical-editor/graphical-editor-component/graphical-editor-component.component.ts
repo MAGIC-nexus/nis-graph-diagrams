@@ -2,6 +2,8 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, TemplateRef } 
 import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
+import '../../model-manager';
+import { ModelService } from '../../model-manager';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -16,12 +18,19 @@ export class GraphicalEditorComponentComponent implements OnInit {
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
 
+  private modalRef : NzModalRef
+
   //Form Processor
-  private formProcessorModal : NzModalRef
   private proccesorIdForm : string;
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle:TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent:TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
+
+  //Form Create
+
+
+  //ModelService
+  modelService : ModelService;
 
   actionMappingTree : IActionMapping = {
     mouse: {
@@ -36,10 +45,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       id: this.ID_DIAGRAMS,
       name: 'Diagrams',
       description: "<test attribute>",
-      children: [
-        { id: 12, name: 'InterfaceTypes diagram #1' },
-        { id: 13, name: 'Processors diagram #1' }
-      ]
+      children: [],
     },
     {
       id: this.ID_PROCESSOR,
@@ -103,9 +109,10 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   
 
-  constructor(private modalService : NzModalService) { }
+  constructor(private nzModalService : NzModalService) { }
 
   ngOnInit() {
+    this.modelService = new ModelService();
     this.eventsProcessorSubject();
   }
 
@@ -124,12 +131,12 @@ export class GraphicalEditorComponentComponent implements OnInit {
       this.proccesorIdForm = id;
     }
 
-    this.formProcessorModal = this.modalService.create({
+    this.modalRef = this.nzModalService.create({
       nzTitle: this.formProcessorTitle,
       nzContent: this.formProcessorContent,
       nzFooter: this.formProcessorFooter,
     });
-    this.formProcessorModal.afterOpen.subscribe( () => {
+    this.modalRef.afterOpen.subscribe( () => {
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
 
@@ -137,6 +144,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
         titles[0].parentElement.parentElement.style.cursor = "move";
       }
     });
+  }
+
+  showFormCreateDiagram() {
+
+  }
+
+  closeModal() {
+    console.log("close modal!");
   }
 
   private draggableModal() {

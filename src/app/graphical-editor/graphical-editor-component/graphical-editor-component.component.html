@@ -26,10 +26,10 @@
         </mat-toolbar-row>
       </mat-toolbar>
       <div fxFlex style="border: 2px solid red;">
+        
         <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
           <mat-tab>
             <ng-template mat-tab-label>
-              <mat-icon>thumb_up</mat-icon>
               Interface Types diagram #1
               <button mat-icon-button>
                 <mat-icon matListIcon>close</mat-icon>
@@ -39,6 +39,7 @@
             <app-interfacetypes-diagram-component></app-interfacetypes-diagram-component>
             <!--      <div #graphContainer1 id="graphContainer1"></div>-->
           </mat-tab>
+
           <mat-tab>
             <ng-template mat-tab-label>
               Processors diagram #1
@@ -51,6 +52,7 @@
             <!--      <div #graphContainer2 id="graphContainer2"></div>-->
           </mat-tab>
         </mat-tab-group>
+
       </div>
     </as-split-area>
   </as-split>
@@ -70,11 +72,36 @@
     </form>
   </ng-template>
   <ng-template #formProcessorFooter>
-    <button nz-button nzType="danger">
+    <button nz-button nzType="danger" (click)="closeModal()">
       Cancel
     </button>
     <button nz-button nzType="primary">
       Confirm
     </button>
   </ng-template>
+
+  <!-- Modal Processor -->
+  <ng-template #formCreateDiagramTitle>
+    <span class="title-modal">Name diagram</span>
+  </ng-template>
+  <ng-template #formCreateDiagramContent>
+    <form nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="3" nzFor="test">Test</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Please input your username!">
+          <input id="testFormProcessor" type="text" nz-input formControlName="test" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-template>
+  <ng-template #formCreateDiagramrFooter>
+    <button nz-button nzType="danger" (click)="closeModal()">
+      Cancel
+    </button>
+    <button nz-button nzType="primary">
+      Confirm
+    </button>
+  </ng-template>
+
+
 </div>
