@@ -16,10 +16,10 @@
       <mat-toolbar fxFlex="64px" color="primary">
         <mat-toolbar-row>
           <button mat-flat-button (click)="showFormCreateDiagram('InterfaceTypes')"
-          matTooltip="New InterfaceTypes diagram">InterfaceTypes</button>
+            matTooltip="New InterfaceTypes diagram">InterfaceTypes</button>
           &nbsp;&nbsp;
           <button mat-flat-button (click)="showFormCreateDiagram('Processors')"
-          matTooltip="New Processors diagram">Processors</button>
+            matTooltip="New Processors diagram">Processors</button>
           <button mat-icon-button matTooltip="Generate into spreadsheet (overwrite workbook)">
             <mat-icon matListIcon>arrow_forward</mat-icon>
           </button>
@@ -29,7 +29,7 @@
         </mat-toolbar-row>
       </mat-toolbar>
       <div fxFlex style="border: 2px solid red;">
-        
+
         <!-- <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
           <mat-tab>
             <ng-template mat-tab-label>
@@ -54,15 +54,19 @@
           </mat-tab>
         </mat-tab-group> -->
         <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
-          <mat-tab *ngFor="let tab of tabsDiagram"></mat-tab>
-          <ng-template mat-tab-label>
-            {{tab.name}}
-            <button mat-icon-button>
-              <mat-icon matListIcon>close</mat-icon>
-            </button>
-          </ng-template>
+          <mat-tab *ngFor="let item of tabsDiagram | keyvalue">
+            <ng-template mat-tab-label>
+              {{item.value.name}}
+              <button mat-icon-button (click)="closeTabDiagram(item.key)">
+                <mat-icon matListIcon>close</mat-icon>
+              </button>
+            </ng-template>
+            <app-processors-diagram-component *ngIf="item.value.type == 0" [proccesorSubject]="proccesorSubject">
+             </app-processors-diagram-component>
+             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1">
+              </app-interfacetypes-diagram-component>
+          </mat-tab>
         </mat-tab-group>
-
       </div>
     </as-split-area>
   </as-split>
@@ -99,7 +103,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="3">Name</nz-form-label>
         <nz-form-control [nzSpan]="19">
-          <input autocomplete="off" name="nameDiagram" type="text" nz-input/>
+          <input autocomplete="off" name="nameDiagram" type="text" nz-input />
         </nz-form-control>
       </nz-form-item>
     </form>
