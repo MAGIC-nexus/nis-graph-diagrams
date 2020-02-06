@@ -67,9 +67,11 @@ export enum EntityTypes {
 export class Entity {
     id: bigint;
     name: string;
+    description: string;
 }
 
 export class Processor extends Entity {
+    hierarchyName: string;
     accounted: ProcessorAccounted;
     subsystemType: ProcessorSubsystemType;
     functionalOrStructural: ProcessorFunctionalOrStructural;
@@ -85,11 +87,13 @@ export class InterfaceType extends Entity {
     roegenType: RoegenType;
     unit: string;
     oppositeSubsystemType: ProcessorSubsystemType;
+    level: string;
 }
 
 export class InterfaceValue {
     value: string;
     unit: string;
+    relativeTo: string; // Local Interface Name
     time: string;
     source: string;
 }
@@ -145,6 +149,7 @@ export class InterfaceTypeScaleChange extends EntityRelationship {
 // Flow between Interfaces
 export class ExchangeRelationship extends InterfaceRelationship {
     weight: string;
+    backInterface: string;
 }
 
 // Scale between Interfaces
@@ -202,19 +207,21 @@ export class ModelService {
         }
         return tmp;
     }
+
     getTreeModelViewProcessors(parentId: bigint) {
         let n = [];
+        let parent: Processor = parentId >= 0 ? this.allObjects.get(parentId) : null;
         for (let child of this.getEntityPartOfChildren(parentId)) {
-            let p = this.allObjects.get(child);
+            let p: Processor = this.allObjects.get(child);
+            if (parentId < 0)
+                p.hierarchyName = p.name;
+            else
+                p.hierarchyName = parent.hierarchyName + "." + p.name;
             n.push({id: p.id, name: p.name, children: this.getTreeModelViewProcessors(p.id)});
         }
         return n;
-        // let tmp = [];
-        // this.processors.forEach( (processor, id) => {
-        //     tmp.push({id: id, name: processor.name});
-        // })
-        // return tmp;
     }
+
     getTreeModelViewInterfaceTypes(parentId: bigint) {
         // Search for all InterfaceTypes whose parent is "parentId"
         let n = [];
@@ -224,6 +231,7 @@ export class ModelService {
         }
         return n;
     }
+
     getTreeModelView() {
         return [
             {id: -3, name: "Diagrams", children: this.getTreeModelViewDiagrams() },
@@ -231,6 +239,7 @@ export class ModelService {
             {id: -1, name: "Interface Types", children: this.getTreeModelViewInterfaceTypes(-1n) }
         ]
     }
+
     // Obtain a list of the diagrams (for the Tab control)
     listDiagrams() {
         let tmp = [];
@@ -239,6 +248,7 @@ export class ModelService {
         }
         return tmp;
     }
+
     // Get a RO perspective of a diagram in a mxGraph compatible structure. Afterwards, the controller would invoke code in example "https://jgraph.github.io/mxgraph/javascript/examples/codec.html"
     getDiagramGraph(diagramName: string) {
         let graph: string = "";
@@ -249,6 +259,7 @@ export class ModelService {
         }
         return graph;
     }
+
     // Save diagram (normally, before closing). Before the call, the controller would invoke code in "https://jgraph.github.io/mxgraph/docs/js-api/files/io/mxCodec-js.html"
     setDiagramGraph(diagramName: string, xml: string) {
         for (let diagram of this.diagrams) {
@@ -257,42 +268,167 @@ export class ModelService {
             }
         }
     }
+
     // Export to JSON encoding of a list of Pandas DataFrames which can be converted to worksheet
-    exportToNISFormat(): string  {
-        // InterfaceTypes
-        this.exportInterfaceTypes();
-        // TODO ScaleChangeMap
-        // TODO BareProcessors
-        // TODO Interfaces
-        // TODO Relationships
-        return "";
+    exportToNISFormat() {
+        let json = {
+            sheets: [
+                {name: "InterfaceTypes", rows: this.exportInterfaceTypes()},
+                {name: "ScaleChangeMap", rows: this.exportScaleChangeMap()},
+                {name: "BareProcessors", rows: this.exportBareProcessors()},
+                {name: "Interfaces", rows: this.exportInterfaces()},
+                {name: "Relationships", rows: this.exportRelationships()}
+            ]
+        };
+        return json;
     }
-    exportScaleChangeMap(): string {
+
+    getEntitiesInPreorder(parentId: bigint) {
+        let lst = [];
+        if (parentId >= 0)
+            lst.push(parentId);
+        for (let child of this.getEntityPartOfChildren(parentId)) {
+            let p: Processor = this.allObjects.get(child);
+            lst.push(... this.getEntitiesInPreorder(p.id));
+        }
+        return lst;
+    }
+
+    exportInterfaceTypes() {
+        let its = [];
+        // Header
+        // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
+        its.push({cells: [{value: "InterfaceTypeHierarchy"}, {value: "InterfaceType"}, {value: "Sphere"},
+                 {value: "RoegenType"}, {value: "ParentInterfaceType"}, {value: "Level"}, {value: "Formula"},
+                 {value: "Description"}, {value: "Unit"}, {value: "OppositeSubsystemType"}, {value: "Attributes"}]});
+        // Each row
+        for (let itypeId of this.getEntitiesInPreorder(-2n)) {
+            let it = this.interfaceTypes.get(itypeId);
+            let parents = this.getEntityPartOfParents(itypeId);
+            let parent = "";
+            if (parents.length > 0)
+                parent = this.allObjects.get(parents[0]).name;
+            its.push({cells: [{value: it.hierarchy}, {value: it.name}, {value: it.sphere},
+                     {value: it.roegenType}, {value: parent}, {value: it.level}, {value: ""},
+                     {value: it.description}, {value: it.unit}, {value: it.oppositeSubsystemType}, {value: ""}]})
+        }
+        return its;
+    }
+
+    exportScaleChangeMap() {
         let scm = [];
+        // Header
+        scm.push({cells: [{value: "OriginHierarchy"}, {value: "OriginInterfaceType"}, {value: "DestinationHierarchy"},
+                 {value: "DestinationInterfaceType"}, {value: "OriginContext"}, {value: "DestinationContext"},
+                 {value: "Scale"}, {value: "OriginUnit"}, {value: "DestinationUnit"}]});
         for (let itypeId of this.interfaceTypes.keys()) {
+            let oIType: InterfaceType = this.allObjects.get(itypeId);
             for (let relId of this.entitiesRelationships.get(itypeId)) {
                 let r = this.allObjects.get(relId);
-                if (r instanceof InterfaceTypeScaleChange && r.originId ==itypeId) {
-                    scm.push({})
-    // originContextProcessorId: bigint; // Can be null
-    // destinationContextProcessorId: bigint; // Can be null
-    // scale: string;
-    // originUnit: string;
-    // destinationUnit: string
-
+                if (r instanceof InterfaceTypeScaleChange && r.originId==itypeId) {
+                    let dIType: InterfaceType = this.allObjects.get(r.destinationId);
+                    let oCtx: string = r.originContextProcessorId ? this.allObjects.get(r.originContextProcessorId).name : "";
+                    let dCtx: string = r.destinationContextProcessorId ? this.allObjects.get(r.destinationContextProcessorId).name : "";
+                    scm.push({cells: [{value: oIType.hierarchy}, {value: oIType.name}, {value: dIType.hierarchy},
+                             {value: dIType.name}, {value: oCtx}, {value: dCtx}, {value: r.scale},
+                             {value: r.originUnit}, {value: r.destinationUnit}]});
                 }
             }
         }
-        return "";
+        return scm;
     }
-    exportInterfaceTypes(): string {
-        let its = [];
-        for (let itypeId of this.interfaceTypes.keys()) {
-            let it = this.interfaceTypes.get(itypeId);
-            its.push({id: it.id, name: it.name, hierarchy: it.hierarchy, sphere: it.sphere, roegenType: it.roegenType, unit: it.unit, oppositeSubsystemType: it.oppositeSubsystemType});
+
+    exportBareProcessors() {
+        let bps = [];
+        // Header
+        // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
+        bps.push({cells: [{value: "ProcessorGroup"}, {value: "Processor"}, {value: "ParentProcessor"},
+                 {value: "SubsystemType"}, {value: "System"}, {value: "FunctionalOrStructural"}, {value: "Accounted"},
+                 {value: "Level"}, {value: "Stock"}, {value: "Description"}, {value: "GeolocationRef"},
+                 {value: "GeolocationCode"}, {value: "GeolocationLatLong"}, {value: "Attributes"}]});
+        for (let pId of this.getEntitiesInPreorder(-2n)) {
+            let p: Processor = this.allObjects.get(pId);
+            p.hierarchyName = p.name;
+            let parents = this.getEntityPartOfParents(pId);
+            let parent = "";
+            if (parents.length > 0)
+                parent = this.allObjects.get(parents[0]).hierarchyName;
+            bps.push({cells: [{value: ""}, {value: p.hierarchyName}, {value: parent},
+                     {value: p.subsystemType}, {value: p.system}, {value: p.functionalOrStructural}, {value: p.accounted},
+                     {value: p.level}, {value: ""}, {value: p.description}, {value: ""},
+                     {value: ""}, {value: p.geolocation}, {value: ""}]});
         }
-        // TODO Convert dictionary to string
-        return "InterfaceTypes"+its.toString();
+    }
+
+    exportInterfaces() {
+        let ifs = [];
+        // Header
+        ifs.push({cells: [{value: "Processor"}, {value: "InterfaceType"}, {value: "Interface"},
+                 {value: "Sphere"}, {value: "RoegenType"}, {value: "Orientation"}, {value: "OppositeSubsystemType"},
+                 {value: "GeolocationRef"}, {value: "GeolocationCode"}, {value: "InterfaceAttributes"}, {value: "Value"},
+                 {value: "Unit"}, {value: "RelativeTo"}, {value: "Uncertainty"},
+                 {value: "Assessment"}, {value: "PedigreeMatrix"}, {value: "Pedigree"},
+                 {value: "Time"}, {value: "Source"}, {value: "NumberAttributes"}, {value: "Comments"}]});
+        for (let ifaceId of this.interfaces.keys()) {
+            let iface: Interface = this.allObjects.get(ifaceId);
+            let firstValue = true;
+            let p: Processor = this.allObjects.get(iface.processorId);
+            let it: Processor = this.allObjects.get(iface.interfaceTypeId);
+            for (let val of iface.values) {
+                if (firstValue)
+                 ifs.push({cells: [{value: p.name}, {value: it.name}, {value: iface.name},
+                 {value: iface.sphere}, {value: iface.roegenType}, {value: iface.orientation}, {value: iface.oppositeSubsystemType},
+                 {value: ""}, {value: ""}, {value: ""}, {value: val.value},
+                 {value: val.unit}, {value: val.relativeTo}, {value: ""},
+                 {value: ""}, {value: ""}, {value: ""},
+                 {value: val.time}, {value: val.source}, {value: ""}, {value: ""}]});
+                else
+                 ifs.push({cells: [{value: p.name}, {value: it.name}, {value: iface.name},
+                 {value: ""}, {value: ""}, {value: ""}, {value: ""},
+                 {value: ""}, {value: ""}, {value: ""}, {value: val.value},
+                 {value: val.unit}, {value: val.relativeTo}, {value: ""},
+                 {value: ""}, {value: ""}, {value: ""},
+                 {value: val.time}, {value: val.source}, {value: ""}, {value: ""}]});
+
+                firstValue = false;
+            }
+        }
+        return ifs;
+    }
+
+    exportRelationships() {
+        let rls = [];
+        // Header
+        rls.push({cells: [{value: "OriginProcessors"}, {value: "OriginInterface"}, {value: "DestinationProcessors"},
+                 {value: "DestinationInterface"}, {value: "BackInterface"}, {value: "RelationType"}, {value: "Weight"},
+                 {value: "ChangeOfTypeScale"}, {value: "OriginCardinality"}, {value: "DestinationCardinality"},
+                 {value: "Attributes"}]});
+
+        let alreadyProcessed = new Set<bigint>();
+        for (let ifaceId of this.interfaces.keys()) {
+            for (let relId of this.entitiesRelationships.get(ifaceId)) {
+                if (alreadyProcessed.has(relId))
+                    continue;
+                alreadyProcessed.add(relId);
+                let r = this.allObjects.get(relId);
+                if (r instanceof ExchangeRelationship || r instanceof ScaleRelationship) {
+                    let oIface: Interface = this.allObjects.get(r.originId);
+                    let oProc: Processor = this.allObjects.get(oIface.processorId);
+                    let dIface: Interface = this.allObjects.get(r.destinationId);
+                    let dProc: Processor = this.allObjects.get(dIface.processorId);
+                    if (r instanceof ExchangeRelationship)
+                        rls.push({cells: [{value: oProc.hierarchyName}, {value: oIface.name}, {value: dProc.hierarchyName},
+                         {value: dIface.name}, {value: r.backInterface}, {value: ">"}, {value: r.weight},
+                         {value: ""}, {value: ""}, {value: ""}, {value: ""}]});
+                    else
+                        rls.push({cells: [{value: oProc.hierarchyName}, {value: oIface.name}, {value: dProc.hierarchyName},
+                         {value: dIface.name}, {value: ""}, {value: "scale"}, {value: r.scale},
+                         {value: ""}, {value: ""}, {value: ""}, {value: ""}]});
+                }
+            }
+        }
+
+        return rls;
     }
 
     // Import JSON encoding a list of Pandas DataFrames coming from a NIS worksheet
@@ -538,6 +674,7 @@ export class ModelService {
                 i.values = new Array<InterfaceValue>();
                 // Insert Interface into the Processor
                 p.interfaces.push(i);
+                this.interfaces.set(i.id, i);
                 // Register Interface in the full registry
                 this.allObjects.set(i.id, i);
                 return i.id;
@@ -561,6 +698,7 @@ export class ModelService {
                         break
                     }
                 }
+                this.interfaces.delete(interfaceId);
                 this.allObjects.delete(interfaceId);
                 return 0;
             } else {
@@ -723,5 +861,17 @@ export class ModelService {
             }
         }
         return children;
+    }
+
+    getEntityPartOfParents(childId: bigint) {
+        let parents = new Array<bigint>();
+        for (let relId of this.entitiesRelationships.get(childId)) { //
+            let r = this.allObjects.get(relId);
+            if (r instanceof EntityRelationshipPartOf) {
+                if (r.destinationId == childId)
+                    parents.push(r.originId);
+            }
+        }
+        return parents;
     }
 }
