@@ -27,6 +27,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
 
   //Form Create Diagram
+  private numberCreateDiagramInterfaceType = 1;
+  private numberCreateDiagramProcessor = 1;
   private typeCreateDiagram : string;
   @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle:TemplateRef<any>;
   @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent:TemplateRef<any>;
@@ -53,56 +55,12 @@ export class GraphicalEditorComponentComponent implements OnInit {
     {
       id: this.ID_PROCESSOR,
       name: 'Processors',
-      children: [
-        {
-          id: 25, name: 'Netherlands',
-          children: [
-            {
-              id: 26,
-              name: 'FoodProduction',
-              children: [
-                {id: 267, name: 'Vegetables'}
-              ]
-            },
-            {
-              id: 27,
-              name: 'EnergyProduction',
-              children: [
-                {id: 277, name: 'Fuels'},
-                  {id: 278, name: 'Electricity'},
-              ]
-            }
-
-          ]
-        },
-        {
-          id: 26, name: 'Brazil',
-          children: [
-            {
-              id: 261,
-              name: 'FoodProduction',
-              children: [
-                {id: 2667, name: 'Vegetables'}
-              ]
-            }
-          ]
-        }
-
-      ]
+      children: []
     },
     {
       id: this.ID_INTERFACETYPES,
-      name: 'InterfaceTypes',
-      children: [
-        { id: 35, name: 'Food' },
-        {
-          id: 36,
-          name: 'Vegetables',
-          children: [
-            { id: 367, name: 'Tomato' }
-          ]
-        }
-      ]
+      name: 'Interface Types',
+      children: []
     }
 
   ];
@@ -110,7 +68,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     actionMapping: this.actionMappingTree,
   };
 
-  
+  tabsDiagram : Array<{id: number, name: string}> = [];
 
   constructor(private nzModalService : NzModalService) { }
 
@@ -126,6 +84,10 @@ export class GraphicalEditorComponentComponent implements OnInit {
           this.showFormProcessor(event.data.processorId);
       }
     })
+  }
+
+  private updateTree() {
+    this.nodes = this.modelService.getTreeModelView();
   }
 
   showFormProcessor(id : string) {
@@ -163,7 +125,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
         titles[0].parentElement.parentElement.style.cursor = "move";
       }
     });
-    this.typeCreateDiagram = typeDiagram;
   }
 
   closeModal() {
@@ -192,6 +153,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
     if (this.modelService.createDiagram(nameDiagram, typeDiagram)) {
       this.modalRef.destroy();
+      this.updateTree();
     } else {
       this.nzModalService.error({
         nzTitle: 'Could not create diagram',
@@ -238,12 +200,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  setAttributeParentTreeNode(node: TreeNode) {
+  getParentTreeNode(node: TreeNode) : string {
 
-    if (node.level == this.ID_DIAGRAMS || node.level == this.ID_INTERFACETYPES 
-      || node.level == this.ID_PROCESSOR) {
+    if (node.level == 1) {
       return "none";
-    } else if (node.level >= 1) {
+    } else if (node.level > 1) {
       
       let nodeParent = node;
       for(let i = node.level; i > 1; i--) {
