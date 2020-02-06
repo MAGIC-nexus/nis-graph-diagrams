@@ -53,6 +53,15 @@
             </app-processors-diagram-component>
           </mat-tab>
         </mat-tab-group> -->
+        <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
+          <mat-tab *ngFor="let tab of tabsDiagram"></mat-tab>
+          <ng-template mat-tab-label>
+            {{tab.name}}
+            <button mat-icon-button>
+              <mat-icon matListIcon>close</mat-icon>
+            </button>
+          </ng-template>
+        </mat-tab-group>
 
       </div>
     </as-split-area>

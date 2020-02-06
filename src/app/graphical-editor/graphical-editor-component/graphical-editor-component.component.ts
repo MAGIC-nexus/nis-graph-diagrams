@@ -112,14 +112,26 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
 
   showFormCreateDiagram(typeDiagram : string) {
+    this.typeCreateDiagram = typeDiagram;
+
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateDiagramTitle,
       nzContent: this.formCreateDiagramContent,
       nzFooter: this.formCreateDiagramFooter,
     });
     this.modalRef.afterOpen.subscribe( () => {
+      let form = this.modalRef.getElement().getElementsByTagName("form")[0];
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
+
+      switch (this.typeCreateDiagram) {
+        case 'InterfaceTypes':
+          form.nameDiagram.value = 'InterfaceType #' + this.numberCreateDiagramInterfaceType;
+          break;
+        case 'Processors':
+          form.nameDiagram.value = 'Processor #' + this.numberCreateDiagramProcessor;
+          break;
+      }
 
       for (let i = 0; i < titles.length; i++) {
         titles[0].parentElement.parentElement.style.cursor = "move";
@@ -153,7 +165,16 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
     if (this.modelService.createDiagram(nameDiagram, typeDiagram)) {
       this.modalRef.destroy();
+      switch (this.typeCreateDiagram) {
+        case 'InterfaceTypes':
+          this.numberCreateDiagramInterfaceType++;
+          break;
+        case 'Processors':
+          this.numberCreateDiagramProcessor++;
+          break;
+      }
       this.updateTree();
+      
     } else {
       this.nzModalService.error({
         nzTitle: 'Could not create diagram',
