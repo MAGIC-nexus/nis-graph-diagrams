@@ -340,6 +340,16 @@ export class ModelService {
         }
         return deleted;
     }
+
+    readDiagram(diagramId: bigint) {
+        let e = this.allObjects.get(diagramId);
+        if (e) {
+            return e;
+        } else {
+            return null; // Not valid ID
+        }
+    }
+
     addEntityToDiagram(diagramName: string, entityId: bigint) {
         for (let diagram of this.diagrams) {
             if (diagram.name == diagramName) {
@@ -352,6 +362,7 @@ export class ModelService {
             }
         }
     }
+
     removeEntityFromDiagram(diagramName: string, entityId: bigint) {
         for (let diagram of this.diagrams) {
             if (diagram.name == diagramName) {
@@ -359,6 +370,7 @@ export class ModelService {
             }
         }
     }
+
     // Set the size and position of the box representing an entity in a diagram
     updateEntityAppearanceInDiagram(diagramName: string, entityId: bigint,
                                     width: number, height: number, left: number, top: number) {
@@ -372,6 +384,7 @@ export class ModelService {
             }
         }
     }
+
     // Obtain the size and position of the box representing an entity in a diagram
     readEntityAppearanceInDiagram(diagramName: string, entityId: bigint) {
         for (let diagram of this.diagrams) {
@@ -413,6 +426,7 @@ export class ModelService {
             return it.id;
         }
     }
+
     /* Behavior when deleting
         - Super delete: delete from all diagrams. NOTE: THE CONTROLLER MUST DELETE DIRECTLY FROM EACH MXGRAPH !!!!
         - Cautious delete: delete if not present in diagrams
@@ -490,7 +504,7 @@ export class ModelService {
         }
     }
 
-    readEntity(entityId): Processor | InterfaceType {
+    readEntity(entityId: bigint): Processor | InterfaceType {
         let e = this.allObjects.get(entityId);
         if (e) {
             if (e instanceof Processor || e instanceof InterfaceType) {
@@ -534,6 +548,7 @@ export class ModelService {
             return -2; // Processor does not exist
         }
     }
+
     deleteInterface(interfaceId) {
         let i: Interface = this.allObjects.get(interfaceId);
         if (i) {
@@ -555,6 +570,7 @@ export class ModelService {
             return -1; // Could not find Interface
         }
     }
+
     updateInterface(interfaceId, properties: Interface) {
         let i: Interface = this.allObjects.get(interfaceId);
         if (i) {
@@ -568,6 +584,7 @@ export class ModelService {
             return -1; // Could not find Interface
         }
     }
+
     updateInterfaceValues(interfaceId, values: Array<InterfaceValue>) {
         let i: Interface = this.allObjects.get(interfaceId);
         if (i) {
@@ -576,7 +593,8 @@ export class ModelService {
             return -1; // Could not find Interface
         }
     }
-    readInterface(interfaceId) {
+
+    readInterface(interfaceId: bigint) {
         return this.allObjects.get(interfaceId);
     }
 
@@ -630,6 +648,7 @@ export class ModelService {
         this.allObjects.set(r.id, r);
         return r.id;
     }
+
     deleteRelationship(relationshipId) {
         let r: Relationship = this.allObjects.get(relationshipId);
         if (r) {
@@ -647,6 +666,7 @@ export class ModelService {
             return -1; // Relationship not found
         }
     }
+
     updateRelationship(relationshipId, properties: EntityRelationshipPartOf | ExchangeRelationship | ScaleRelationship | InterfaceTypeScaleChange) {
         let r = this.allObjects.get(relationshipId);
         if (r) {
@@ -704,5 +724,4 @@ export class ModelService {
         }
         return children;
     }
-
 }
