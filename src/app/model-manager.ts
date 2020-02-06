@@ -321,10 +321,10 @@ export class ModelService {
             diagram.diagramXML = "";
             this.diagrams.push(diagram);
             this.allObjects.set(diagram.id, diagram);
-            return true;
+            return diagram.id;
         } else {
             // Name exists!
-            return false;
+            return -1;
         }
     }
 
@@ -398,7 +398,7 @@ export class ModelService {
             p.geolocation = "";
             this.allObjects.set(p.id, p);
             this.processors.set(p.id, p);
-            return p;
+            return p.id;
         } else if (entityType == EntityTypes.InterfaceType) {
             let it = new InterfaceType();
             it.id = this.getNewId();
@@ -410,7 +410,7 @@ export class ModelService {
             it.unit = "";
             this.allObjects.set(it.id, it);
             this.interfaceTypes.set(it.id, it);
-            return it;
+            return it.id;
         }
     }
     /* Behavior when deleting
@@ -526,6 +526,7 @@ export class ModelService {
                 p.interfaces.push(i);
                 // Register Interface in the full registry
                 this.allObjects.set(i.id, i);
+                return i.id;
             } else {
                 return -1; // InterfaceType does not exist
             }
@@ -626,6 +627,8 @@ export class ModelService {
             this.entitiesRelationships.set(destinationId, s);
         }
         s.add(r.id);
+        this.allObjects.set(r.id, r);
+        return r.id;
     }
     deleteRelationship(relationshipId) {
         let r: Relationship = this.allObjects.get(relationshipId);
