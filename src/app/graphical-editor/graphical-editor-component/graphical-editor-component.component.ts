@@ -3,7 +3,7 @@ import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
-import { ModelService } from '../../model-manager';
+import { ModelService, DiagramType } from '../../model-manager';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -26,8 +26,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent:TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
 
-  //Form Create
-
+  //Form Create Diagram
+  private typeCreateDiagram : string;
+  @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle:TemplateRef<any>;
+  @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent:TemplateRef<any>;
+  @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter:TemplateRef<any>;
 
   //ModelService
   modelService : ModelService;
@@ -146,12 +149,55 @@ export class GraphicalEditorComponentComponent implements OnInit {
     });
   }
 
-  showFormCreateDiagram() {
+  showFormCreateDiagram(typeDiagram : string) {
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formCreateDiagramTitle,
+      nzContent: this.formCreateDiagramContent,
+      nzFooter: this.formCreateDiagramFooter,
+    });
+    this.modalRef.afterOpen.subscribe( () => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
 
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+    this.typeCreateDiagram = typeDiagram;
   }
 
   closeModal() {
-    console.log("close modal!");
+    this.modalRef.destroy();
+  }
+
+  submitCreateDiagram(event : Event) {
+    event.preventDefault();
+    this.createDiagram();
+  }
+
+  createDiagram() {
+
+    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
+    let nameDiagram : string = form.nameDiagram.value.trim();
+    let typeDiagram : DiagramType;
+
+    switch (this.typeCreateDiagram) {
+      case 'InterfaceTypes':
+        typeDiagram = DiagramType.InterfaceTypes;
+        break;
+      case 'Processors':
+        typeDiagram = DiagramType.Processors;
+        break;
+    }
+
+    if (this.modelService.createDiagram(nameDiagram, typeDiagram)) {
+      this.modalRef.destroy();
+    } else {
+      this.nzModalService.error({
+        nzTitle: 'Could not create diagram',
+        nzContent: 'The name "' + nameDiagram + '" already exists',
+      });
+    }
   }
 
   private draggableModal() {
