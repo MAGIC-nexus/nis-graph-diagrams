@@ -128,6 +128,7 @@ export class InterfaceRelationship extends Relationship {
 
 }
 
+// Processors and InterfaceTypes can be joined by them
 export class EntityRelationshipPartOf extends EntityRelationship {
     amount: string; // 0 to 1 membership, regarding accounting. 1 for InterfaceTypes
 }
@@ -173,15 +174,15 @@ export class ModelService {
      */
 
     nextId: bigint;
-    allObjects: Map<bigint, any> = new Map<bigint, any>(); // Diagrams, processors, interface types, interfaces and relationships
     diagrams: Array<Diagram> = [];
     processors: Map<bigint, Processor> = new Map<bigint, Processor>();
     interfaceTypes: Map<bigint, InterfaceType> = new Map<bigint, InterfaceType>();
     interfaces: Map<bigint, Interface> = new Map<bigint, Interface>();
-    // Set of Relationships (their IDs) related to a given ID
+    // Set of Relationships (their IDs) of an Entity (Processor, InterfaceType, Interface)
     // IDs can be from: Processors, InterfaceTypes and Interfaces
     // Logically a Relationship will appear in two of the elements of the Map (we always will have an origin and a destination)
-    relationships: Map<bigint, Set<bigint>> = new Map<bigint, Set<bigint>>();
+    entitiesRelationships: Map<bigint, Set<bigint>> = new Map<bigint, Set<bigint>>();
+    allObjects: Map<bigint, any> = new Map<bigint, any>(); // Diagrams, processors, interface types, interfaces and relationships
 
     constructor() {
         this.nextId = 1n;
@@ -201,21 +202,33 @@ export class ModelService {
         }
         return tmp;
     }
-    getTreeModelViewProcessors() {
-        let tmp = [];
-        this.processors.forEach( (processor, id) => {
-            tmp.push({id: id, name: processor.name});
-        })
-        return tmp;
+    getTreeModelViewProcessors(parentId: bigint) {
+        let n = [];
+        for (let child of this.getEntityPartOfChildren(parentId)) {
+            let p = this.allObjects.get(child);
+            n.push({id: p.id, name: p.name, children: this.getTreeModelViewProcessors(p.id)});
+        }
+        return n;
+        // let tmp = [];
+        // this.processors.forEach( (processor, id) => {
+        //     tmp.push({id: id, name: processor.name});
+        // })
+        // return tmp;
     }
-    getTreeModelViewInterfaceTypes() {
-        return [];
+    getTreeModelViewInterfaceTypes(parentId: bigint) {
+        // Search for all InterfaceTypes whose parent is "parentId"
+        let n = [];
+        for (let child of this.getEntityPartOfChildren(parentId)) {
+            let it = this.allObjects.get(child);
+            n.push({id: it.id, name: it.name, children: this.getTreeModelViewInterfaceTypes(it.id)});
+        }
+        return n;
     }
     getTreeModelView() {
         return [
             {id: -3, name: "Diagrams", children: this.getTreeModelViewDiagrams() },
-            {id: -2, name: "Processors", children: this.getTreeModelViewProcessors() },
-            {id: -1, name: "Interface Types", children: this.getTreeModelViewInterfaceTypes() }
+            {id: -2, name: "Processors", children: this.getTreeModelViewProcessors(-2n) },
+            {id: -1, name: "Interface Types", children: this.getTreeModelViewInterfaceTypes(-1n) }
         ]
     }
     // Obtain a list of the diagrams (for the Tab control)
@@ -246,13 +259,42 @@ export class ModelService {
     }
     // Export to JSON encoding of a list of Pandas DataFrames which can be converted to worksheet
     exportToNISFormat(): string  {
-        // TODO InterfaceTypes
+        // InterfaceTypes
+        this.exportInterfaceTypes();
         // TODO ScaleChangeMap
         // TODO BareProcessors
         // TODO Interfaces
         // TODO Relationships
         return "";
     }
+    exportScaleChangeMap(): string {
+        let scm = [];
+        for (let itypeId of this.interfaceTypes.keys()) {
+            for (let relId of this.entitiesRelationships.get(itypeId)) {
+                let r = this.allObjects.get(relId);
+                if (r instanceof InterfaceTypeScaleChange && r.originId ==itypeId) {
+                    scm.push({})
+    // originContextProcessorId: bigint; // Can be null
+    // destinationContextProcessorId: bigint; // Can be null
+    // scale: string;
+    // originUnit: string;
+    // destinationUnit: string
+
+                }
+            }
+        }
+        return "";
+    }
+    exportInterfaceTypes(): string {
+        let its = [];
+        for (let itypeId of this.interfaceTypes.keys()) {
+            let it = this.interfaceTypes.get(itypeId);
+            its.push({id: it.id, name: it.name, hierarchy: it.hierarchy, sphere: it.sphere, roegenType: it.roegenType, unit: it.unit, oppositeSubsystemType: it.oppositeSubsystemType});
+        }
+        // TODO Convert dictionary to string
+        return "InterfaceTypes"+its.toString();
+    }
+
     // Import JSON encoding a list of Pandas DataFrames coming from a NIS worksheet
     importFromNISFormat(s) {
         // TODO While importing, obtain the highest ID to initialize "this.nextId"
@@ -390,11 +432,11 @@ export class ModelService {
             }
             if (cont == 0 || (cont>0 && complete)) {
                 // Delete relationships where the entity appears
-                for (let relationshipId of this.relationships.get(entityId)) {
+                for (let relationshipId of this.entitiesRelationships.get(entityId)) {
                     this.deleteRelationship(relationshipId);
                 }
                 // And second, delete the set of relationships attached to the entity
-                this.relationships.delete(entityId);
+                this.entitiesRelationships.delete(entityId);
                 // Delete the entity from the registries
                 this.allObjects.delete(entityId);
                 if (e instanceof Processor) {
@@ -572,16 +614,16 @@ export class ModelService {
         r.destinationId = destinationId;
         r.originId = originId;
         r.name = "";
-        let s: Set<bigint> = this.relationships.get(originId);
+        let s: Set<bigint> = this.entitiesRelationships.get(originId);
         if (!s) {
             s = new Set<bigint>();
-            this.relationships.set(originId, s);
+            this.entitiesRelationships.set(originId, s);
         }
         s.add(r.id);
-        s = this.relationships.get(destinationId);
+        s = this.entitiesRelationships.get(destinationId);
         if (!s) {
             s = new Set<bigint>();
-            this.relationships.set(destinationId, s);
+            this.entitiesRelationships.set(destinationId, s);
         }
         s.add(r.id);
     }
@@ -589,10 +631,10 @@ export class ModelService {
         let r: Relationship = this.allObjects.get(relationshipId);
         if (r) {
             // Delete from the origin
-            let rels: Set<bigint> = this.relationships.get(r.originId);
+            let rels: Set<bigint> = this.entitiesRelationships.get(r.originId);
             rels.delete(relationshipId);
             // Delete from the destination
-            rels = this.relationships.get(r.destinationId);
+            rels = this.entitiesRelationships.get(r.destinationId);
             rels.delete(relationshipId);
             // Delete from registry
             this.allObjects.delete(relationshipId);
@@ -619,13 +661,45 @@ export class ModelService {
                 r.destinationUnit = r2.destinationUnit;
                 r.originUnit = r2.originUnit;
                 r.scale = r2.scale;
-
             }
         } else {
             return -1; // Relationship not found
         }
     }
+
     readRelationship(relationshipId: bigint) {
         return this.allObjects.get(relationshipId);
     }
+
+    // Valid to obtain children of Processors and InterfaceTypes
+    getEntityPartOfChildren(parentId: bigint) {
+        let children = new Array<bigint>();
+        if (parentId == -1n || parentId == -2n) { // -1n -> InterfaceTypes; -2n -> Processors
+            // All InterfaceTypes OR all Processors
+            let keys = parentId == -1n ? this.interfaceTypes.keys() : this.processors.keys();
+            for (let entityId of keys) {
+                let addAsRoot: boolean = true;
+                for (let relId of this.entitiesRelationships.get(entityId)) {
+                    let r = this.allObjects.get(relId);
+                    if (r instanceof EntityRelationshipPartOf && r.destinationId == relId) {
+                        addAsRoot = false;
+                        break;
+                    }
+                }
+                if (addAsRoot)
+                    children.push(entityId);
+            }
+        }
+        else {
+            for (let relId of this.entitiesRelationships.get(parentId)) { //
+                let r = this.allObjects.get(relId);
+                if (r instanceof EntityRelationshipPartOf) {
+                    if (r.originId == parentId)
+                        children.push(r.destinationId);
+                }
+            }
+        }
+        return children;
+    }
+
 }
