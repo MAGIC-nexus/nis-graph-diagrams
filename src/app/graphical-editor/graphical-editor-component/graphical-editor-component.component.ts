@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
+import { MatMenuTrigger } from '@angular/material';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -37,8 +38,13 @@ export class GraphicalEditorComponentComponent implements OnInit {
   //ModelService
   modelService : ModelService;
 
+  //Context Menu
+  @ViewChild(MatMenuTrigger, {static: false}) contextMenuDiagram: MatMenuTrigger;
+  contextMenuDiagramPosition = { x: '0px', y: '0px' };
+
   actionMappingTree : IActionMapping = {
     mouse: {
+
       dblClick: (tree, node, $event) => {
         if(node.level > 1) {
           let parentNode = node;
@@ -51,8 +57,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
               break;
           }
         }
+      },
+
+      contextMenu: (tree, node, $event) => {
+        $event.preventDefault();
       }
     }
+
+
   }
 
   nodes = [
@@ -107,6 +119,19 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   closeTabDiagram(diagramId : bigint) {
     this.tabsDiagram.delete(diagramId);
+  }
+
+  onContextMenuDiagram(event : MouseEvent, node) {
+    event.preventDefault();
+    this.contextMenuDiagramPosition.x = event.clientX + 'px';
+    this.contextMenuDiagramPosition.y = event.clientY + 'px';
+    this.contextMenuDiagram.menuData = { 'item': node };
+    this.contextMenuDiagram.menu.focusFirstItem('mouse');
+    this.contextMenuDiagram.openMenu();
+  }
+
+  onContextMenuDiagramDelete(item) {
+    console.log(item);
   }
 
   showFormProcessor(id : string) {
