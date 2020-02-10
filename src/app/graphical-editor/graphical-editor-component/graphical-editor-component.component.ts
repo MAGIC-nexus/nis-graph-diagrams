@@ -130,8 +130,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.contextMenuDiagram.openMenu();
   }
 
-  onContextMenuDiagramDelete(item) {
-    console.log(item);
+  onContextMenuDiagramDelete(node : TreeNode) {
+    if( this.modelService.deleteDiagram(node.data.name) ) {
+      this.closeTabDiagram(node.data.id);
+      this.updateTree();
+    }
   }
 
   showFormProcessor(id : string) {
