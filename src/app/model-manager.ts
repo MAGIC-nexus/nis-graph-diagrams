@@ -179,7 +179,7 @@ export class ModelService {
      */
 
     nextId: bigint;
-    diagrams: Array<Diagram> = [];
+    diagrams: Map<bigint, Diagram> = new Map<bigint, Diagram>();
     processors: Map<bigint, Processor> = new Map<bigint, Processor>();
     interfaceTypes: Map<bigint, InterfaceType> = new Map<bigint, InterfaceType>();
     interfaces: Map<bigint, Interface> = new Map<bigint, Interface>();
@@ -202,9 +202,9 @@ export class ModelService {
     // Obtain a RO perspective for the TreeView component
     getTreeModelViewDiagrams() {
         let tmp = [];
-        for (let diagram of this.diagrams) {
-            tmp.push({id: diagram.id, name: diagram.name});
-        }
+        this.diagrams.forEach((diagram, id) => {
+            tmp.push({id: id, name: diagram.name });
+        })
         return tmp;
     }
 
@@ -243,29 +243,27 @@ export class ModelService {
     // Obtain a list of the diagrams (for the Tab control)
     listDiagrams() {
         let tmp = [];
-        for (let diagram of this.diagrams) {
+        this.diagrams.forEach( (diagram, id) => {
             tmp.push(diagram.name);
-        }
+        });
         return tmp;
     }
 
     // Get a RO perspective of a diagram in a mxGraph compatible structure. Afterwards, the controller would invoke code in example "https://jgraph.github.io/mxgraph/javascript/examples/codec.html"
-    getDiagramGraph(diagramName: string) {
+    getDiagramGraph(diagramId: bigint) {
         let graph: string = "";
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
-                graph = diagram.diagramXML;
-            }
+        let diagram = this.diagrams.get(diagramId);
+        if (diagram) {
+            graph = diagram.diagramXML;
         }
         return graph;
     }
 
     // Save diagram (normally, before closing). Before the call, the controller would invoke code in "https://jgraph.github.io/mxgraph/docs/js-api/files/io/mxCodec-js.html"
-    setDiagramGraph(diagramName: string, xml: string) {
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
-                diagram.diagramXML = xml;
-            }
+    setDiagramGraph(diagramId: bigint, xml: string) {
+        let diagram = this.diagrams.get(diagramId);
+        if (diagram) {
+            diagram.diagramXML = xml;
         }
     }
 
@@ -442,10 +440,9 @@ export class ModelService {
     // Create an new, empty diagram of certain type
     createDiagram(diagramName: string, diagramType: DiagramType) {
         let found = false;
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
+        for (let id in this.diagrams) {
+            if (this.diagrams[id].name == diagramName) {
                 found = true;
-                break;
             }
         }
         if (!found) {
@@ -455,7 +452,7 @@ export class ModelService {
             diagram.diagramType = diagramType;
             diagram.entities = new Map<bigint, GraphicalProperties>(); // Empty diagram
             diagram.diagramXML = "";
-            this.diagrams.push(diagram);
+            this.diagrams.set(diagram.id, diagram);
             this.allObjects.set(diagram.id, diagram);
             return diagram.id;
         } else {
@@ -464,15 +461,13 @@ export class ModelService {
         }
     }
 
-    deleteDiagram(diagramName) {
+    deleteDiagram(diagramId: bigint) {
         let deleted = false;
-        for (let i=0; i<=this.diagrams.length; i++) {
-            if (this.diagrams[i].name == diagramName) {
-                deleted = true;
-                this.allObjects.delete(this.diagrams[i].id);
-                this.diagrams.splice(i, 1);
-                break;
-            }
+        let diagram = this.diagrams.get(diagramId);
+        if (diagram) {
+            deleted = true;
+            this.allObjects.delete(diagramId);
+            this.diagrams.delete(diagramId);
         }
         return deleted;
     }
@@ -486,33 +481,32 @@ export class ModelService {
         }
     }
 
-    addEntityToDiagram(diagramName: string, entityId: bigint) {
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
-                let p = new GraphicalProperties();
-                p.height = 80;
-                p.width = 100;
-                p.left = 10;
-                p.top = 10;
-                diagram.entities.set(entityId, p);
-            }
+    addEntityToDiagram(diagramId: bigint, entityId: bigint) {
+        let diagram = this.diagrams.get(diagramId);
+        if(diagram) {
+            let p = new GraphicalProperties();
+            p.height = 80;
+            p.width = 100;
+            p.left = 10;
+            p.top = 10;
+            diagram.entities.set(entityId, p);
         }
     }
 
-    removeEntityFromDiagram(diagramName: string, entityId: bigint) {
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
-                diagram.entities.delete(entityId);
-            }
+    removeEntityFromDiagram(diagramId: bigint, entityId: bigint) {
+        let diagram = this.diagrams.get(diagramId);
+        if(diagram) {
+            diagram.entities.delete(entityId);
         }
     }
 
     // Set the size and position of the box representing an entity in a diagram
-    updateEntityAppearanceInDiagram(diagramName: string, entityId: bigint,
+    updateEntityAppearanceInDiagram(diagramId: bigint, entityId: bigint,
                                     width: number, height: number, left: number, top: number) {
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
-                let p = diagram.entities.get(entityId);
+        let diagram = this.diagrams.get(diagramId);
+        if(diagram) {
+            let p = diagram.entities.get(entityId);
+            if(p) {
                 p.height = height;
                 p.width = width;
                 p.left = left;
@@ -522,11 +516,10 @@ export class ModelService {
     }
 
     // Obtain the size and position of the box representing an entity in a diagram
-    readEntityAppearanceInDiagram(diagramName: string, entityId: bigint) {
-        for (let diagram of this.diagrams) {
-            if (diagram.name == diagramName) {
-                return diagram.entities.get(entityId);
-            }
+    readEntityAppearanceInDiagram(diagramId: bigint, entityId: bigint) {
+        let diagram = this.diagrams.get(diagramId);
+        if(diagram) {
+            return diagram.entities.get(entityId);
         }
         return null;
     }
@@ -572,14 +565,14 @@ export class ModelService {
         let e = this.allObjects.get(entityId);
         if (e) {
             let cont = 0;
-            for (let diagram of this.diagrams) {
-                if (diagram.entities.get(entityId)) {
-                    cont ++;
-                    if (complete) {
+            this.diagrams.forEach( (diagram, id) => {
+                if(diagram.entities.get(entityId)) {
+                    cont++;
+                    if(complete) {
                         diagram.entities.delete(entityId);
                     }
                 }
-            }
+            });
             if (cont == 0 || (cont>0 && complete)) {
                 // Delete relationships where the entity appears
                 for (let relationshipId of this.entitiesRelationships.get(entityId)) {
