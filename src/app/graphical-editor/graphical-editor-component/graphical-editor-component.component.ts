@@ -90,7 +90,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     actionMapping: this.actionMappingTree,
   };
 
-  tabsDiagram : Map<BigInt,{name: String, type: DiagramType}> = new Map();
+  tabsDiagram : Map<BigInt,{id:BigInt, name: String, type: DiagramType}> = new Map();
 
   constructor(private nzModalService : NzModalService) { }
 
@@ -114,7 +114,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   private addTabDiagram(diagramId : bigint) {
     let diagram : Diagram = this.modelService.readDiagram(diagramId);
-    this.tabsDiagram.set(diagram.id, {name: diagram.name, type:diagram.diagramType});
+    this.tabsDiagram.set(diagram.id, {id: diagram.id ,name: diagram.name, type:diagram.diagramType});
   }
 
   closeTabDiagram(diagramId : bigint) {
