@@ -3,7 +3,8 @@ import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
-import { ModelService, DiagramType } from '../../model-manager';
+import { ModelService, DiagramType, Diagram } from '../../model-manager';
+import { MatMenuTrigger } from '@angular/material';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -37,12 +38,33 @@ export class GraphicalEditorComponentComponent implements OnInit {
   //ModelService
   modelService : ModelService;
 
+  //Context Menu
+  @ViewChild(MatMenuTrigger, {static: false}) contextMenuDiagram: MatMenuTrigger;
+  contextMenuDiagramPosition = { x: '0px', y: '0px' };
+
   actionMappingTree : IActionMapping = {
     mouse: {
+
       dblClick: (tree, node, $event) => {
-        console.log(node);
+        if(node.level > 1) {
+          let parentNode = node;
+          for (let i = node.level; i > 1; i--) {
+            parentNode = parentNode.parent;
+          }
+          switch(parentNode.data.id) {
+            case this.ID_DIAGRAMS:
+              this.addTabDiagram(node.data.id);
+              break;
+          }
+        }
+      },
+
+      contextMenu: (tree, node, $event) => {
+        $event.preventDefault();
       }
     }
+
+
   }
 
   nodes = [
@@ -68,7 +90,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     actionMapping: this.actionMappingTree,
   };
 
-  tabsDiagram : Array<{id: number, name: string}> = [];
+  tabsDiagram : Map<BigInt,{id:BigInt, name: String, type: DiagramType}> = new Map();
 
   constructor(private nzModalService : NzModalService) { }
 
@@ -88,6 +110,31 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   private updateTree() {
     this.nodes = this.modelService.getTreeModelView();
+  }
+
+  private addTabDiagram(diagramId : bigint) {
+    let diagram : Diagram = this.modelService.readDiagram(diagramId);
+    this.tabsDiagram.set(diagram.id, {id: diagram.id ,name: diagram.name, type:diagram.diagramType});
+  }
+
+  closeTabDiagram(diagramId : bigint) {
+    this.tabsDiagram.delete(diagramId);
+  }
+
+  onContextMenuDiagram(event : MouseEvent, node) {
+    event.preventDefault();
+    this.contextMenuDiagramPosition.x = event.clientX + 'px';
+    this.contextMenuDiagramPosition.y = event.clientY + 'px';
+    this.contextMenuDiagram.menuData = { 'item': node };
+    this.contextMenuDiagram.menu.focusFirstItem('mouse');
+    this.contextMenuDiagram.openMenu();
+  }
+
+  onContextMenuDiagramDelete(node : TreeNode) {
+    if( this.modelService.deleteDiagram(node.data.name) ) {
+      this.closeTabDiagram(node.data.id);
+      this.updateTree();
+    }
   }
 
   showFormProcessor(id : string) {
@@ -163,7 +210,9 @@ export class GraphicalEditorComponentComponent implements OnInit {
         break;
     }
 
-    if (this.modelService.createDiagram(nameDiagram, typeDiagram)) {
+    let diagramId = this.modelService.createDiagram(nameDiagram, typeDiagram);
+
+    if (diagramId != -1n) {
       this.modalRef.destroy();
       switch (this.typeCreateDiagram) {
         case 'InterfaceTypes':
@@ -174,7 +223,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
           break;
       }
       this.updateTree();
-      
+      this.addTabDiagram(<bigint>diagramId);
     } else {
       this.nzModalService.error({
         nzTitle: 'Could not create diagram',

@@ -4,22 +4,56 @@
       Filter
       <input id="filter" placeholder="filter nodes" />
       <button mat-flat-button>Clear Filter</button>
+
+      <!-- Tree root -->
       <tree-root #treeRoot [nodes]="nodes" [options]="options">
+
         <ng-template #treeNodeTemplate let-node let-index="index">
           <span (mouseover)="mouseOverTree($event)" [attr.data-node-id]="node.data.id"
             [attr.data-node-parent]="getParentTreeNode(node)">{{node.data.name}}</span>
         </ng-template>
+        <ng-template #treeNodeWrapperTemplate let-node let-index="index">
+
+          <div *ngIf="getParentTreeNode(node) == 'none'" class="node-wrapper"
+            [style.padding-left]="node.getNodePadding()">
+            <tree-node-expander [node]="node"></tree-node-expander>
+            <div class="node-content-wrapper" [class.node-content-wrapper-active]="node.isActive"
+              [class.node-content-wrapper-focused]="node.isFocused" (click)="node.mouseAction('click', $event)"
+              (dblclick)="node.mouseAction('dblClick', $event)" (contextmenu)="node.mouseAction('contextMenu', $event)"
+              (treeDrop)="node.onDrop($event)" [treeAllowDrop]="node.allowDrop" [treeDrag]="node"
+              [treeDragEnabled]="node.allowDrag()">
+
+              <tree-node-content [node]="node" [index]="index" [template]="treeNodeTemplate"></tree-node-content>
+            </div>
+          </div>
+
+          <!-- Diagrams -->
+          <div *ngIf="getParentTreeNode(node) == 'Diagrams'" class="node-wrapper"
+            [style.padding-left]="node.getNodePadding()">
+            <tree-node-expander [node]="node"></tree-node-expander>
+            <div class="node-content-wrapper" [class.node-content-wrapper-active]="node.isActive"
+              [class.node-content-wrapper-focused]="node.isFocused" (click)="node.mouseAction('click', $event)"
+              (dblclick)="node.mouseAction('dblClick', $event)" (contextmenu)="onContextMenuDiagram($event, node)"
+              (treeDrop)="node.onDrop($event)" [treeAllowDrop]="node.allowDrop" [treeDrag]="node"
+              [treeDragEnabled]="node.allowDrag()">
+
+              <tree-node-content [node]="node" [index]="index" [template]="treeNodeTemplate"></tree-node-content>
+            </div>
+          </div>
+
+        </ng-template>
       </tree-root>
+
     </as-split-area>
 
     <as-split-area size="80" fxLayout="column" fxLayoutAlign="stretch">
       <mat-toolbar fxFlex="64px" color="primary">
         <mat-toolbar-row>
           <button mat-flat-button (click)="showFormCreateDiagram('InterfaceTypes')"
-          matTooltip="New InterfaceTypes diagram">InterfaceTypes</button>
+            matTooltip="New InterfaceTypes diagram">InterfaceTypes</button>
           &nbsp;&nbsp;
           <button mat-flat-button (click)="showFormCreateDiagram('Processors')"
-          matTooltip="New Processors diagram">Processors</button>
+            matTooltip="New Processors diagram">Processors</button>
           <button mat-icon-button matTooltip="Generate into spreadsheet (overwrite workbook)">
             <mat-icon matListIcon>arrow_forward</mat-icon>
           </button>
@@ -29,43 +63,39 @@
         </mat-toolbar-row>
       </mat-toolbar>
       <div fxFlex style="border: 2px solid red;">
-        
-        <!-- <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
-          <mat-tab>
-            <ng-template mat-tab-label>
-              Interface Types diagram #1
-              <button mat-icon-button>
-                <mat-icon matListIcon>close</mat-icon>
-              </button>
-            </ng-template>
 
-            <app-interfacetypes-diagram-component></app-interfacetypes-diagram-component>
-          </mat-tab>
-
-          <mat-tab>
-            <ng-template mat-tab-label>
-              Processors diagram #1
-              <button mat-icon-button>
-                <mat-icon matListIcon>close</mat-icon>
-              </button>
-            </ng-template>
-            <app-processors-diagram-component [proccesorSubject]="proccesorSubject">
-            </app-processors-diagram-component>
-          </mat-tab>
-        </mat-tab-group> -->
+        <!-- Tabs diagrams -->
         <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
-          <mat-tab *ngFor="let tab of tabsDiagram"></mat-tab>
-          <ng-template mat-tab-label>
-            {{tab.name}}
-            <button mat-icon-button>
-              <mat-icon matListIcon>close</mat-icon>
-            </button>
-          </ng-template>
+          <mat-tab *ngFor="let item of tabsDiagram | keyvalue">
+            <ng-template mat-tab-label>
+              {{item.value.name}}
+              <button mat-icon-button (click)="closeTabDiagram(item.key)">
+                <mat-icon matListIcon>close</mat-icon>
+              </button>
+            </ng-template>
+            <app-processors-diagram-component *ngIf="item.value.type == 0" [proccesorSubject]="proccesorSubject">
+            </app-processors-diagram-component>
+            <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramName]="item.value.name" 
+            [modelService]="modelService">
+            </app-interfacetypes-diagram-component>
+          </mat-tab>
         </mat-tab-group>
 
       </div>
     </as-split-area>
   </as-split>
+
+  <!-- Context Menu Diagram-->
+  <div style="visibility: hidden; position: fixed"
+    [style.left]="contextMenuDiagramPosition.x"
+    [style.top]="contextMenuDiagramPosition.y"
+    [matMenuTriggerFor]="contextMenuDiagram">
+  </div>
+  <mat-menu #contextMenuDiagram="matMenu">
+    <ng-template matMenuContent let-item="item">
+      <button mat-menu-item (click)="onContextMenuDiagramDelete(item)">Eliminar</button>
+    </ng-template>
+  </mat-menu>
 
   <!-- Modal Processor -->
   <ng-template #formProcessorTitle>
@@ -99,7 +129,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="3">Name</nz-form-label>
         <nz-form-control [nzSpan]="19">
-          <input autocomplete="off" name="nameDiagram" type="text" nz-input/>
+          <input autocomplete="off" name="nameDiagram" type="text" nz-input />
         </nz-form-control>
       </nz-form-item>
     </form>

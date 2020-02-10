@@ -471,6 +471,15 @@ declare class mxGraph {
 
 }
 
+declare class mxCodec {
+
+  constructor(document: any);
+
+  encode(obj: any);
+  decode(node: any, into: any)
+
+}
+
 declare class mxGraphHandler {
 
 

@@ -140,6 +140,9 @@ declare class mxUtils {
   static makeDraggable(elementDrag, graph, func);
   static createXmlDocument();
   static convertPoint(graph, x, y);
+  static getXml(node: any);
+  static getXml(node: any, linefeed: any);
+  static parseXml(xml: any);
 }
 
 /******************      Util end      **************/
