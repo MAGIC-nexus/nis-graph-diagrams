@@ -5,6 +5,7 @@ import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger } from '@angular/material';
+import { DiagramComponentHelper } from '../diagram-component-helper';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -96,6 +97,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   ngOnInit() {
     this.modelService = new ModelService();
+    DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
   }
 

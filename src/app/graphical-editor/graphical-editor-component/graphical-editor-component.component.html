@@ -75,7 +75,7 @@
             </ng-template>
             <app-processors-diagram-component *ngIf="item.value.type == 0" [proccesorSubject]="proccesorSubject">
             </app-processors-diagram-component>
-            <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramName]="item.value.name" 
+            <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id" 
             [modelService]="modelService">
             </app-interfacetypes-diagram-component>
           </mat-tab>
