@@ -6,6 +6,7 @@ export class DiagramComponentHelper {
 
     static setModelService(modelService: ModelService) {
         DiagramComponentHelper.modelService =  modelService;
+        console.log(DiagramComponentHelper.modelService);
     }
 
     static loadDiagram(diagramId: bigint, graph : mxGraph) {

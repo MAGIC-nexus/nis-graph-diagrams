@@ -133,7 +133,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
 
   onContextMenuDiagramDelete(node : TreeNode) {
-    if( this.modelService.deleteDiagram(node.data.name) ) {
+    if( this.modelService.deleteDiagram(node.data.id) ) {
       this.closeTabDiagram(node.data.id);
       this.updateTree();
     }
