@@ -383,6 +383,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
     });
   }
 
+  submitCreateProcessor(event: Event) {
+    event.preventDefault();
+    this.createProcessor();
+  }
+
   createProcessor() {
     this.modalRef.destroy();
     let form = this.modalRef.getElement().getElementsByTagName("form")[0];
