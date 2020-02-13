@@ -5,6 +5,8 @@ import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger } from '@angular/material';
+import { DiagramComponentHelper } from '../diagram-component-helper';
+import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -34,6 +36,12 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle:TemplateRef<any>;
   @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent:TemplateRef<any>;
   @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter:TemplateRef<any>;
+
+  //Form Create InterfaceType
+  @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle:TemplateRef<any>;
+  @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent:TemplateRef<any>;
+  @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter:TemplateRef<any>;
+  emmiterCreateInterfaceTypeData : {pt: mxPoint, component: InterfacetypesDiagramComponentComponent};
 
   //ModelService
   modelService : ModelService;
@@ -96,6 +104,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   ngOnInit() {
     this.modelService = new ModelService();
+    DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
   }
 
@@ -117,6 +126,44 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.tabsDiagram.set(diagram.id, {id: diagram.id ,name: diagram.name, type:diagram.diagramType});
   }
 
+  private draggableModal() {
+    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("ant-modal-header");
+    for (let i = 0; i < headersModal.length; i++) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      headersModal[i].onmousedown = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+    
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        headersModal[i].parentElement.style.top = (headersModal[i].parentElement.offsetTop - pos2) + "px";
+        headersModal[i].parentElement.style.left = (headersModal[i].parentElement.offsetLeft - pos1) + "px";
+      }
+    
+      function closeDragElement() {
+        // stop moving when mouse button is released:
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+  }
+
   closeTabDiagram(diagramId : bigint) {
     this.tabsDiagram.delete(diagramId);
   }
@@ -131,7 +178,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
 
   onContextMenuDiagramDelete(node : TreeNode) {
-    if( this.modelService.deleteDiagram(node.data.name) ) {
+    if( this.modelService.deleteDiagram(node.data.id) ) {
       this.closeTabDiagram(node.data.id);
       this.updateTree();
     }
@@ -232,44 +279,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  private draggableModal() {
-    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("ant-modal-header");
-    for (let i = 0; i < headersModal.length; i++) {
-      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-      headersModal[i].onmousedown = dragMouseDown;
-
-      function dragMouseDown(e) {
-        e = e || window.event;
-        e.preventDefault();
-        // get the mouse cursor position at startup:
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        document.onmouseup = closeDragElement;
-        // call a function whenever the cursor moves:
-        document.onmousemove = elementDrag;
-      }
-    
-      function elementDrag(e) {
-        e = e || window.event;
-        e.preventDefault();
-        // calculate the new cursor position:
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        // set the element's new position:
-        headersModal[i].parentElement.style.top = (headersModal[i].parentElement.offsetTop - pos2) + "px";
-        headersModal[i].parentElement.style.left = (headersModal[i].parentElement.offsetLeft - pos1) + "px";
-      }
-    
-      function closeDragElement() {
-        // stop moving when mouse button is released:
-        document.onmouseup = null;
-        document.onmousemove = null;
-      }
-    }
-  }
-
   getParentTreeNode(node: TreeNode) : string {
 
     if (node.level == 1) {
@@ -300,5 +309,47 @@ export class GraphicalEditorComponentComponent implements OnInit {
       data: event.target
     });
   }
+  
+  showFormCreateInterfaceType() {
+    
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formCreateInterfaceTypeTitle,
+      nzContent: this.formCreateInterfaceTypeContent,
+      nzFooter: this.formCreateInterfaceTypeFooter,
+    });
+    this.modalRef.afterOpen.subscribe( () => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+
+  }
+
+  emitterInterfaceType(event : {name: string, data: any}) {
+    switch(event.name) {
+      case "showFormCreateInterfaceType":
+        this.emmiterCreateInterfaceTypeData = event.data;
+        this.showFormCreateInterfaceType();
+        break;
+    }
+  }
+
+  submitCreateInterfaceType(event : Event) {
+    event.preventDefault();
+    this.createInterfaceType();
+  }
+
+  createInterfaceType() {
+    this.modalRef.destroy();
+    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
+    let name = form.nameInterfaceType.value.trim();
+    this.emmiterCreateInterfaceTypeData.component.createInterfaceType(name, this.emmiterCreateInterfaceTypeData.pt);
+    this.updateTree();
+  }
+
+  
 
 }
