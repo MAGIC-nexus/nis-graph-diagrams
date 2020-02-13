@@ -217,7 +217,11 @@ export class ModelService {
                 p.hierarchyName = p.name;
             else
                 p.hierarchyName = parent.hierarchyName + "." + p.name;
-            n.push({id: p.id, name: p.name, children: this.getTreeModelViewProcessors(p.id)});
+            let children2 = this.getTreeModelViewInterfaceTypes(p.id);
+            if (children2.length > 0)
+                n.push({id: p.id, name: p.name, children: this.getTreeModelViewProcessors(p.id)});
+            else
+                n.push({id: p.id, name: p.name});
         }
         return n;
     }
@@ -227,7 +231,11 @@ export class ModelService {
         let n = [];
         for (let child of this.getEntityPartOfChildren(parentId)) {
             let it = this.allObjects.get(child);
-            n.push({id: it.id, name: it.name, children: this.getTreeModelViewInterfaceTypes(it.id)});
+            let children2 = this.getTreeModelViewInterfaceTypes(it.id);
+            if (children2.length > 0)
+                n.push({id: it.id, name: it.name, children: children2});
+            else
+                n.push({id: it.id, name: it.name});
         }
         return n;
     }
@@ -237,7 +245,7 @@ export class ModelService {
             {id: -3, name: "Diagrams", children: this.getTreeModelViewDiagrams() },
             {id: -2, name: "Processors", children: this.getTreeModelViewProcessors(-2n) },
             {id: -1, name: "Interface Types", children: this.getTreeModelViewInterfaceTypes(-1n) }
-        ]
+        ];
     }
 
     // Obtain a list of the diagrams (for the Tab control)
@@ -528,6 +536,7 @@ export class ModelService {
     // ENTITIES (both Processors and InterfaceTypes)
 
     createEntity(entityType, name) {
+        let e_id: bigint;
         if (entityType == EntityTypes.Processor) {
             let p = new Processor();
             p.id = this.getNewId();
@@ -540,7 +549,7 @@ export class ModelService {
             p.geolocation = "";
             this.allObjects.set(p.id, p);
             this.processors.set(p.id, p);
-            return p.id;
+            e_id = p.id;
         } else if (entityType == EntityTypes.InterfaceType) {
             let it = new InterfaceType();
             it.id = this.getNewId();
@@ -552,8 +561,11 @@ export class ModelService {
             it.unit = "";
             this.allObjects.set(it.id, it);
             this.interfaceTypes.set(it.id, it);
-            return it.id;
+            e_id = it.id;
         }
+        let s = new Set<bigint>();
+        this.entitiesRelationships.set(e_id, s);
+        return e_id;
     }
 
     /* Behavior when deleting
@@ -833,6 +845,7 @@ export class ModelService {
             let keys = parentId == -1n ? this.interfaceTypes.keys() : this.processors.keys();
             for (let entityId of keys) {
                 let addAsRoot: boolean = true;
+                console.log(this.entitiesRelationships.get(entityId));
                 for (let relId of this.entitiesRelationships.get(entityId)) {
                     let r = this.allObjects.get(relId);
                     if (r instanceof EntityRelationshipPartOf && r.destinationId == relId) {

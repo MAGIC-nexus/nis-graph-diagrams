@@ -428,6 +428,7 @@ declare class mxGraph {
   getOpposites(edges, terminal, sources, targets);
   getEdgesBetween(source, target, directed);
   getPointForEvent(evt, addOffset);
+  getPointForEvent(evt);
   getCells(x, y, width, height, parent, result);
   getCellsBeyond(x0, y0, parent, rightHalfpane, bottomHalfpane);
   findTreeRoots(parent, isolate, invert);

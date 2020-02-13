@@ -6,15 +6,12 @@ export class DiagramComponentHelper {
 
     static setModelService(modelService: ModelService) {
         DiagramComponentHelper.modelService =  modelService;
-        console.log(DiagramComponentHelper.modelService);
     }
 
     static loadDiagram(diagramId: bigint, graph : mxGraph) {
          let diagramXml = this.modelService.getDiagramGraph(diagramId);
         if (diagramXml == "") {
-          let encoder = new mxCodec(null);
-          let xml =  mxUtils.getXml(encoder.encode(graph.getModel()));
-          this.modelService.setDiagramGraph(diagramId, xml);
+          this.updateGraphInModel(diagramId,graph);
         } else {
           graph.getModel().beginUpdate();
           try {
@@ -28,5 +25,11 @@ export class DiagramComponentHelper {
           }
         }
         
+    }
+
+    static updateGraphInModel(diagramId: bigint, graph: mxGraph) {
+      let encoder = new mxCodec(null);
+      let xml = mxUtils.getXml(encoder.encode(graph.getModel()));
+      this.modelService.setDiagramGraph(diagramId,xml);
     }
 }
