@@ -10,7 +10,7 @@ import { DiagramComponentHelper } from '../diagram-component-helper';
 })
 export class InterfacetypesDiagramComponentComponent implements AfterViewInit, OnInit {
 
-  @ViewChild('graphContainer1', { static: true }) graphContainer1: ElementRef;
+  @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
   @ViewChild('interfaceTypeToolbar', { static: true }) interfaceTypeToolbar: ElementRef;
   private graph: mxGraph;
   @Input() diagramId: bigint;
@@ -25,13 +25,12 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   ngAfterViewInit() {
-    this.graph = new mxGraph(this.graphContainer1.nativeElement);
+    this.graph = new mxGraph(this.graphContainer.nativeElement);
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
     this.makeDraggableToolbar();
   }
 
   private makeDraggableToolbar() {
-    let modelService = this.modelService;
     let emitterToParent = this.emitterToParent;
     let component = this;
 

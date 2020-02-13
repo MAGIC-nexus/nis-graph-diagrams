@@ -94,6 +94,7 @@ declare class mxEvent {
   static ADD: any;
   static REMOVE: any;
   static readonly DOUBLE_CLICK : string;
+  static readonly CHANGE : string;
 }
 
 declare class mxMouseEvent {

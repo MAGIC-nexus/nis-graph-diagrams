@@ -1,5 +1,7 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
+import { DiagramComponentHelper } from '../diagram-component-helper';
+import { ModelService, EntityTypes } from 'src/app/model-manager';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -9,10 +11,16 @@ import { Subject } from 'rxjs';
 })
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
 
-  @ViewChild('graphContainer2', { static: true }) graphContainer2: ElementRef;
+  @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
+  @ViewChild('processorToolbar', { static: true }) processorToolbar: ElementRef;
   @Input() proccesorSubject: Subject<{name: string, data: any}>;
+  @Input() diagramId: bigint;
+  @Input() modelService: ModelService;
+  
+  @Output() emitterToParent = new EventEmitter<{ name: string, data: any }>();
+  
 
-  private graph2 : mxGraph;
+  private graph : mxGraph;
 
   constructor() { }
 
@@ -21,34 +29,116 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   ngAfterViewInit() {
-    this.graph2 = new mxGraph(this.graphContainer2.nativeElement);
-    
-    try {
-      const parent = this.graph2.getDefaultParent();
-      this.graph2.getModel().beginUpdate();
-
-      let doc = mxUtils.createXmlDocument();
-      let proccesor = doc.createElement("processor");
-      proccesor.setAttribute("id", 2);
-
-      const vertex1 = this.graph2.insertVertex(parent, '1', proccesor, 0, 0, 200, 80);
-      const vertex2 = this.graph2.insertVertex(parent, '2', 'Vertex 4', 0, 0, 200, 80);
-
-      this.graph2.insertEdge(parent, '', '', vertex1, vertex2);
-    } finally {
-      this.graph2.getModel().endUpdate();
-      new mxHierarchicalLayout(this.graph2).execute(this.graph2.getDefaultParent());
-    }
-
+    this.graph = new mxGraph(this.graphContainer.nativeElement);
+    DiagramComponentHelper.loadDiagram(this.diagramId,this.graph);
+    this.makeDraggableToolbar();
     this.overrideMethodsGraphPorts();
     this.eventsProcessorSubject();
     this.graphMouseEvent();
+  }
 
+  private makeDraggableToolbar() {
+    let emitterToParent = this.emitterToParent;
+    let component = this;
+
+    var functionInterfaceType = function (graph: mxGraph, evt, cell) {
+
+      let pt: mxPoint = graph.getPointForEvent(evt);
+      emitterToParent.emit({
+        name: "showFormCreateProcessor",
+        data: {
+          pt: pt,
+          component: component,
+        }
+      });
+    }
+    let dragElement = document.createElement("img");
+    dragElement.setAttribute("src", "assets/toolbar/rectangle.gif");
+    dragElement.style.height = "20px";
+    dragElement.style.width = "20px";
+    mxUtils.makeDraggable(this.processorToolbar.nativeElement, this.graph, functionInterfaceType, dragElement);
+  }
+
+  createProcessor(name: string, pt: mxPoint) {
+    this.graph.getModel().beginUpdate();
+    let id = this.modelService.createEntity(EntityTypes.Processor, name);
+    let doc = mxUtils.createXmlDocument();
+    let interfaceTypeDoc = doc.createElement('processor');
+    interfaceTypeDoc.setAttribute('name', name);
+    this.graph.insertVertex(this.graph.getDefaultParent(), id.toString(), interfaceTypeDoc, pt.x, pt.y,
+      100, 80);
+    this.graph.getModel().endUpdate();
+    this.modelService.addEntityToDiagram(this.diagramId, id);
+    this.modelService.updateEntityAppearanceInDiagram(this.diagramId,id,100,80,pt.x,pt.y);
+    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+  }
+
+  private eventsProcessorSubject() {
+
+    this.proccesorSubject.subscribe(event => {
+        switch (event.name) {
+        case "mouseOverTree":
+          this.portDraggable(event.data);
+          break;
+      }
+    });
+  }
+
+  private portDraggable(element : HTMLElement) {
+    if (element.getAttribute("data-node-parent") == "InterfaceTypes") {
+      let clone = element.cloneNode(true);
+      element.parentNode.replaceChild(clone, element);
+
+      var funct = function (graph, evt, cell) {
+        
+        let pt: mxPoint = graph.getPointForEvent(evt);
+        let cellTarget = graph.getCellAt(pt.x, pt.y);
+        if (cellTarget != null && cellTarget.value.nodeName == "processor") {
+          graph.stopEditing(false);
+
+          graph.getModel().beginUpdate();
+
+          let doc = mxUtils.createXmlDocument();
+          let port = doc.createElement('port');
+          port.setAttribute('name', 'in');
+          port.setAttribute('id', element.getAttribute("data-node-id"));
+
+          let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
+            'fontSize=9;shape=ellipse;resizable=0;');
+          v2.geometry.offset = new mxPoint(-15, -15);
+          v2.geometry.relative = true;
+          graph.getModel().endUpdate();
+        }
+
+      }
+      mxUtils.makeDraggable(clone, this.graph, funct);
+    }
+  }
+
+  private graphMouseEvent() {
+    this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
+  }
+
+  private doubleClickGraph(graph, evt) {
+    let cellTarget = evt.getProperty('cell');
+
+    if(cellTarget != undefined && cellTarget.value.nodeName == "processor") {
+      this.showFormProcessor(cellTarget.getAttribute("id"));
+    }
+  }
+
+  private showFormProcessor(cellId) {
+    this.emitterToParent.emit({
+      name: "showFormProcessor",
+      data: {
+        processorId: cellId
+      }
+    })
   }
 
   private overrideMethodsGraphPorts() {
 
-    let graph = this.graph2;
+    let graph = this.graph;
 
     // Removes folding icon for relative children
     graph.isCellFoldable = function (cell, collapse) {
@@ -162,70 +252,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     };
 
     new mxRubberband(graph);
-  }
-
-  private eventsProcessorSubject() {
-
-    this.proccesorSubject.subscribe(event => {
-
-      switch (event.name) {
-        case "mouseOverTree":
-          if (event.data.getAttribute("data-node-parent") == "InterfaceTypes") {
-            let clone = event.data.cloneNode(true);
-            event.data.parentNode.replaceChild(clone, event.data);
-
-            var funct = function (graph, evt, cell) {
-              
-              let pt: mxPoint = graph.getPointForEvent(evt);
-              let cellTarget = graph.getCellAt(pt.x, pt.y);
-              if (cellTarget != null && cellTarget.value.nodeName == "processor") {
-                graph.stopEditing(false);
-
-                graph.getModel().beginUpdate();
-
-                let doc = mxUtils.createXmlDocument();
-                let port = doc.createElement('port');
-                port.setAttribute('name', 'in');
-                port.setAttribute('id', event.data.getAttribute("data-node-id"));
-
-                let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-                  'fontSize=9;shape=ellipse;resizable=0;');
-                v2.geometry.offset = new mxPoint(-15, -15);
-                v2.geometry.relative = true;
-                graph.getModel().endUpdate();
-              }
-
-            }
-            mxUtils.makeDraggable(clone, this.graph2, funct);
-          }
-          break;
-      }
-    });
-  }
-
-  private graphMouseEvent() {
-    this.graph2.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
-  }
-
-  private doubleClickGraph(graph, evt) {
-    let cellTarget = evt.getProperty('cell');
-
-    if(cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-      this.showFormProcessor(cellTarget.getAttribute("id"));
-    }
-  }
-
-  private showFormProcessor(cellId) {
-    this.proccesorSubject.next({
-      name: "showFormProcessor",
-      data: { 
-        processorId: cellId,
-      },
-    })
-  }
-
-  eventFormAfterOpen() {
-
   }
 
 }
