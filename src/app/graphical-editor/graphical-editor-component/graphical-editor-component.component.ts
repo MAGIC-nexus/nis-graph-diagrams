@@ -98,7 +98,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     actionMapping: this.actionMappingTree,
   };
 
-  tabsDiagram : Map<BigInt,{id:BigInt, name: String, type: DiagramType}> = new Map();
+  tabsDiagram : Map<Number,{id:Number, name: String, type: DiagramType}> = new Map();
 
   constructor(private nzModalService : NzModalService) { }
 
@@ -121,7 +121,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.nodes = this.modelService.getTreeModelView();
   }
 
-  private addTabDiagram(diagramId : bigint) {
+  private addTabDiagram(diagramId : number) {
     let diagram : Diagram = this.modelService.readDiagram(diagramId);
     this.tabsDiagram.set(diagram.id, {id: diagram.id ,name: diagram.name, type:diagram.diagramType});
   }
@@ -164,7 +164,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  closeTabDiagram(diagramId : bigint) {
+  closeTabDiagram(diagramId : number) {
     this.tabsDiagram.delete(diagramId);
   }
 
@@ -259,7 +259,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
     let diagramId = this.modelService.createDiagram(nameDiagram, typeDiagram);
 
-    if (diagramId != -1n) {
+    if (diagramId != -1) {
       this.modalRef.destroy();
       switch (this.typeCreateDiagram) {
         case 'InterfaceTypes':
@@ -270,7 +270,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
           break;
       }
       this.updateTree();
-      this.addTabDiagram(<bigint>diagramId);
+      this.addTabDiagram(<number>diagramId);
     } else {
       this.nzModalService.error({
         nzTitle: 'Could not create diagram',

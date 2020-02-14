@@ -65,7 +65,7 @@ export enum EntityTypes {
 
 
 export class Entity {
-    id: bigint;
+    id: number;
     name: string;
     description: string;
 }
@@ -99,8 +99,8 @@ export class InterfaceValue {
 }
 
 export class Interface extends Entity {
-    processorId: bigint;
-    interfaceTypeId: bigint;
+    processorId: number;
+    interfaceTypeId: number;
     orientation: InterfaceOrientation;
     sphere: Sphere;
     roegenType: RoegenType;
@@ -120,8 +120,8 @@ export class GraphicalProperties {
 // RELATIONSHIPS (MODEL classes forming a hierarchy)
 
 export class Relationship extends Entity {
-    originId: bigint;
-    destinationId: bigint;
+    originId: number;
+    destinationId: number;
 }
 
 export class EntityRelationship extends Relationship {
@@ -139,8 +139,8 @@ export class EntityRelationshipPartOf extends EntityRelationship {
 
 // Only for InterfaceTypes
 export class InterfaceTypeScaleChange extends EntityRelationship {
-    originContextProcessorId: bigint; // Can be null
-    destinationContextProcessorId: bigint; // Can be null
+    originContextProcessorId: number; // Can be null
+    destinationContextProcessorId: number; // Can be null
     scale: string;
     originUnit: string;
     destinationUnit: string
@@ -159,7 +159,7 @@ export class ScaleRelationship extends InterfaceRelationship {
 
 export class Diagram extends Entity {
     diagramType: DiagramType;
-    entities: Map<bigint, GraphicalProperties>; // List of Processors or InterfaceTypes (not both) in the diagram, and their sizes and positions
+    entities: Map<number, GraphicalProperties>; // List of Processors or InterfaceTypes (not both) in the diagram, and their sizes and positions
     diagramXML: string;
 }
 
@@ -178,19 +178,19 @@ export class ModelService {
       type
      */
 
-    nextId: bigint;
-    diagrams: Map<bigint, Diagram> = new Map<bigint, Diagram>();
-    processors: Map<bigint, Processor> = new Map<bigint, Processor>();
-    interfaceTypes: Map<bigint, InterfaceType> = new Map<bigint, InterfaceType>();
-    interfaces: Map<bigint, Interface> = new Map<bigint, Interface>();
+    nextId: number;
+    diagrams: Map<number, Diagram> = new Map<number, Diagram>();
+    processors: Map<number, Processor> = new Map<number, Processor>();
+    interfaceTypes: Map<number, InterfaceType> = new Map<number, InterfaceType>();
+    interfaces: Map<number, Interface> = new Map<number, Interface>();
     // Set of Relationships (their IDs) of an Entity (Processor, InterfaceType, Interface)
     // IDs can be from: Processors, InterfaceTypes and Interfaces
     // Logically a Relationship will appear in two of the elements of the Map (we always will have an origin and a destination)
-    entitiesRelationships: Map<bigint, Set<bigint>> = new Map<bigint, Set<bigint>>();
-    allObjects: Map<bigint, any> = new Map<bigint, any>(); // Diagrams, processors, interface types, interfaces and relationships
+    entitiesRelationships: Map<number, Set<number>> = new Map<number, Set<number>>();
+    allObjects: Map<number, any> = new Map<number, any>(); // Diagrams, processors, interface types, interfaces and relationships
 
     constructor() {
-        this.nextId = 1n;
+        this.nextId = 1;
     }
 
     // Utility function to obtain unique IDs to be assigned to the different items (processors, interface types, interfaces and relationships)
@@ -208,7 +208,7 @@ export class ModelService {
         return tmp;
     }
 
-    getTreeModelViewProcessors(parentId: bigint) {
+    getTreeModelViewProcessors(parentId: number) {
         let n = [];
         let parent: Processor = parentId >= 0 ? this.allObjects.get(parentId) : null;
         for (let child of this.getEntityPartOfChildren(parentId)) {
@@ -226,7 +226,7 @@ export class ModelService {
         return n;
     }
 
-    getTreeModelViewInterfaceTypes(parentId: bigint) {
+    getTreeModelViewInterfaceTypes(parentId: number) {
         // Search for all InterfaceTypes whose parent is "parentId"
         let n = [];
         for (let child of this.getEntityPartOfChildren(parentId)) {
@@ -243,8 +243,8 @@ export class ModelService {
     getTreeModelView() {
         return [
             {id: -3, name: "Diagrams", children: this.getTreeModelViewDiagrams() },
-            {id: -2, name: "Processors", children: this.getTreeModelViewProcessors(-2n) },
-            {id: -1, name: "Interface Types", children: this.getTreeModelViewInterfaceTypes(-1n) }
+            {id: -2, name: "Processors", children: this.getTreeModelViewProcessors(-2) },
+            {id: -1, name: "Interface Types", children: this.getTreeModelViewInterfaceTypes(-1) }
         ];
     }
 
@@ -258,7 +258,7 @@ export class ModelService {
     }
 
     // Get a RO perspective of a diagram in a mxGraph compatible structure. Afterwards, the controller would invoke code in example "https://jgraph.github.io/mxgraph/javascript/examples/codec.html"
-    getDiagramGraph(diagramId: bigint) {
+    getDiagramGraph(diagramId: number) {
         let graph: string = "";
         let diagram = this.diagrams.get(diagramId);
         if (diagram) {
@@ -268,7 +268,7 @@ export class ModelService {
     }
 
     // Save diagram (normally, before closing). Before the call, the controller would invoke code in "https://jgraph.github.io/mxgraph/docs/js-api/files/io/mxCodec-js.html"
-    setDiagramGraph(diagramId: bigint, xml: string) {
+    setDiagramGraph(diagramId: number, xml: string) {
         let diagram = this.diagrams.get(diagramId);
         if (diagram) {
             diagram.diagramXML = xml;
@@ -289,7 +289,7 @@ export class ModelService {
         return json;
     }
 
-    getEntitiesInPreorder(parentId: bigint) {
+    getEntitiesInPreorder(parentId: number) {
         let lst = [];
         if (parentId >= 0)
             lst.push(parentId);
@@ -308,7 +308,7 @@ export class ModelService {
                  {value: "RoegenType"}, {value: "ParentInterfaceType"}, {value: "Level"}, {value: "Formula"},
                  {value: "Description"}, {value: "Unit"}, {value: "OppositeSubsystemType"}, {value: "Attributes"}]});
         // Each row
-        for (let itypeId of this.getEntitiesInPreorder(-2n)) {
+        for (let itypeId of this.getEntitiesInPreorder(-2)) {
             let it = this.interfaceTypes.get(itypeId);
             let parents = this.getEntityPartOfParents(itypeId);
             let parent = "";
@@ -352,7 +352,7 @@ export class ModelService {
                  {value: "SubsystemType"}, {value: "System"}, {value: "FunctionalOrStructural"}, {value: "Accounted"},
                  {value: "Level"}, {value: "Stock"}, {value: "Description"}, {value: "GeolocationRef"},
                  {value: "GeolocationCode"}, {value: "GeolocationLatLong"}, {value: "Attributes"}]});
-        for (let pId of this.getEntitiesInPreorder(-2n)) {
+        for (let pId of this.getEntitiesInPreorder(-2)) {
             let p: Processor = this.allObjects.get(pId);
             p.hierarchyName = p.name;
             let parents = this.getEntityPartOfParents(pId);
@@ -410,7 +410,7 @@ export class ModelService {
                  {value: "ChangeOfTypeScale"}, {value: "OriginCardinality"}, {value: "DestinationCardinality"},
                  {value: "Attributes"}]});
 
-        let alreadyProcessed = new Set<bigint>();
+        let alreadyProcessed = new Set<number>();
         for (let ifaceId of this.interfaces.keys()) {
             for (let relId of this.entitiesRelationships.get(ifaceId)) {
                 if (alreadyProcessed.has(relId))
@@ -458,7 +458,7 @@ export class ModelService {
             diagram.id = this.getNewId();
             diagram.name = diagramName;
             diagram.diagramType = diagramType;
-            diagram.entities = new Map<bigint, GraphicalProperties>(); // Empty diagram
+            diagram.entities = new Map<number, GraphicalProperties>(); // Empty diagram
             diagram.diagramXML = "";
             this.diagrams.set(diagram.id, diagram);
             this.allObjects.set(diagram.id, diagram);
@@ -469,7 +469,7 @@ export class ModelService {
         }
     }
 
-    deleteDiagram(diagramId: bigint) {
+    deleteDiagram(diagramId: number) {
         let deleted = false;
         let diagram = this.diagrams.get(diagramId);
         if (diagram) {
@@ -480,7 +480,7 @@ export class ModelService {
         return deleted;
     }
 
-    readDiagram(diagramId: bigint) {
+    readDiagram(diagramId: number) {
         let e = this.allObjects.get(diagramId);
         if (e) {
             return e;
@@ -489,7 +489,7 @@ export class ModelService {
         }
     }
 
-    addEntityToDiagram(diagramId: bigint, entityId: bigint) {
+    addEntityToDiagram(diagramId: number, entityId: number) {
         let diagram = this.diagrams.get(diagramId);
         if(diagram) {
             let p = new GraphicalProperties();
@@ -501,7 +501,7 @@ export class ModelService {
         }
     }
 
-    removeEntityFromDiagram(diagramId: bigint, entityId: bigint) {
+    removeEntityFromDiagram(diagramId: number, entityId: number) {
         let diagram = this.diagrams.get(diagramId);
         if(diagram) {
             diagram.entities.delete(entityId);
@@ -509,7 +509,7 @@ export class ModelService {
     }
 
     // Set the size and position of the box representing an entity in a diagram
-    updateEntityAppearanceInDiagram(diagramId: bigint, entityId: bigint,
+    updateEntityAppearanceInDiagram(diagramId: number, entityId: number,
                                     width: number, height: number, left: number, top: number) {
         let diagram = this.diagrams.get(diagramId);
         if(diagram) {
@@ -524,7 +524,7 @@ export class ModelService {
     }
 
     // Obtain the size and position of the box representing an entity in a diagram
-    readEntityAppearanceInDiagram(diagramId: bigint, entityId: bigint) {
+    readEntityAppearanceInDiagram(diagramId: number, entityId: number) {
         let diagram = this.diagrams.get(diagramId);
         if(diagram) {
             return diagram.entities.get(entityId);
@@ -536,7 +536,7 @@ export class ModelService {
     // ENTITIES (both Processors and InterfaceTypes)
 
     createEntity(entityType, name) {
-        let e_id: bigint;
+        let e_id: number;
         if (entityType == EntityTypes.Processor) {
             let p = new Processor();
             p.id = this.getNewId();
@@ -563,7 +563,7 @@ export class ModelService {
             this.interfaceTypes.set(it.id, it);
             e_id = it.id;
         }
-        let s = new Set<bigint>();
+        let s = new Set<number>();
         this.entitiesRelationships.set(e_id, s);
         return e_id;
     }
@@ -645,7 +645,7 @@ export class ModelService {
         }
     }
 
-    readEntity(entityId: bigint): Processor | InterfaceType {
+    readEntity(entityId: number): Processor | InterfaceType {
         let e = this.allObjects.get(entityId);
         if (e) {
             if (e instanceof Processor || e instanceof InterfaceType) {
@@ -737,7 +737,7 @@ export class ModelService {
         }
     }
 
-    readInterface(interfaceId: bigint) {
+    readInterface(interfaceId: number) {
         return this.allObjects.get(interfaceId);
     }
 
@@ -776,15 +776,15 @@ export class ModelService {
         r.destinationId = destinationId;
         r.originId = originId;
         r.name = "";
-        let s: Set<bigint> = this.entitiesRelationships.get(originId);
+        let s: Set<number> = this.entitiesRelationships.get(originId);
         if (!s) {
-            s = new Set<bigint>();
+            s = new Set<number>();
             this.entitiesRelationships.set(originId, s);
         }
         s.add(r.id);
         s = this.entitiesRelationships.get(destinationId);
         if (!s) {
-            s = new Set<bigint>();
+            s = new Set<number>();
             this.entitiesRelationships.set(destinationId, s);
         }
         s.add(r.id);
@@ -796,7 +796,7 @@ export class ModelService {
         let r: Relationship = this.allObjects.get(relationshipId);
         if (r) {
             // Delete from the origin
-            let rels: Set<bigint> = this.entitiesRelationships.get(r.originId);
+            let rels: Set<number> = this.entitiesRelationships.get(r.originId);
             rels.delete(relationshipId);
             // Delete from the destination
             rels = this.entitiesRelationships.get(r.destinationId);
@@ -833,16 +833,16 @@ export class ModelService {
         }
     }
 
-    readRelationship(relationshipId: bigint) {
+    readRelationship(relationshipId: number) {
         return this.allObjects.get(relationshipId);
     }
 
     // Valid to obtain children of Processors and InterfaceTypes
-    getEntityPartOfChildren(parentId: bigint) {
-        let children = new Array<bigint>();
-        if (parentId == -1n || parentId == -2n) { // -1n -> InterfaceTypes; -2n -> Processors
+    getEntityPartOfChildren(parentId: number) {
+        let children = new Array<number>();
+        if (parentId == -1 || parentId == -2) { // -1n -> InterfaceTypes; -2n -> Processors
             // All InterfaceTypes OR all Processors
-            let keys = parentId == -1n ? this.interfaceTypes.keys() : this.processors.keys();
+            let keys = parentId == -1 ? this.interfaceTypes.keys() : this.processors.keys();
             for (let entityId of keys) {
                 let addAsRoot: boolean = true;
                 console.log(this.entitiesRelationships.get(entityId));
@@ -869,8 +869,8 @@ export class ModelService {
         return children;
     }
 
-    getEntityPartOfParents(childId: bigint) {
-        let parents = new Array<bigint>();
+    getEntityPartOfParents(childId: number) {
+        let parents = new Array<number>();
         for (let relId of this.entitiesRelationships.get(childId)) { //
             let r = this.allObjects.get(relId);
             if (r instanceof EntityRelationshipPartOf) {

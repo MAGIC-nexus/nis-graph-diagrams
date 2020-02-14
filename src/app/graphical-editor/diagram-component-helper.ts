@@ -8,7 +8,7 @@ export class DiagramComponentHelper {
         DiagramComponentHelper.modelService =  modelService;
     }
 
-    static loadDiagram(diagramId: bigint, graph : mxGraph) {
+    static loadDiagram(diagramId: number, graph : mxGraph) {
          let diagramXml = this.modelService.getDiagramGraph(diagramId);
         if (diagramXml == "") {
           this.updateGraphInModel(diagramId,graph);
@@ -27,7 +27,7 @@ export class DiagramComponentHelper {
         
     }
 
-    static updateGraphInModel(diagramId: bigint, graph: mxGraph) {
+    static updateGraphInModel(diagramId: number, graph: mxGraph) {
       let encoder = new mxCodec(null);
       let xml = mxUtils.getXml(encoder.encode(graph.getModel()));
       this.modelService.setDiagramGraph(diagramId,xml);

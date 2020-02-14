@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import { ModelService, Diagram, EntityTypes } from 'src/app/model-manager';
+import { ModelService, Diagram, EntityTypes } from '../../model-manager';
 import { DiagramComponentHelper } from '../diagram-component-helper';
 
 @Component({
@@ -13,7 +13,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @ViewChild('graphContainer1', { static: true }) graphContainer1: ElementRef;
   @ViewChild('interfaceTypeToolbar', { static: true }) interfaceTypeToolbar: ElementRef;
   private graph: mxGraph;
-  @Input() diagramId: bigint;
+  @Input() diagramId: number;
   @Input() modelService: ModelService;
 
   @Output() emitterToParent = new EventEmitter<{ name: string, data: any }>();
