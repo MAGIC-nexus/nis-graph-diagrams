@@ -7,6 +7,7 @@ import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger } from '@angular/material';
 import { DiagramComponentHelper } from '../diagram-component-helper';
 import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
+import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -42,6 +43,12 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent:TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter:TemplateRef<any>;
   emmiterCreateInterfaceTypeData : {pt: mxPoint, component: InterfacetypesDiagramComponentComponent};
+
+  //Form Create Processor
+  @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle:TemplateRef<any>;
+  @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent:TemplateRef<any>;
+  @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter:TemplateRef<any>;
+  emmiterCreateProcessorData : {pt: mxPoint, component: ProcessorsDiagramComponentComponent};
 
   //ModelService
   modelService : ModelService;
@@ -182,27 +189,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
       this.closeTabDiagram(node.data.id);
       this.updateTree();
     }
-  }
-
-  showFormProcessor(id : string) {
-
-    if (this.proccesorIdForm != undefined && this.proccesorIdForm != id) {
-      this.proccesorIdForm = id;
-    }
-
-    this.modalRef = this.nzModalService.create({
-      nzTitle: this.formProcessorTitle,
-      nzContent: this.formProcessorContent,
-      nzFooter: this.formProcessorFooter,
-    });
-    this.modalRef.afterOpen.subscribe( () => {
-      this.draggableModal();
-      let titles = document.getElementsByClassName("title-modal");
-
-      for (let i = 0; i < titles.length; i++) {
-        titles[0].parentElement.parentElement.style.cursor = "move";
-      }
-    });
   }
 
   showFormCreateDiagram(typeDiagram : string) {
@@ -349,6 +335,68 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.emmiterCreateInterfaceTypeData.component.createInterfaceType(name, this.emmiterCreateInterfaceTypeData.pt);
     this.updateTree();
   }
+
+  emitterProcessor(event : {name: string, data: any}){
+    switch(event.name) {
+      case 'showFormProcessor':
+        console.log(event.data.processorId);
+        break;
+      case 'showFormCreateProcessor':
+        this.emmiterCreateProcessorData = event.data;
+        this.showFormCreateProcessor();
+        break;
+    }
+  }
+
+  showFormProcessor(id : string) {
+
+    this.proccesorIdForm = id;
+
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formProcessorTitle,
+      nzContent: this.formProcessorContent,
+      nzFooter: this.formProcessorFooter,
+    });
+    this.modalRef.afterOpen.subscribe( () => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  showFormCreateProcessor() {
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formCreateProcessorTitle,
+      nzContent: this.formCreateProcessorContent,
+      nzFooter: this.formCreateProcessorFooter,
+    });
+    this.modalRef.afterOpen.subscribe( () => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  submitCreateProcessor(event: Event) {
+    event.preventDefault();
+    this.createProcessor();
+  }
+
+  createProcessor() {
+    this.modalRef.destroy();
+    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
+    let name = form.nameInterfaceType.value.trim();
+    this.emmiterCreateProcessorData.component.createProcessor(name, this.emmiterCreateProcessorData.pt);
+    this.updateTree();
+  }
+
+  
 
   
 
