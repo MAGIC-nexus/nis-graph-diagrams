@@ -101,6 +101,7 @@
                 <mat-icon matListIcon>close</mat-icon>
               </button>
             </ng-template>
+
             <app-processors-diagram-component *ngIf="item.value.type == 0" [diagramId]="item.value.id"
             [proccesorSubject]="proccesorSubject" (emitterToParent)="emitterProcessor($event)"
             [modelService]="modelService">

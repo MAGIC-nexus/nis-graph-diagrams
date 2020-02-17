@@ -13,14 +13,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
   @ViewChild('processorToolbar', { static: true }) processorToolbar: ElementRef;
-  @Input() proccesorSubject: Subject<{name: string, data: any}>;
-  @Input() diagramId: bigint;
+  @Input() proccesorSubject: Subject<{ name: string, data: any }>;
+  @Input() diagramId: number;
   @Input() modelService: ModelService;
-  
-  @Output() emitterToParent = new EventEmitter<{ name: string, data: any }>();
-  
 
-  private graph : mxGraph;
+  @Output() emitterToParent = new EventEmitter<{ name: string, data: any }>();
+
+
+  private graph: mxGraph;
 
   constructor() { }
 
@@ -30,7 +30,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   ngAfterViewInit() {
     this.graph = new mxGraph(this.graphContainer.nativeElement);
-    DiagramComponentHelper.loadDiagram(this.diagramId,this.graph);
+    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
     this.makeDraggableToolbar();
     this.overrideMethodsGraphPorts();
     this.eventsProcessorSubject();
@@ -69,50 +69,45 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       100, 80);
     this.graph.getModel().endUpdate();
     this.modelService.addEntityToDiagram(this.diagramId, id);
-    this.modelService.updateEntityAppearanceInDiagram(this.diagramId,id,100,80,pt.x,pt.y);
+    this.modelService.updateEntityAppearanceInDiagram(this.diagramId, id, 100, 80, pt.x, pt.y);
     DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
   }
 
   private eventsProcessorSubject() {
 
     this.proccesorSubject.subscribe(event => {
-        switch (event.name) {
-        case "mouseOverTree":
+      switch (event.name) {
+        case "portDraggable":
           this.portDraggable(event.data);
           break;
       }
     });
   }
 
-  private portDraggable(element : HTMLElement) {
-    if (element.getAttribute("data-node-parent") == "InterfaceTypes") {
-      let clone = element.cloneNode(true);
-      element.parentNode.replaceChild(clone, element);
+  private portDraggable(element: HTMLElement) {
+    var funct = function (graph, evt, cell) {
 
-      var funct = function (graph, evt, cell) {
-        
-        let pt: mxPoint = graph.getPointForEvent(evt);
-        let cellTarget = graph.getCellAt(pt.x, pt.y);
-        if (cellTarget != null && cellTarget.value.nodeName == "processor") {
-          graph.stopEditing(false);
+      let pt: mxPoint = graph.getPointForEvent(evt);
+      let cellTarget = graph.getCellAt(pt.x, pt.y);
+      if (cellTarget != null && cellTarget.value.nodeName == "processor") {
+        graph.stopEditing(false);
 
-          graph.getModel().beginUpdate();
+        graph.getModel().beginUpdate();
 
-          let doc = mxUtils.createXmlDocument();
-          let port = doc.createElement('port');
-          port.setAttribute('name', 'in');
-          port.setAttribute('id', element.getAttribute("data-node-id"));
+        let doc = mxUtils.createXmlDocument();
+        let port = doc.createElement('port');
+        port.setAttribute('name', 'in');
+        port.setAttribute('id', element.getAttribute("data-node-id"));
 
-          let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-            'fontSize=9;shape=ellipse;resizable=0;');
-          v2.geometry.offset = new mxPoint(-15, -15);
-          v2.geometry.relative = true;
-          graph.getModel().endUpdate();
-        }
-
+        let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
+          'fontSize=9;shape=ellipse;resizable=0;');
+        v2.geometry.offset = new mxPoint(-15, -15);
+        v2.geometry.relative = true;
+        graph.getModel().endUpdate();
       }
-      mxUtils.makeDraggable(clone, this.graph, funct);
+
     }
+    mxUtils.makeDraggable(element, this.graph, funct);
   }
 
   private graphMouseEvent() {
@@ -122,7 +117,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private doubleClickGraph(graph, evt) {
     let cellTarget = evt.getProperty('cell');
 
-    if(cellTarget != undefined && cellTarget.value.nodeName == "processor") {
+    if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
       this.showFormProcessor(cellTarget.getAttribute("id"));
     }
   }

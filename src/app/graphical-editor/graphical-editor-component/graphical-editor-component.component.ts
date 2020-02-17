@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, TemplateRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2 } from '@angular/core';
 import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
@@ -17,56 +17,56 @@ import { ProcessorsDiagramComponentComponent } from '../processors-diagram-compo
 export class GraphicalEditorComponentComponent implements OnInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
-  proccesorSubject:Subject<{name: string, data: any}> = new Subject();
+  proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
   private readonly ID_DIAGRAMS = -3;
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
 
-  private modalRef : NzModalRef
+  private modalRef: NzModalRef
 
   //Form Processor
-  private proccesorIdForm : string;
-  @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle:TemplateRef<any>;
-  @ViewChild('formProcessorContent', { static: false }) formProcessorContent:TemplateRef<any>;
-  @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter:TemplateRef<any>;
+  private proccesorIdForm: string;
+  @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
+  @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
+  @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
   private numberCreateDiagramProcessor = 1;
-  private typeCreateDiagram : string;
-  @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle:TemplateRef<any>;
-  @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent:TemplateRef<any>;
-  @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter:TemplateRef<any>;
+  private typeCreateDiagram: string;
+  @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle: TemplateRef<any>;
+  @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent: TemplateRef<any>;
+  @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter: TemplateRef<any>;
 
   //Form Create InterfaceType
-  @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle:TemplateRef<any>;
-  @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent:TemplateRef<any>;
-  @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter:TemplateRef<any>;
-  emmiterCreateInterfaceTypeData : {pt: mxPoint, component: InterfacetypesDiagramComponentComponent};
+  @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle: TemplateRef<any>;
+  @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent: TemplateRef<any>;
+  @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter: TemplateRef<any>;
+  emmiterCreateInterfaceTypeData: { pt: mxPoint, component: InterfacetypesDiagramComponentComponent };
 
   //Form Create Processor
-  @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle:TemplateRef<any>;
-  @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent:TemplateRef<any>;
-  @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter:TemplateRef<any>;
-  emmiterCreateProcessorData : {pt: mxPoint, component: ProcessorsDiagramComponentComponent};
+  @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle: TemplateRef<any>;
+  @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent: TemplateRef<any>;
+  @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
+  emmiterCreateProcessorData: { pt: mxPoint, component: ProcessorsDiagramComponentComponent };
 
   //ModelService
-  modelService : ModelService;
+  modelService: ModelService;
 
   //Context Menu
-  @ViewChild(MatMenuTrigger, {static: false}) contextMenuDiagram: MatMenuTrigger;
+  @ViewChild(MatMenuTrigger, { static: false }) contextMenuDiagram: MatMenuTrigger;
   contextMenuDiagramPosition = { x: '0px', y: '0px' };
 
-  actionMappingTree : IActionMapping = {
+  actionMappingTree: IActionMapping = {
     mouse: {
 
       dblClick: (tree, node, $event) => {
-        if(node.level > 1) {
+        if (node.level > 1) {
           let parentNode = node;
           for (let i = node.level; i > 1; i--) {
             parentNode = parentNode.parent;
           }
-          switch(parentNode.data.id) {
+          switch (parentNode.data.id) {
             case this.ID_DIAGRAMS:
               this.addTabDiagram(node.data.id);
               break;
@@ -105,9 +105,10 @@ export class GraphicalEditorComponentComponent implements OnInit {
     actionMapping: this.actionMappingTree,
   };
 
-  tabsDiagram : Map<Number,{id:Number, name: String, type: DiagramType}> = new Map();
+  tabsDiagram: Map<Number, { id: Number, name: String, type: DiagramType }> = new Map();
 
-  constructor(private nzModalService : NzModalService) { }
+  constructor(private nzModalService: NzModalService,
+    private renderer: Renderer2) { }
 
   ngOnInit() {
     this.modelService = new ModelService();
@@ -116,8 +117,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
 
   private eventsProcessorSubject() {
-    this.proccesorSubject.subscribe( (event) => {
-      switch(event.name) {
+    this.proccesorSubject.subscribe((event) => {
+      switch (event.name) {
         case "showFormProcessor":
           this.showFormProcessor(event.data.processorId);
       }
@@ -128,13 +129,13 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.nodes = this.modelService.getTreeModelView();
   }
 
-  private addTabDiagram(diagramId : number) {
-    let diagram : Diagram = this.modelService.readDiagram(diagramId);
-    this.tabsDiagram.set(diagram.id, {id: diagram.id ,name: diagram.name, type:diagram.diagramType});
+  private addTabDiagram(diagramId: number) {
+    let diagram: Diagram = this.modelService.readDiagram(diagramId);
+    this.tabsDiagram.set(diagram.id, { id: diagram.id, name: diagram.name, type: diagram.diagramType });
   }
 
   private draggableModal() {
-    let headersModal = <HTMLCollectionOf<HTMLDivElement>> document.getElementsByClassName("ant-modal-header");
+    let headersModal = <HTMLCollectionOf<HTMLDivElement>>document.getElementsByClassName("ant-modal-header");
     for (let i = 0; i < headersModal.length; i++) {
       var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
       headersModal[i].onmousedown = dragMouseDown;
@@ -149,7 +150,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
         // call a function whenever the cursor moves:
         document.onmousemove = elementDrag;
       }
-    
+
       function elementDrag(e) {
         e = e || window.event;
         e.preventDefault();
@@ -162,7 +163,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
         headersModal[i].parentElement.style.top = (headersModal[i].parentElement.offsetTop - pos2) + "px";
         headersModal[i].parentElement.style.left = (headersModal[i].parentElement.offsetLeft - pos1) + "px";
       }
-    
+
       function closeDragElement() {
         // stop moving when mouse button is released:
         document.onmouseup = null;
@@ -171,11 +172,11 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  closeTabDiagram(diagramId : number) {
+  closeTabDiagram(diagramId: number) {
     this.tabsDiagram.delete(diagramId);
   }
 
-  onContextMenuDiagram(event : MouseEvent, node) {
+  onContextMenuDiagram(event: MouseEvent, node) {
     event.preventDefault();
     this.contextMenuDiagramPosition.x = event.clientX + 'px';
     this.contextMenuDiagramPosition.y = event.clientY + 'px';
@@ -184,14 +185,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.contextMenuDiagram.openMenu();
   }
 
-  onContextMenuDiagramDelete(node : TreeNode) {
-    if( this.modelService.deleteDiagram(node.data.id) ) {
+  onContextMenuDiagramDelete(node: TreeNode) {
+    if (this.modelService.deleteDiagram(node.data.id)) {
       this.closeTabDiagram(node.data.id);
       this.updateTree();
     }
   }
 
-  showFormCreateDiagram(typeDiagram : string) {
+  showFormCreateDiagram(typeDiagram: string) {
     this.typeCreateDiagram = typeDiagram;
 
     this.modalRef = this.nzModalService.create({
@@ -199,7 +200,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       nzContent: this.formCreateDiagramContent,
       nzFooter: this.formCreateDiagramFooter,
     });
-    this.modalRef.afterOpen.subscribe( () => {
+    this.modalRef.afterOpen.subscribe(() => {
       let form = this.modalRef.getElement().getElementsByTagName("form")[0];
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
@@ -223,7 +224,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.modalRef.destroy();
   }
 
-  submitCreateDiagram(event : Event) {
+  submitCreateDiagram(event: Event) {
     event.preventDefault();
     this.createDiagram();
   }
@@ -231,8 +232,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
   createDiagram() {
 
     let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let nameDiagram : string = form.nameDiagram.value.trim();
-    let typeDiagram : DiagramType;
+    let nameDiagram: string = form.nameDiagram.value.trim();
+    let typeDiagram: DiagramType;
 
     switch (this.typeCreateDiagram) {
       case 'InterfaceTypes':
@@ -265,18 +266,18 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  getParentTreeNode(node: TreeNode) : string {
+  getParentTreeNode(node: TreeNode): string {
 
     if (node.level == 1) {
       return "none";
     } else if (node.level > 1) {
-      
+
       let nodeParent = node;
-      for(let i = node.level; i > 1; i--) {
+      for (let i = node.level; i > 1; i--) {
         nodeParent = nodeParent.parent;
       }
 
-      switch(nodeParent.id) {
+      switch (nodeParent.id) {
         case this.ID_DIAGRAMS:
           return "Diagrams"
         case this.ID_PROCESSOR:
@@ -288,22 +289,33 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
     return "";
   }
-  
-  mouseOverTree(event : Event) {
-    this.proccesorSubject.next({
-      name:"mouseOverTree",
-      data: event.target
-    });
+
+  mouseOverTree(event: MouseEvent) {
+    let target = <HTMLElement>event.target;
+    if (target.getAttribute("data-node-parent") == "InterfaceTypes") {
+      let clone = target.cloneNode(true);
+      target.parentNode.replaceChild(clone, target);
+      this.renderer.listen(clone, "mouseout", this.mouseOutTree.bind(this));
+      this.proccesorSubject.next({
+        name: "portDraggable",
+        data: clone
+      });
+    }
   }
-  
+
+  mouseOutTree(event: MouseEvent) {
+    let target = event.target;
+    this.renderer.listen(target, "mouseover", this.mouseOverTree.bind(this));
+  }
+
   showFormCreateInterfaceType() {
-    
+
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateInterfaceTypeTitle,
       nzContent: this.formCreateInterfaceTypeContent,
       nzFooter: this.formCreateInterfaceTypeFooter,
     });
-    this.modalRef.afterOpen.subscribe( () => {
+    this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
 
@@ -314,8 +326,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   }
 
-  emitterInterfaceType(event : {name: string, data: any}) {
-    switch(event.name) {
+  emitterInterfaceType(event: { name: string, data: any }) {
+    switch (event.name) {
       case "showFormCreateInterfaceType":
         this.emmiterCreateInterfaceTypeData = event.data;
         this.showFormCreateInterfaceType();
@@ -323,7 +335,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  submitCreateInterfaceType(event : Event) {
+  submitCreateInterfaceType(event: Event) {
     event.preventDefault();
     this.createInterfaceType();
   }
@@ -336,8 +348,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.updateTree();
   }
 
-  emitterProcessor(event : {name: string, data: any}){
-    switch(event.name) {
+  emitterProcessor(event: { name: string, data: any }) {
+    switch (event.name) {
       case 'showFormProcessor':
         console.log(event.data.processorId);
         break;
@@ -348,7 +360,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     }
   }
 
-  showFormProcessor(id : string) {
+  showFormProcessor(id: string) {
 
     this.proccesorIdForm = id;
 
@@ -357,7 +369,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       nzContent: this.formProcessorContent,
       nzFooter: this.formProcessorFooter,
     });
-    this.modalRef.afterOpen.subscribe( () => {
+    this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
 
@@ -373,7 +385,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
       nzContent: this.formCreateProcessorContent,
       nzFooter: this.formCreateProcessorFooter,
     });
-    this.modalRef.afterOpen.subscribe( () => {
+    this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
 
@@ -396,8 +408,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.updateTree();
   }
 
-  
 
-  
 
 }
