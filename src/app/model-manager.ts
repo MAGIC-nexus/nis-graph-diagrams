@@ -845,7 +845,6 @@ export class ModelService {
             let keys = parentId == -1 ? this.interfaceTypes.keys() : this.processors.keys();
             for (let entityId of keys) {
                 let addAsRoot: boolean = true;
-                console.log(this.entitiesRelationships.get(entityId));
                 for (let relId of this.entitiesRelationships.get(entityId)) {
                     let r = this.allObjects.get(relId);
                     if (r instanceof EntityRelationshipPartOf && r.destinationId == relId) {
