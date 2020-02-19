@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper } from '../diagram-component-helper';
-import { ModelService, EntityTypes } from 'src/app/model-manager';
+import { ModelService, EntityTypes } from '../../model-manager';
 
 @Component({
   selector: 'app-processors-diagram-component',
