@@ -8,7 +8,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import {GraphicalEditorModule} from "./graphical-editor/graphical-editor.module";
 import { AngularSplitModule } from 'angular-split'; // https://bertrandg.github.io/angular-split/#/
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';  // Angular Browser Animations
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {ModelService} from "./model-manager";  // Angular Browser Animations
 
 @NgModule({
   declarations: [
@@ -23,7 +24,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; 
     AppRoutingModule,
       MatTooltipModule
   ],
-  providers: [],
+  providers: [ModelService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

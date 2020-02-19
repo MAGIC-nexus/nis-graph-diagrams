@@ -50,9 +50,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
   emmiterCreateProcessorData: { pt: mxPoint, component: ProcessorsDiagramComponentComponent };
 
-  //ModelService
-  modelService: ModelService;
-
   //Context Menu
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuDiagram: MatMenuTrigger;
   contextMenuDiagramPosition = { x: '0px', y: '0px' };
@@ -107,7 +104,9 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   tabsDiagram: Map<Number, { id: Number, name: String, type: DiagramType }> = new Map();
 
-  constructor(private nzModalService: NzModalService,
+  constructor(
+    private modelService: ModelService,
+    private nzModalService: NzModalService,
     private renderer: Renderer2) { }
 
   ngOnInit() {

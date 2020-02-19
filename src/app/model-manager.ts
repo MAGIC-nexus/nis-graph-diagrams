@@ -7,6 +7,8 @@
 // ---------------------------------------------------------------------------------------------------------------------
 // ENUMS
 
+import {Injectable} from "@angular/core";
+
 export enum ProcessorAccounted {
     Yes,
     No
@@ -166,6 +168,7 @@ export class Diagram extends Entity {
 // ---------------------------------------------------------------------------------------------------------------------
 // MODEL service class, management of the model
 
+@Injectable()
 export class ModelService {
     // ----------------------------------------------------------------------------------
 
