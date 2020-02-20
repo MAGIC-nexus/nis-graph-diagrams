@@ -177,20 +177,24 @@ function getTextWidth(text, font) {
     return metrics.width;
 }
 
-function convertTabSeparatedSheetToJSON(worksheetname: string, input: string, firstRowBold: boolean, firstColBold: boolean): object
+function convertTabSeparatedSheetToJSON(worksheetname: string, input: string, firstRowBold: boolean, firstColBold: boolean, embedded: boolean=true): object
 {
   let out: object[] = [];
   let row: number = 0;
   let col: number;
 
   // Obtain FONT
-  let spreadsheet = $("[name='spreadsheet_editor']").data("kendoSpreadsheet");
-  let sheet = spreadsheet.activeSheet();
-  let range = sheet.range("A1:A1");
   let f;
-  range.forEachCell(function (row, column, value) {
-    f = "bold " + value.fontSize + " " + value.fontFamily;
-  });
+  if (embedded) {
+    let spreadsheet = $("[name='spreadsheet_editor']").data("kendoSpreadsheet");
+    let sheet = spreadsheet.activeSheet();
+    let range = sheet.range("A1:A1");
+    range.forEachCell(function (row, column, value) {
+      f = "bold " + value.fontSize + " " + value.fontFamily;
+    });
+  } else {
+    f = "bold 12 Sans Serif";
+  }
 
   // Split line by line, composing each row as a list of dictionaries (a dictionary per cell)
   let maxNCols = 0;
@@ -343,8 +347,8 @@ export class ModelService {
 
     // Do the export from graphical diagrams to NIS spreadsheet
     exportGraphicalModelToSpreadsheet() {
+      let tmp = this.exportToNISFormat();
       if (this.embeddedInNISFrontend) {
-        let tmp = this.exportToNISFormat();
         let spreadsheet = $("[name='spreadsheet_editor']").data("kendoSpreadsheet");
         spreadsheet.fromJSON(tmp);
         for (let i = 0; i < spreadsheet.sheets().length; i++) {
@@ -353,6 +357,8 @@ export class ModelService {
         }
         spreadsheet.activeSheet(spreadsheet.sheets()[1]);
         spreadsheet.activeSheet(spreadsheet.sheets()[0]);
+      } else {
+        console.log(tmp);
       }
     }
 
@@ -384,7 +390,7 @@ export class ModelService {
     exportInterfaceTypes() {
       // Header
       // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
-      let s = new Array("InterfaceTypeHierarchy", "InterfaceType", "Sphere", "RoegenType", "ParentInterfaceType", "Level", "Formula", "Description", "Unit", "OppositeSubsystemType", "Attributes").join("\t");
+      let s = new Array("InterfaceTypeHierarchy", "InterfaceType", "Sphere", "RoegenType", "ParentInterfaceType", "Level", "Formula", "Description", "Unit", "OppositeSubsystemType", "Attributes", "@gd_id").join("\t");
       // Each row
       let tmp = this.getEntitiesInPreorder(-1);
       for (let itypeId of this.getEntitiesInPreorder(-1)) {
@@ -393,9 +399,9 @@ export class ModelService {
         let parent = "";
         if (parents.length > 0)
           parent = this.allObjects.get(parents[0]).name;
-        s += "\n" + new Array(it.hierarchy, it.name, Sphere[it.sphere], RoegenType[it.roegenType], parent, it.level, "", it.description, it.unit, ProcessorSubsystemType[it.oppositeSubsystemType], "").join("\t");
+        s += "\n" + new Array(it.hierarchy, it.name, Sphere[it.sphere], RoegenType[it.roegenType], parent, it.level, "", it.description, it.unit, ProcessorSubsystemType[it.oppositeSubsystemType], "", itypeId.toString()).join("\t");
       }
-      return convertTabSeparatedSheetToJSON("IntefaceTypes", s, true, false);
+      return convertTabSeparatedSheetToJSON("IntefaceTypes", s, true, false, this.embeddedInNISFrontend);
     }
 
     exportScaleChangeMap() {
@@ -413,14 +419,14 @@ export class ModelService {
           }
         }
       }
-      return convertTabSeparatedSheetToJSON("ScaleChangeMap", s, true, false);
+      return convertTabSeparatedSheetToJSON("ScaleChangeMap", s, true, false, this.embeddedInNISFrontend);
     }
 
     exportBareProcessors() {
         let bps = [];
         // Header
         // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
-        let s = new Array("ProcessorGroup", "Processor", "ParentProcessor", "SubsystemType", "System", "FunctionalOrStructural", "Accounted", "Level", "Stock", "Description", "GeolocationRef", "GeolocationCode", "GeolocationLatLong", "Attributes").join("\t");
+        let s = new Array("ProcessorGroup", "Processor", "ParentProcessor", "SubsystemType", "System", "FunctionalOrStructural", "Accounted", "Level", "Stock", "Description", "GeolocationRef", "GeolocationCode", "GeolocationLatLong", "Attributes", "@gd_id").join("\t");
         for (let pId of this.getEntitiesInPreorder(-2)) {
             let p: Processor = this.allObjects.get(pId);
             p.hierarchyName = p.name;
@@ -428,33 +434,39 @@ export class ModelService {
             let parent = "";
             if (parents.length > 0)
                 parent = this.allObjects.get(parents[0]).hierarchyName;
-            s += "\n" + new Array("", p.hierarchyName, parent, ProcessorSubsystemType[p.subsystemType], p.system, ProcessorFunctionalOrStructural[p.functionalOrStructural], ProcessorAccounted[p.accounted], p.level, "", p.description, "", "", p.geolocation, "").join("\t");
+            s += "\n" + new Array("", p.hierarchyName, parent, ProcessorSubsystemType[p.subsystemType], p.system, ProcessorFunctionalOrStructural[p.functionalOrStructural], ProcessorAccounted[p.accounted], p.level, "", p.description, "", "", p.geolocation, "", pId.toString()).join("\t");
         }
-      return convertTabSeparatedSheetToJSON("BareProcessors", s, true, false);
+      return convertTabSeparatedSheetToJSON("BareProcessors", s, true, false, this.embeddedInNISFrontend);
     }
 
     exportInterfaces() {
-        // Header
+      // Header
       let s = new Array("Processor", "InterfaceType", "Interface", "Sphere", "RoegenType", "Orientation",
-                        "OppositeSubsystemType", "GeolocationRef", "GeolocationCode", "InterfaceAttributes", "Value",
-                        "Unit", "RelativeTo", "Uncertainty", "Assessment", "PedigreeMatrix", "Pedigree", "Time",
-                        "Source", "NumberAttributes", "Comments").join("\t");
-        for (let ifaceId of this.interfaces.keys()) {
-            let iface: Interface = this.allObjects.get(ifaceId);
-            let firstValue = true;
-            let p: Processor = this.allObjects.get(iface.processorId);
-            let it: Processor = this.allObjects.get(iface.interfaceTypeId);
-            for (let val of iface.values) {
-                if (firstValue)
-                  s += "\n" + new Array(p.name, it.name, iface.name, Sphere[iface.sphere], RoegenType[iface.roegenType],
-                    InterfaceOrientation[iface.orientation], ProcessorSubsystemType[iface.oppositeSubsystemType], "", "", "",
-                    val.value, val.unit, val.relativeTo, "", "", "", "", val.time, val.source, "", "").join("\t");
-                else
-                  s += "\n" + new Array(p.name, it.name, iface.name, "", "", "", "", "", "", "", val.value, val.unit, val.relativeTo, "", "", "", "", val.time, val.source, "", "").join("\t");
-                firstValue = false;
-            }
+        "OppositeSubsystemType", "GeolocationRef", "GeolocationCode", "InterfaceAttributes", "Value",
+        "Unit", "RelativeTo", "Uncertainty", "Assessment", "PedigreeMatrix", "Pedigree", "Time",
+        "Source", "NumberAttributes", "Comments").join("\t");
+      for (let ifaceId of this.interfaces.keys()) {
+        let iface: Interface = this.allObjects.get(ifaceId);
+        let firstValue = true;
+        let p: Processor = this.allObjects.get(iface.processorId);
+        let it: Processor = this.allObjects.get(iface.interfaceTypeId);
+        if (iface.values.length == 0) {
+          s += "\n" + new Array(p.name, it.name, iface.name, Sphere[iface.sphere], RoegenType[iface.roegenType],
+            InterfaceOrientation[iface.orientation], ProcessorSubsystemType[iface.oppositeSubsystemType], "", "", "",
+            "", "", "", "", "", "", "", "", "", "", "").join("\t");
+        } else {
+          for (let val of iface.values) {
+            if (firstValue)
+              s += "\n" + new Array(p.name, it.name, iface.name, Sphere[iface.sphere], RoegenType[iface.roegenType],
+                InterfaceOrientation[iface.orientation], ProcessorSubsystemType[iface.oppositeSubsystemType], "", "", "",
+                val.value, val.unit, val.relativeTo, "", "", "", "", val.time, val.source, "", "").join("\t");
+            else
+              s += "\n" + new Array(p.name, it.name, iface.name, "", "", "", "", "", "", "", val.value, val.unit, val.relativeTo, "", "", "", "", val.time, val.source, "", "").join("\t");
+            firstValue = false;
+          }
         }
-      return convertTabSeparatedSheetToJSON("Interfaces", s, true, false);
+      }
+      return convertTabSeparatedSheetToJSON("Interfaces", s, true, false, this.embeddedInNISFrontend);
     }
 
     exportRelationships() {
@@ -462,6 +474,8 @@ export class ModelService {
         let s = new Array("OriginProcessors", "OriginInterface", "DestinationProcessors", "DestinationInterface", "BackInterface", "RelationType", "Weight", "ChangeOfTypeScale", "OriginCardinality", "DestinationCardinality", "Attributes").join("\t");
         let alreadyProcessed = new Set<number>();
         for (let ifaceId of this.interfaces.keys()) {
+            if (!this.entitiesRelationships.has(ifaceId))
+              continue;
             for (let relId of this.entitiesRelationships.get(ifaceId)) {
                 if (alreadyProcessed.has(relId))
                     continue;
@@ -479,7 +493,7 @@ export class ModelService {
                 }
             }
         }
-      return convertTabSeparatedSheetToJSON("Relationships", s, true, false);
+      return convertTabSeparatedSheetToJSON("Relationships", s, true, false, this.embeddedInNISFrontend);
     }
 
     // Import JSON encoding a list of Pandas DataFrames coming from a NIS worksheet
@@ -592,6 +606,7 @@ export class ModelService {
             p.subsystemType = ProcessorSubsystemType.Local;
             p.system = "";
             p.geolocation = "";
+            p.interfaces = new Array<Interface>();
             this.allObjects.set(p.id, p);
             this.processors.set(p.id, p);
             e_id = p.id;

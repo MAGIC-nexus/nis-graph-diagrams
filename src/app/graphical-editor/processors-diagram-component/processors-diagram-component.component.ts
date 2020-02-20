@@ -85,8 +85,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private portDraggable(element: HTMLElement) {
+    let processorsDiagramInstance = this;
     var funct = function (graph, evt, cell) {
-
       let pt: mxPoint = graph.getPointForEvent(evt);
       let cellTarget = graph.getCellAt(pt.x, pt.y);
       if (cellTarget != null && cellTarget.value.nodeName == "processor") {
@@ -104,6 +104,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         v2.geometry.offset = new mxPoint(-15, -15);
         v2.geometry.relative = true;
         graph.getModel().endUpdate();
+        // Add Interface to the model
+        processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id), Number(port.id));
       }
 
     }
