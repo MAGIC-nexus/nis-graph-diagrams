@@ -82,12 +82,12 @@
           &nbsp;&nbsp;
           <button mat-flat-button (click)="showFormCreateDiagram('Processors')"
             matTooltip="New Processors diagram">Processors</button>
-          <button mat-icon-button matTooltip="Generate into spreadsheet (overwrite workbook)">
+          <button mat-icon-button (click)="modelService.exportGraphicalModelToSpreadsheet()" matTooltip="Generate into spreadsheet (overwrite workbook)"  >
             <mat-icon matListIcon>arrow_forward</mat-icon>
           </button>
-          <button mat-icon-button matTooltip="Read from spreadsheet (overwrite diagrams)">
-            <mat-icon matListIcon>arrow_back</mat-icon>
-          </button>
+<!--          <button mat-icon-button matTooltip="Read from spreadsheet (overwrite diagrams)" >-->
+<!--            <mat-icon matListIcon>arrow_back</mat-icon>-->
+<!--          </button>-->
         </mat-toolbar-row>
       </mat-toolbar>
       <div fxFlex style="border: 2px solid red;">

@@ -3,6 +3,7 @@
 // MODEL classes, enums and MODEL service management class
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
+import * as $ from "jquery";
 
 // ---------------------------------------------------------------------------------------------------------------------
 // ENUMS
@@ -165,6 +166,65 @@ export class Diagram extends Entity {
     diagramXML: string;
 }
 
+// Utility function, convert from tab separated string to JSON for Spreadsheet
+let getTextWidthCanvas;
+function getTextWidth(text, font) {
+    // re-use canvas object for better performance
+    let canvas = getTextWidthCanvas || (getTextWidthCanvas = document.createElement("canvas"));
+    let context = canvas.getContext("2d");
+    context.font = font;
+    let metrics = context.measureText(text);
+    return metrics.width;
+}
+
+function convertTabSeparatedSheetToJSON(worksheetname: string, input: string, firstRowBold: boolean, firstColBold: boolean): object
+{
+  let out: object[] = [];
+  let row: number = 0;
+  let col: number;
+
+  // Obtain FONT
+  let spreadsheet = $("[name='spreadsheet_editor']").data("kendoSpreadsheet");
+  let sheet = spreadsheet.activeSheet();
+  let range = sheet.range("A1:A1");
+  let f;
+  range.forEachCell(function (row, column, value) {
+    f = "bold " + value.fontSize + " " + value.fontFamily;
+  });
+
+  // Split line by line, composing each row as a list of dictionaries (a dictionary per cell)
+  let maxNCols = 0;
+  let colWidths = [];
+  for (let line of input.split(/\r?\n/)) {
+    col = 0;
+    let cur = {index: row, cells: []};
+    // For each line, split the line (by Tab)
+    for (let cellValue of line.split("\t")) {
+      let cell = {value: cellValue};
+      // First line goes in bold, if activated
+      if (col == 0 && firstColBold)
+        cell["bold"] = true;
+      if (row == 0 && firstRowBold)
+        cell["bold"] = true;
+      // Column widths
+      if (row == 0)
+        colWidths.push({width: Math.ceil(getTextWidth(cellValue, f))+40, autoWidth: true});
+
+      cur.cells.push(cell);
+      col++;
+    }
+    col ++;
+    if (col > maxNCols)
+      maxNCols = col;
+    out.push(cur);
+    row++;
+  }
+
+  return {name: worksheetname, rows: out, columns: colWidths}; // Array(maxNCols).fill({autoWidth: true})
+}
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // MODEL service class, management of the model
 
@@ -191,6 +251,9 @@ export class ModelService {
     // Logically a Relationship will appear in two of the elements of the Map (we always will have an origin and a destination)
     entitiesRelationships: Map<number, Set<number>> = new Map<number, Set<number>>();
     allObjects: Map<number, any> = new Map<number, any>(); // Diagrams, processors, interface types, interfaces and relationships
+
+    // If true, the function "exportGraphicalModelToSpreadsheet" executes normally
+    embeddedInNISFrontend: boolean = false;
 
     constructor() {
         this.nextId = 1;
@@ -278,15 +341,30 @@ export class ModelService {
         }
     }
 
+    // Do the export from graphical diagrams to NIS spreadsheet
+    exportGraphicalModelToSpreadsheet() {
+      if (this.embeddedInNISFrontend) {
+        let tmp = this.exportToNISFormat();
+        let spreadsheet = $("[name='spreadsheet_editor']").data("kendoSpreadsheet");
+        spreadsheet.fromJSON(tmp);
+        for (let i = 0; i < spreadsheet.sheets().length; i++) {
+          let ws = spreadsheet.sheets()[i];
+          ws.frozenRows(1);
+        }
+        spreadsheet.activeSheet(spreadsheet.sheets()[1]);
+        spreadsheet.activeSheet(spreadsheet.sheets()[0]);
+      }
+    }
+
     // Export to JSON encoding of a list of Pandas DataFrames which can be converted to worksheet
     exportToNISFormat() {
         let json = {
             sheets: [
-                {name: "InterfaceTypes", rows: this.exportInterfaceTypes()},
-                {name: "ScaleChangeMap", rows: this.exportScaleChangeMap()},
-                {name: "BareProcessors", rows: this.exportBareProcessors()},
-                {name: "Interfaces", rows: this.exportInterfaces()},
-                {name: "Relationships", rows: this.exportRelationships()}
+                this.exportInterfaceTypes(),
+                this.exportScaleChangeMap(),
+                this.exportBareProcessors(),
+                this.exportInterfaces(),
+                this.exportRelationships()
             ]
         };
         return json;
@@ -297,64 +375,52 @@ export class ModelService {
         if (parentId >= 0)
             lst.push(parentId);
         for (let child of this.getEntityPartOfChildren(parentId)) {
-            let p: Processor = this.allObjects.get(child);
+            let p = this.allObjects.get(child);
             lst.push(... this.getEntitiesInPreorder(p.id));
         }
         return lst;
     }
 
     exportInterfaceTypes() {
-        let its = [];
-        // Header
-        // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
-        its.push({cells: [{value: "InterfaceTypeHierarchy"}, {value: "InterfaceType"}, {value: "Sphere"},
-                 {value: "RoegenType"}, {value: "ParentInterfaceType"}, {value: "Level"}, {value: "Formula"},
-                 {value: "Description"}, {value: "Unit"}, {value: "OppositeSubsystemType"}, {value: "Attributes"}]});
-        // Each row
-        for (let itypeId of this.getEntitiesInPreorder(-2)) {
-            let it = this.interfaceTypes.get(itypeId);
-            let parents = this.getEntityPartOfParents(itypeId);
-            let parent = "";
-            if (parents.length > 0)
-                parent = this.allObjects.get(parents[0]).name;
-            its.push({cells: [{value: it.hierarchy}, {value: it.name}, {value: it.sphere},
-                     {value: it.roegenType}, {value: parent}, {value: it.level}, {value: ""},
-                     {value: it.description}, {value: it.unit}, {value: it.oppositeSubsystemType}, {value: ""}]})
-        }
-        return its;
+      // Header
+      // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
+      let s = new Array("InterfaceTypeHierarchy", "InterfaceType", "Sphere", "RoegenType", "ParentInterfaceType", "Level", "Formula", "Description", "Unit", "OppositeSubsystemType", "Attributes").join("\t");
+      // Each row
+      let tmp = this.getEntitiesInPreorder(-1);
+      for (let itypeId of this.getEntitiesInPreorder(-1)) {
+        let it = this.interfaceTypes.get(itypeId);
+        let parents = this.getEntityPartOfParents(itypeId);
+        let parent = "";
+        if (parents.length > 0)
+          parent = this.allObjects.get(parents[0]).name;
+        s += "\n" + new Array(it.hierarchy, it.name, Sphere[it.sphere], RoegenType[it.roegenType], parent, it.level, "", it.description, it.unit, ProcessorSubsystemType[it.oppositeSubsystemType], "").join("\t");
+      }
+      return convertTabSeparatedSheetToJSON("IntefaceTypes", s, true, false);
     }
 
     exportScaleChangeMap() {
-        let scm = [];
-        // Header
-        scm.push({cells: [{value: "OriginHierarchy"}, {value: "OriginInterfaceType"}, {value: "DestinationHierarchy"},
-                 {value: "DestinationInterfaceType"}, {value: "OriginContext"}, {value: "DestinationContext"},
-                 {value: "Scale"}, {value: "OriginUnit"}, {value: "DestinationUnit"}]});
-        for (let itypeId of this.interfaceTypes.keys()) {
-            let oIType: InterfaceType = this.allObjects.get(itypeId);
-            for (let relId of this.entitiesRelationships.get(itypeId)) {
-                let r = this.allObjects.get(relId);
-                if (r instanceof InterfaceTypeScaleChange && r.originId==itypeId) {
-                    let dIType: InterfaceType = this.allObjects.get(r.destinationId);
-                    let oCtx: string = r.originContextProcessorId ? this.allObjects.get(r.originContextProcessorId).name : "";
-                    let dCtx: string = r.destinationContextProcessorId ? this.allObjects.get(r.destinationContextProcessorId).name : "";
-                    scm.push({cells: [{value: oIType.hierarchy}, {value: oIType.name}, {value: dIType.hierarchy},
-                             {value: dIType.name}, {value: oCtx}, {value: dCtx}, {value: r.scale},
-                             {value: r.originUnit}, {value: r.destinationUnit}]});
-                }
-            }
+      // Header
+      let s = new Array("OriginHierarchy", "OriginInterfaceType", "DestinationHierarchy", "DestinationInterfaceType", "OriginContext", "DestinationContext", "Scale", "OriginUnit", "DestinationUnit").join("\t")
+      for (let itypeId of this.interfaceTypes.keys()) {
+        let oIType: InterfaceType = this.allObjects.get(itypeId);
+        for (let relId of this.entitiesRelationships.get(itypeId)) {
+          let r = this.allObjects.get(relId);
+          if (r instanceof InterfaceTypeScaleChange && r.originId == itypeId) {
+            let dIType: InterfaceType = this.allObjects.get(r.destinationId);
+            let oCtx: string = r.originContextProcessorId ? this.allObjects.get(r.originContextProcessorId).name : "";
+            let dCtx: string = r.destinationContextProcessorId ? this.allObjects.get(r.destinationContextProcessorId).name : "";
+            s += "\n" + new Array(oIType.hierarchy, oIType.name, dIType.hierarchy, dIType.name, oCtx, dCtx, r.scale, r.originUnit, r.destinationUnit).join("\t");
+          }
         }
-        return scm;
+      }
+      return convertTabSeparatedSheetToJSON("ScaleChangeMap", s, true, false);
     }
 
     exportBareProcessors() {
         let bps = [];
         // Header
         // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
-        bps.push({cells: [{value: "ProcessorGroup"}, {value: "Processor"}, {value: "ParentProcessor"},
-                 {value: "SubsystemType"}, {value: "System"}, {value: "FunctionalOrStructural"}, {value: "Accounted"},
-                 {value: "Level"}, {value: "Stock"}, {value: "Description"}, {value: "GeolocationRef"},
-                 {value: "GeolocationCode"}, {value: "GeolocationLatLong"}, {value: "Attributes"}]});
+        let s = new Array("ProcessorGroup", "Processor", "ParentProcessor", "SubsystemType", "System", "FunctionalOrStructural", "Accounted", "Level", "Stock", "Description", "GeolocationRef", "GeolocationCode", "GeolocationLatLong", "Attributes").join("\t");
         for (let pId of this.getEntitiesInPreorder(-2)) {
             let p: Processor = this.allObjects.get(pId);
             p.hierarchyName = p.name;
@@ -362,22 +428,17 @@ export class ModelService {
             let parent = "";
             if (parents.length > 0)
                 parent = this.allObjects.get(parents[0]).hierarchyName;
-            bps.push({cells: [{value: ""}, {value: p.hierarchyName}, {value: parent},
-                     {value: p.subsystemType}, {value: p.system}, {value: p.functionalOrStructural}, {value: p.accounted},
-                     {value: p.level}, {value: ""}, {value: p.description}, {value: ""},
-                     {value: ""}, {value: p.geolocation}, {value: ""}]});
+            s += "\n" + new Array("", p.hierarchyName, parent, ProcessorSubsystemType[p.subsystemType], p.system, ProcessorFunctionalOrStructural[p.functionalOrStructural], ProcessorAccounted[p.accounted], p.level, "", p.description, "", "", p.geolocation, "").join("\t");
         }
+      return convertTabSeparatedSheetToJSON("BareProcessors", s, true, false);
     }
 
     exportInterfaces() {
-        let ifs = [];
         // Header
-        ifs.push({cells: [{value: "Processor"}, {value: "InterfaceType"}, {value: "Interface"},
-                 {value: "Sphere"}, {value: "RoegenType"}, {value: "Orientation"}, {value: "OppositeSubsystemType"},
-                 {value: "GeolocationRef"}, {value: "GeolocationCode"}, {value: "InterfaceAttributes"}, {value: "Value"},
-                 {value: "Unit"}, {value: "RelativeTo"}, {value: "Uncertainty"},
-                 {value: "Assessment"}, {value: "PedigreeMatrix"}, {value: "Pedigree"},
-                 {value: "Time"}, {value: "Source"}, {value: "NumberAttributes"}, {value: "Comments"}]});
+      let s = new Array("Processor", "InterfaceType", "Interface", "Sphere", "RoegenType", "Orientation",
+                        "OppositeSubsystemType", "GeolocationRef", "GeolocationCode", "InterfaceAttributes", "Value",
+                        "Unit", "RelativeTo", "Uncertainty", "Assessment", "PedigreeMatrix", "Pedigree", "Time",
+                        "Source", "NumberAttributes", "Comments").join("\t");
         for (let ifaceId of this.interfaces.keys()) {
             let iface: Interface = this.allObjects.get(ifaceId);
             let firstValue = true;
@@ -385,34 +446,20 @@ export class ModelService {
             let it: Processor = this.allObjects.get(iface.interfaceTypeId);
             for (let val of iface.values) {
                 if (firstValue)
-                 ifs.push({cells: [{value: p.name}, {value: it.name}, {value: iface.name},
-                 {value: iface.sphere}, {value: iface.roegenType}, {value: iface.orientation}, {value: iface.oppositeSubsystemType},
-                 {value: ""}, {value: ""}, {value: ""}, {value: val.value},
-                 {value: val.unit}, {value: val.relativeTo}, {value: ""},
-                 {value: ""}, {value: ""}, {value: ""},
-                 {value: val.time}, {value: val.source}, {value: ""}, {value: ""}]});
+                  s += "\n" + new Array(p.name, it.name, iface.name, Sphere[iface.sphere], RoegenType[iface.roegenType],
+                    InterfaceOrientation[iface.orientation], ProcessorSubsystemType[iface.oppositeSubsystemType], "", "", "",
+                    val.value, val.unit, val.relativeTo, "", "", "", "", val.time, val.source, "", "").join("\t");
                 else
-                 ifs.push({cells: [{value: p.name}, {value: it.name}, {value: iface.name},
-                 {value: ""}, {value: ""}, {value: ""}, {value: ""},
-                 {value: ""}, {value: ""}, {value: ""}, {value: val.value},
-                 {value: val.unit}, {value: val.relativeTo}, {value: ""},
-                 {value: ""}, {value: ""}, {value: ""},
-                 {value: val.time}, {value: val.source}, {value: ""}, {value: ""}]});
-
+                  s += "\n" + new Array(p.name, it.name, iface.name, "", "", "", "", "", "", "", val.value, val.unit, val.relativeTo, "", "", "", "", val.time, val.source, "", "").join("\t");
                 firstValue = false;
             }
         }
-        return ifs;
+      return convertTabSeparatedSheetToJSON("Interfaces", s, true, false);
     }
 
     exportRelationships() {
-        let rls = [];
         // Header
-        rls.push({cells: [{value: "OriginProcessors"}, {value: "OriginInterface"}, {value: "DestinationProcessors"},
-                 {value: "DestinationInterface"}, {value: "BackInterface"}, {value: "RelationType"}, {value: "Weight"},
-                 {value: "ChangeOfTypeScale"}, {value: "OriginCardinality"}, {value: "DestinationCardinality"},
-                 {value: "Attributes"}]});
-
+        let s = new Array("OriginProcessors", "OriginInterface", "DestinationProcessors", "DestinationInterface", "BackInterface", "RelationType", "Weight", "ChangeOfTypeScale", "OriginCardinality", "DestinationCardinality", "Attributes").join("\t");
         let alreadyProcessed = new Set<number>();
         for (let ifaceId of this.interfaces.keys()) {
             for (let relId of this.entitiesRelationships.get(ifaceId)) {
@@ -426,18 +473,13 @@ export class ModelService {
                     let dIface: Interface = this.allObjects.get(r.destinationId);
                     let dProc: Processor = this.allObjects.get(dIface.processorId);
                     if (r instanceof ExchangeRelationship)
-                        rls.push({cells: [{value: oProc.hierarchyName}, {value: oIface.name}, {value: dProc.hierarchyName},
-                         {value: dIface.name}, {value: r.backInterface}, {value: ">"}, {value: r.weight},
-                         {value: ""}, {value: ""}, {value: ""}, {value: ""}]});
+                      s += "\n" + new Array(oProc.hierarchyName, oIface.name, dProc.hierarchyName, dIface.name, r.backInterface, ">", r.weight, "", "", "", "").join("\t");
                     else
-                        rls.push({cells: [{value: oProc.hierarchyName}, {value: oIface.name}, {value: dProc.hierarchyName},
-                         {value: dIface.name}, {value: ""}, {value: "scale"}, {value: r.scale},
-                         {value: ""}, {value: ""}, {value: ""}, {value: ""}]});
+                      s += "\n" + new Array(oProc.hierarchyName, oIface.name, dProc.hierarchyName, dIface.name, "", "Scale", r.scale, "", "", "", "").join("\t");
                 }
             }
         }
-
-        return rls;
+      return convertTabSeparatedSheetToJSON("Relationships", s, true, false);
     }
 
     // Import JSON encoding a list of Pandas DataFrames coming from a NIS worksheet
@@ -548,7 +590,7 @@ export class ModelService {
             p.accounted = ProcessorAccounted.Yes;
             p.functionalOrStructural = ProcessorFunctionalOrStructural.Functional;
             p.subsystemType = ProcessorSubsystemType.Local;
-            p.system = "default";
+            p.system = "";
             p.geolocation = "";
             this.allObjects.set(p.id, p);
             this.processors.set(p.id, p);
@@ -557,7 +599,7 @@ export class ModelService {
             let it = new InterfaceType();
             it.id = this.getNewId();
             it.name = name;
-            it.hierarchy = "default";
+            it.hierarchy = "";
             it.oppositeSubsystemType = ProcessorSubsystemType.Environment;
             it.roegenType = RoegenType.Flow;
             it.sphere = Sphere.Technosphere;

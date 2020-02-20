@@ -110,7 +110,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
     private renderer: Renderer2) { }
 
   ngOnInit() {
-    this.modelService = new ModelService();
     DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
   }
