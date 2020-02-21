@@ -105,7 +105,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   tabsDiagram: Map<Number, { id: Number, name: String, type: DiagramType }> = new Map();
 
   constructor(
-    private modelService: ModelService,
+    public modelService: ModelService,
     private nzModalService: NzModalService,
     private renderer: Renderer2) { }
 
