@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, RelationshipErrorDto } from '../diagram-component-helper';
+import { DiagramComponentHelper, StatusCreatingRelationship, ModalErrorDto } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
 
@@ -23,7 +23,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   @Output("createInterfaceType") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
-  @Output("relationshipError") relationshipErrorEmitter = new EventEmitter<RelationshipErrorDto>();
+  @Output("relationshipError") relationshipErrorEmitter = new EventEmitter<ModalErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
 
 
@@ -186,7 +186,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private checkRelationshipPartOf(cell): Boolean {
     let check = cell.value.nodeName.toLowerCase() == 'processor';
     if (!check) {
-      let relationshipErrorDto = new RelationshipErrorDto();
+      let relationshipErrorDto = new ModalErrorDto();
       relationshipErrorDto.title = "Error";
       relationshipErrorDto.body = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
       this.relationshipErrorEmitter.emit(relationshipErrorDto);

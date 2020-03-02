@@ -49,33 +49,33 @@ export class DiagramComponentHelper {
     svg.append(line);
   }
 
-  static moveLineCreateRelationship(line : SVGLineElement, mouseEvent: mxMouseEvent) {
+  static moveLineCreateRelationship(line: SVGLineElement, mouseEvent: mxMouseEvent) {
     let sourceX = parseInt(line.getAttribute("x1"));
-      let sourceY = parseInt(line.getAttribute("y1"));
-      let positionX;
-      let positionY;
+    let sourceY = parseInt(line.getAttribute("y1"));
+    let positionX;
+    let positionY;
 
-      if ((mouseEvent.getGraphX() - sourceX) > 0) {
-        positionX = parseInt(mouseEvent.getGraphX()) - 1;
-      } else {
-        positionX = parseInt(mouseEvent.getGraphX()) + 1;
-      }
+    if ((mouseEvent.getGraphX() - sourceX) > 0) {
+      positionX = parseInt(mouseEvent.getGraphX()) - 1;
+    } else {
+      positionX = parseInt(mouseEvent.getGraphX()) + 1;
+    }
 
-      if ((mouseEvent.getGraphY() - sourceY) > 0) {
-        positionY = parseInt(mouseEvent.getGraphY()) - 1;
-      } else {
-        positionY = parseInt(mouseEvent.getGraphY()) + 1;
-      }
+    if ((mouseEvent.getGraphY() - sourceY) > 0) {
+      positionY = parseInt(mouseEvent.getGraphY()) - 1;
+    } else {
+      positionY = parseInt(mouseEvent.getGraphY()) + 1;
+    }
 
-      line.setAttribute("x2", positionX.toString());
-      line.setAttribute("y2", positionY.toString());
+    line.setAttribute("x2", positionX.toString());
+    line.setAttribute("y2", positionY.toString());
   }
 
 }
 
-export class RelationshipErrorDto {
-  title : string;
-  body : string;
+export class ModalErrorDto {
+  title: string;
+  body: string;
 }
 
 export enum StatusCreatingRelationship {
