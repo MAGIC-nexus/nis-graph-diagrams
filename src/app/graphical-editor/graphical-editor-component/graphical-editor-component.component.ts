@@ -5,7 +5,7 @@ import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger } from '@angular/material';
-import { DiagramComponentHelper } from '../diagram-component-helper';
+import { DiagramComponentHelper, RelationshipErrorDto } from '../diagram-component-helper';
 import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-component/processors-diagram-component-dto';
@@ -389,6 +389,13 @@ export class GraphicalEditorComponentComponent implements OnInit {
     let name = form.nameInterfaceType.value.trim();
     this.createProcessorDto.component.createProcessor(name, this.createProcessorDto.pt);
     this.updateTree();
+  }
+
+  showErrorMessageRelationship(event: RelationshipErrorDto) {
+    this.nzModalService.error({
+      nzTitle: event.title,
+      nzContent: event.body,
+    });
   }
 
 
