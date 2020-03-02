@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ModelService, Diagram, EntityTypes } from '../../model-manager';
 import { DiagramComponentHelper } from '../diagram-component-helper';
+import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
 
 @Component({
   selector: 'app-interfacetypes-diagram-component',
@@ -16,7 +17,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @Input() diagramId: number;
   @Input() modelService: ModelService;
 
-  @Output() emitterToParent = new EventEmitter<{ name: string, data: any }>();
+  @Output("createInterfaceType") createInterfaceTypeEmitter = new EventEmitter<CreateInterfaceTypeDto>();
 
   constructor() { }
 
@@ -31,19 +32,16 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   private makeDraggableToolbar() {
-    let emitterToParent = this.emitterToParent;
+    let createInterfaceTypeEmitter = this.createInterfaceTypeEmitter;
     let component = this;
 
-    var functionInterfaceType = function (graph: mxGraph, evt, cell) {
+    let functionInterfaceType = function (graph: mxGraph, evt, cell) {
 
       let pt: mxPoint = graph.getPointForEvent(evt);
-      emitterToParent.emit({
-        name: "showFormCreateInterfaceType",
-        data: {
-          pt: pt,
-          component: component,
-        }
-      });
+      let createInterfaceTypeDto = new CreateInterfaceTypeDto();
+      createInterfaceTypeDto.pt = pt;
+      createInterfaceTypeDto.component = component;
+      createInterfaceTypeEmitter.emit(createInterfaceTypeDto);
     }
     let dragElement = document.createElement("img");
     dragElement.setAttribute("src", "assets/toolbar/rectangle.gif");
