@@ -6,8 +6,9 @@ import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger } from '@angular/material';
 import { DiagramComponentHelper } from '../diagram-component-helper';
-import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
+import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
+import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-component/processors-diagram-component-dto';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -42,13 +43,13 @@ export class GraphicalEditorComponentComponent implements OnInit {
   @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter: TemplateRef<any>;
-  emmiterCreateInterfaceTypeData: { pt: mxPoint, component: InterfacetypesDiagramComponentComponent };
+  createInterfaceTypeDto: CreateInterfaceTypeDto;
 
   //Form Create Processor
   @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle: TemplateRef<any>;
   @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent: TemplateRef<any>;
   @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
-  emmiterCreateProcessorData: { pt: mxPoint, component: ProcessorsDiagramComponentComponent };
+  createProcessorDto: CreateProcessorDto;
 
   //Context Menu
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuDiagram: MatMenuTrigger;
@@ -306,7 +307,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.renderer.listen(target, "mouseover", this.mouseOverTree.bind(this));
   }
 
-  showFormCreateInterfaceType() {
+  showFormCreateInterfaceType(event: CreateInterfaceTypeDto) {
+    this.createInterfaceTypeDto = event;
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateInterfaceTypeTitle,
@@ -324,16 +326,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
 
   }
 
-  emitterInterfaceType(event: { name: string, data: any }) {
-    switch (event.name) {
-      case "showFormCreateInterfaceType":
-        this.emmiterCreateInterfaceTypeData = event.data;
-        this.showFormCreateInterfaceType();
-        break;
-    }
-  }
-
-  submitCreateInterfaceType(event: Event) {
+  submitCreateInterfaceType(event: any) {
+    console.log(event.nameInterfaceType);
     event.preventDefault();
     this.createInterfaceType();
   }
@@ -342,25 +336,13 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.modalRef.destroy();
     let form = this.modalRef.getElement().getElementsByTagName("form")[0];
     let name = form.nameInterfaceType.value.trim();
-    this.emmiterCreateInterfaceTypeData.component.createInterfaceType(name, this.emmiterCreateInterfaceTypeData.pt);
+    this.createInterfaceTypeDto.component.createInterfaceType(name, this.createInterfaceTypeDto.pt);
     this.updateTree();
   }
 
-  emitterProcessor(event: { name: string, data: any }) {
-    switch (event.name) {
-      case 'showFormProcessor':
-        console.log(event.data.processorId);
-        break;
-      case 'showFormCreateProcessor':
-        this.emmiterCreateProcessorData = event.data;
-        this.showFormCreateProcessor();
-        break;
-    }
-  }
+  showFormProcessor(event : ProcessorFormDto) {
 
-  showFormProcessor(id: string) {
-
-    this.proccesorIdForm = id;
+    console.log(event);
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formProcessorTitle,
@@ -377,7 +359,10 @@ export class GraphicalEditorComponentComponent implements OnInit {
     });
   }
 
-  showFormCreateProcessor() {
+  showFormCreateProcessor(event : CreateProcessorDto) {
+
+    this.createProcessorDto = event;
+
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateProcessorTitle,
       nzContent: this.formCreateProcessorContent,
@@ -402,7 +387,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.modalRef.destroy();
     let form = this.modalRef.getElement().getElementsByTagName("form")[0];
     let name = form.nameInterfaceType.value.trim();
-    this.emmiterCreateProcessorData.component.createProcessor(name, this.emmiterCreateProcessorData.pt);
+    this.createProcessorDto.component.createProcessor(name, this.createProcessorDto.pt);
     this.updateTree();
   }
 

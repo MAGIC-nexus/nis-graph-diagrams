@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output,
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper } from '../diagram-component-helper';
 import { ModelService, EntityTypes } from '../../model-manager';
+import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -13,11 +14,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
   @ViewChild('processorToolbar', { static: true }) processorToolbar: ElementRef;
+
   @Input() proccesorSubject: Subject<{ name: string, data: any }>;
   @Input() diagramId: number;
   @Input() modelService: ModelService;
 
-  @Output() emitterToParent = new EventEmitter<{ name: string, data: any }>();
+  @Output("createInterfaceType") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
+  @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
 
 
   private graph: mxGraph;
@@ -38,34 +41,32 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private makeDraggableToolbar() {
-    let emitterToParent = this.emitterToParent;
+    let createProcessorEmitter = this.createProcessorEmitter;
     let component = this;
 
-    var functionInterfaceType = function (graph: mxGraph, evt, cell) {
+    let functionProcessor = function (graph: mxGraph, evt, cell) {
 
       let pt: mxPoint = graph.getPointForEvent(evt);
-      emitterToParent.emit({
-        name: "showFormCreateProcessor",
-        data: {
-          pt: pt,
-          component: component,
-        }
-      });
+      let createProcessorDto = new CreateProcessorDto();
+      createProcessorDto.component = component;
+      createProcessorDto.pt = pt;
+      createProcessorEmitter.emit(createProcessorDto);
     }
     let dragElement = document.createElement("img");
     dragElement.setAttribute("src", "assets/toolbar/rectangle.gif");
     dragElement.style.height = "20px";
     dragElement.style.width = "20px";
-    mxUtils.makeDraggable(this.processorToolbar.nativeElement, this.graph, functionInterfaceType, dragElement);
+    mxUtils.makeDraggable(this.processorToolbar.nativeElement, this.graph, functionProcessor, dragElement);
   }
 
   createProcessor(name: string, pt: mxPoint) {
     this.graph.getModel().beginUpdate();
     let id = this.modelService.createEntity(EntityTypes.Processor, name);
     let doc = mxUtils.createXmlDocument();
-    let interfaceTypeDoc = doc.createElement('processor');
-    interfaceTypeDoc.setAttribute('name', name);
-    this.graph.insertVertex(this.graph.getDefaultParent(), id.toString(), interfaceTypeDoc, pt.x, pt.y,
+    let processorDoc = doc.createElement('processor');
+    processorDoc.setAttribute('name', name);
+    processorDoc.setAttribute('id', id);
+    this.graph.insertVertex(this.graph.getDefaultParent(), id.toString(), processorDoc, pt.x, pt.y,
       100, 80);
     this.graph.getModel().endUpdate();
     this.modelService.addEntityToDiagram(this.diagramId, id);
@@ -125,12 +126,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private showFormProcessor(cellId) {
-    this.emitterToParent.emit({
-      name: "showFormProcessor",
-      data: {
-        processorId: cellId
-      }
-    })
+    let processorFormDto = new ProcessorFormDto();
+    processorFormDto.cellId = cellId;
+    this.processorFormEmitter.emit(processorFormDto);
   }
 
   private overrideMethodsGraphPorts() {
