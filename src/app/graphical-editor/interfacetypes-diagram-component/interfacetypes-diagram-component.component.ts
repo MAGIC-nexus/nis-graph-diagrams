@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ModelService, Diagram, EntityTypes } from '../../model-manager';
-import { DiagramComponentHelper } from '../diagram-component-helper';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
 
 @Component({
@@ -13,11 +13,18 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
   @ViewChild('interfaceTypeToolbar', { static: true }) interfaceTypeToolbar: ElementRef;
-  private graph: mxGraph;
   @Input() diagramId: number;
   @Input() modelService: ModelService;
 
   @Output("createInterfaceType") createInterfaceTypeEmitter = new EventEmitter<CreateInterfaceTypeDto>();
+  @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
+
+  graph: mxGraph;
+
+  relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
+  imageToolbarRelationship: HTMLImageElement;
+  statusCreateRelationship = StatusCreatingRelationship.notCreating;
+  sourceCellRelationship;
 
   constructor() { }
 

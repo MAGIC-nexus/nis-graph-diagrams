@@ -1,4 +1,6 @@
-import { ModelService } from '../model-manager';
+import { ModelService, RelationshipType } from '../model-manager';
+import { ProcessorsDiagramComponentComponent } from './processors-diagram-component/processors-diagram-component.component';
+import { InterfacetypesDiagramComponentComponent } from './interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 
 export class DiagramComponentHelper {
 
@@ -71,11 +73,46 @@ export class DiagramComponentHelper {
     line.setAttribute("y2", positionY.toString());
   }
 
+  static cancelCreateRelationship(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent) {
+    component.relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
+    component.imageToolbarRelationship.style.backgroundColor = "transparent";
+    component.graph.setCellStyles('movable', '1', component.graph.getChildCells());
+  }
+
+  static checkRelationshipPartOfSource(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent, 
+    cell): Boolean {
+    if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    };
+    return true;
+  }
+
+  static checkRelationshipPartOfTarget(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
+    cell) : Boolean {
+    if (cell.value.nodeName.toLowerCase() != 'processor') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    };
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.id), 
+      Number(component.sourceCellRelationship.id));
+    if (messageError != "") {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = messageError;
+      component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    return true;
+  }
+
 }
 
-export class ModalErrorDto {
-  title: string;
-  body: string;
+export class SnackErrorDto {
+  message: string;
 }
 
 export enum StatusCreatingRelationship {

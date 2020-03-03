@@ -6,11 +6,19 @@ import {
   MatListModule,
   MatIconModule,
   MatMenuModule,
-  MatDialogModule
+  MatDialogModule,
+  MatSnackBarModule
 } from '@angular/material';  // Material components
 
 
-import { NgZorroAntdModule, NZ_I18N, en_US } from 'ng-zorro-antd';
+import { 
+  NZ_I18N, 
+  en_US, 
+  NzModalModule, 
+  NzFormModule, 
+  NzInputModule, 
+  NzButtonModule 
+} from 'ng-zorro-antd';
 
 import { GraphicalEditorComponentComponent } from './graphical-editor-component/graphical-editor-component.component';
 import { InterfacetypesDiagramComponentComponent } from './interfacetypes-diagram-component/interfacetypes-diagram-component.component';
@@ -37,9 +45,14 @@ import { HttpClientModule } from '@angular/common/http';
     MatDialogModule,
     MatButtonModule,
     MatTabsModule,
+    MatSnackBarModule,
     HttpClientModule,
 
-    NgZorroAntdModule,
+    // NG-ZORRO
+    NzModalModule,
+    NzFormModule,
+    NzInputModule,
+    NzButtonModule,
   ],
   exports: [
       GraphicalEditorComponentComponent,
