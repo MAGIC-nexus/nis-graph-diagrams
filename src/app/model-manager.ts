@@ -911,7 +911,7 @@ export class ModelService {
                 let addAsRoot: boolean = true;
                 for (let relId of this.entitiesRelationships.get(entityId)) {
                     let r = this.allObjects.get(relId);
-                    if (r instanceof EntityRelationshipPartOf && r.destinationId == relId) {
+                    if (r instanceof EntityRelationshipPartOf && r.originId == entityId) {
                         addAsRoot = false;
                         break;
                     }
@@ -924,8 +924,8 @@ export class ModelService {
             for (let relId of this.entitiesRelationships.get(parentId)) { //
                 let r = this.allObjects.get(relId);
                 if (r instanceof EntityRelationshipPartOf) {
-                    if (r.originId == parentId)
-                        children.push(r.destinationId);
+                    if (r.destinationId == parentId)
+                        children.push(r.originId);
                 }
             }
         }
@@ -937,8 +937,8 @@ export class ModelService {
         for (let relId of this.entitiesRelationships.get(childId)) { //
             let r = this.allObjects.get(relId);
             if (r instanceof EntityRelationshipPartOf) {
-                if (r.destinationId == childId)
-                    parents.push(r.originId);
+                if (r.originId == childId)
+                    parents.push(r.destinationId);
             }
         }
         return parents;
