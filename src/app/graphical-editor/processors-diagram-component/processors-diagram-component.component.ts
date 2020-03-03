@@ -21,7 +21,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Input() diagramId: number;
   @Input() modelService: ModelService;
 
-  @Output("createInterfaceType") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
+  @Output("createProccesor") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
@@ -122,6 +122,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(element, this.graph, funct);
   }
 
+  imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
+    (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
+    this.relationshipSelect = relationshipType;
+    this.imageToolbarRelationship = <HTMLImageElement>event.target;
+    this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
+  }
+
   private graphMouseEvent() {
     this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
     this.graph.addMouseListener(
@@ -147,6 +154,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       }
     } 
   }
+  
 
   private checkRelationshipCellSource(cell): Boolean {
     switch (this.relationshipSelect) {
@@ -183,22 +191,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private createRelationship(cell) {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
-        this.createPartOfRelationship(cell);
+        DiagramComponentHelper.createPartOfRelationship(this, cell);
         break;
     }
-  }
-
-  private createPartOfRelationship(cell) {
-    this.graph.getModel().beginUpdate();
-    let doc = mxUtils.createXmlDocument();
-    let id = this.modelService.createRelationship(RelationshipType.PartOf,Number(cell.id), Number(this.sourceCellRelationship.id));
-    let partOfDoc = doc.createElement('partof');
-    partOfDoc.setAttribute("name", "name");
-    partOfDoc.setAttribute("id", id);
-    this.graph.insertEdge(this.graph.getDefaultParent(), null, partOfDoc,
-      this.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
-    this.graph.getModel().endUpdate();
-    this.updateTreeEmitter.emit(null);
   }
 
   private mouseMoveGraph(sender, mouseEvent: mxMouseEvent) {
@@ -340,14 +335,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     };
 
     new mxRubberband(graph);
-  }
-
-
-  startRelationship(event: MouseEvent, relationshipType: RelationshipType) {
-    (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
-    this.relationshipSelect = relationshipType;
-    this.imageToolbarRelationship = <HTMLImageElement>event.target;
-    this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
   }
 
 }

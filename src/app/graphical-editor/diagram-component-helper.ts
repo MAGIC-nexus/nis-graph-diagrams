@@ -92,7 +92,7 @@ export class DiagramComponentHelper {
 
   static checkRelationshipPartOfTarget(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
     cell) : Boolean {
-    if (cell.value.nodeName.toLowerCase() != 'processor') {
+    if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
       let relationshipErrorDto = new SnackErrorDto();
       relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
       component.snackBarErrorEmitter.emit(relationshipErrorDto);
@@ -107,6 +107,21 @@ export class DiagramComponentHelper {
       return false;
     }
     return true;
+  }
+
+  static createPartOfRelationship(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
+    cell) {
+    component.graph.getModel().beginUpdate();
+    let doc = mxUtils.createXmlDocument();
+    let id = component.modelService.createRelationship(RelationshipType.PartOf, Number(component.sourceCellRelationship.id), 
+    Number(cell.id));
+    let partOfDoc = doc.createElement('partof');
+    partOfDoc.setAttribute("name", "name");
+    partOfDoc.setAttribute("id", id);
+    component.graph.insertEdge(component.graph.getDefaultParent(), null, partOfDoc,
+      component.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
+      component.graph.getModel().endUpdate();
+      component.updateTreeEmitter.emit(null);
   }
 
 }

@@ -105,11 +105,12 @@
 
             <app-processors-diagram-component *ngIf="item.value.type == 0" [diagramId]="item.value.id"
               [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
-              (createInterfaceType)="showFormCreateProcessor($event)" [modelService]="modelService"
+              (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
               (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()">
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
-              [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)">
+              [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)"
+              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()">
             </app-interfacetypes-diagram-component>
           </mat-tab>
         </mat-tab-group>
