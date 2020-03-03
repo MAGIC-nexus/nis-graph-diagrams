@@ -140,6 +140,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     )
   }
 
+  private doubleClickGraph(graph, evt) {
+    let cellTarget = evt.getProperty('cell');
+
+    if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
+      this.showFormProcessor(cellTarget.getAttribute("id"));
+    }
+  }
+
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
     if (this.relationshipSelect != DiagramComponentHelper.NOT_RELATIONSHIP &&
@@ -202,14 +210,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating &&
       lineRelationship != undefined) {
       DiagramComponentHelper.moveLineCreateRelationship(lineRelationship, mouseEvent);
-    }
-  }
-
-  private doubleClickGraph(graph, evt) {
-    let cellTarget = evt.getProperty('cell');
-
-    if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-      this.showFormProcessor(cellTarget.getAttribute("id"));
     }
   }
 

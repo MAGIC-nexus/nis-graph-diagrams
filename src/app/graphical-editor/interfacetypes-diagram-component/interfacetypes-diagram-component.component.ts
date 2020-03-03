@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import { ModelService, Diagram, EntityTypes, RelationshipType } from '../../model-manager';
+import { ModelService, Diagram, EntityTypes, RelationshipType, InterfaceType } from '../../model-manager';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
 
@@ -37,9 +37,10 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   ngAfterViewInit() {
     this.graph = new mxGraph(this.graphContainer.nativeElement);
-    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
-    this.makeDraggableToolbar();
+    this.customLabel();
     this.graphMouseEvent();
+    this.makeDraggableToolbar();
+    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
   private makeDraggableToolbar() {
@@ -71,12 +72,11 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       100, 80);
     this.graph.getModel().endUpdate();
     this.modelService.addEntityToDiagram(this.diagramId, id);
-    this.modelService.updateEntityAppearanceInDiagram(this.diagramId,id,100,80,pt.x,pt.y);
+    this.modelService.updateEntityAppearanceInDiagram(this.diagramId, id, 100, 80, pt.x, pt.y);
     DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
   }
 
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
-    console.log("entre");
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
     this.relationshipSelect = relationshipType;
     this.imageToolbarRelationship = <HTMLImageElement>event.target;
@@ -84,6 +84,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   private graphMouseEvent() {
+    this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
     this.graph.addMouseListener(
       {
         mouseDown: this.mouseDownGraph.bind(this),
@@ -91,6 +92,11 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         mouseUp: this.mouseUpGraph.bind(this),
       }
     )
+  }
+
+  private doubleClickGraph(graph, evt) {
+    let cellTarget = evt.getProperty('cell');
+    console.log(cellTarget);
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -105,9 +111,9 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);
       }
-    } 
+    }
   }
-  
+
 
   private checkRelationshipCellSource(cell): Boolean {
     switch (this.relationshipSelect) {
@@ -117,7 +123,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     return false;
   }
 
-  private mouseUpGraph(sender, mouseEvent : mxMouseEvent) {
+  private mouseUpGraph(sender, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
 
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
@@ -133,7 +139,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     }
   }
 
-  private checkRelationshipCellTarget(cell) : Boolean {
+  private checkRelationshipCellTarget(cell): Boolean {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfTarget(this, cell);
@@ -156,5 +162,60 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       lineRelationship != undefined) {
       DiagramComponentHelper.moveLineCreateRelationship(lineRelationship, mouseEvent);
     }
+  }
+
+  private customLabel() {
+    let modelService = this.modelService;
+    let diagramId = this.diagramId;
+
+    this.graph.convertValueToString = (cell: mxCell) => {
+      console.log("convertValueToString");
+      switch (cell.value.nodeName.toLowerCase()) {
+        case 'interfacetype':
+          return cell.getAttribute('name', 'interfaceType');
+        case 'partof':
+          return 'partof';
+      }
+    }
+
+    this.graph.cellLabelChanged = function (cell: mxCell, newValue, autoSize) {
+      switch (cell.value.nodeName.toLowerCase()) {
+        case 'interfacetype':
+          try {
+            let edit = {
+              cell: cell,
+              attribute: "name",
+              value: newValue,
+              previous: newValue,
+              execute: function () {
+                if (this.cell != null) {
+                  var tmp = this.cell.getAttribute(this.attribute);
+    
+                  if (this.previous == null) {
+                    this.cell.value.removeAttribute(this.attribute);
+                  }
+                  else {
+                    this.cell.setAttribute(this.attribute, this.previous);
+                  }
+    
+                  this.previous = tmp;
+                }
+              }
+            };
+            modelService.updateEntityName(Number(cell.id), newValue);
+            console.log(modelService.readEntity(Number(cell.id)));
+            this.getModel().execute(edit);
+          }
+          finally {
+            this.getModel().endUpdate();
+          }
+          break;
+      }
+      DiagramComponentHelper.updateGraphInModel(diagramId, this);
+    }
+
+    this.graph.getEditingValue = function (cell: mxCell) {
+      return cell.getAttribute('name','interfaceType')
+    };
   }
 }
