@@ -3,5 +3,8 @@
 
 <div style="background-color: rgb(214, 214, 214);width: 40px; 
 position: absolute; top: 10px; left: 10px; border-radius: 5px; padding: 10px 5px;">
-    <img #interfaceTypeToolbar src="assets/toolbar/rectangle.gif" alt="rectangle" style="width: 100%; height: auto;">
+    <img #interfaceTypeToolbar src="assets/toolbar/rectangle.gif" alt="rectangle" style="width: 100%; height: auto;"/>
+
+    <img class="toolbar-relationship" (click)="imageToolbarRelationshipClick($event, RelationshipType.PartOf)" 
+    src="assets/toolbar/arrow.png" alt="rectangle" style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;"/>
 </div>
