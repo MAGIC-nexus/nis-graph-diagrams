@@ -340,7 +340,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.updateTree();
   }
 
-  showFormProcessor(event : ProcessorFormDto) {
+  showFormProcessor(event: ProcessorFormDto) {
 
     console.log(event);
 
@@ -359,7 +359,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
     });
   }
 
-  showFormCreateProcessor(event : CreateProcessorDto) {
+  showFormCreateProcessor(event: CreateProcessorDto) {
 
     this.createProcessorDto = event;
 

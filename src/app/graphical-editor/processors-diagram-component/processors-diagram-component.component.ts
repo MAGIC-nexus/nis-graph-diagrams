@@ -30,7 +30,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private graph: mxGraph;
 
   private relationship = DiagramComponentHelper.NOT_RELATIONSHIP;
-  private toolbarRelationship: HTMLImageElement;
+  private imageToolbarRelationship: HTMLImageElement;
   private statusCreateRelationship = StatusCreatingRelationship.notCreating;
   private sourceCellRelationship;
 
@@ -128,14 +128,19 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       {
         mouseDown: this.mouseDownGraph.bind(this),
         mouseMove: this.mouseMoveGraph.bind(this),
-        mouseUp: () => { },
+        mouseUp: this.mouseUpGraph.bind(this),
       }
     )
   }
 
+  private cancelCreateRelationship() {
+    this.relationship = DiagramComponentHelper.NOT_RELATIONSHIP;
+    this.imageToolbarRelationship.style.backgroundColor = "transparent";
+    this.graph.setCellStyles('movable', '1', this.graph.getChildCells());
+  }
+
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
-
     if (this.relationship != DiagramComponentHelper.NOT_RELATIONSHIP &&
       this.statusCreateRelationship == StatusCreatingRelationship.notCreating) {
       if (cell != null && this.checkRelationshipCellSource(cell)) {
@@ -143,48 +148,25 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         DiagramComponentHelper.printLineCreateRelationship(svg, cell);
         this.statusCreateRelationship = StatusCreatingRelationship.creating;
         this.sourceCellRelationship = cell;
-        let allCells : [mxCell] = this.graph.getChildCells();
-        for (let i = 0; i < allCells.length; i++) {
-          console.log(allCells[i].getStyle());
-        }
       } else {
-        this.relationship = DiagramComponentHelper.NOT_RELATIONSHIP;
-        this.toolbarRelationship.style.backgroundColor = "transparent";
+        this.cancelCreateRelationship();
       }
-    } else if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
-      this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
-      let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
-      let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
-      lineRelationship.remove();
-      if (cell != null) {
-        this.createRelationship(cell);
-      } else {
-        this.relationship = DiagramComponentHelper.NOT_RELATIONSHIP;
-        this.toolbarRelationship.style.backgroundColor = "transparent";
-      }
-    }
+    } 
   }
 
   private checkRelationshipCellSource(cell): Boolean {
     switch (this.relationship) {
       case RelationshipType.PartOf:
-        return this.checkRelationshipPartOf(cell);
+        return this.checkRelationshipPartOfSource(cell);
     }
     return false;
   }
 
-  private createRelationship(cell) {
-    switch (this.relationship) {
-      case RelationshipType.PartOf:
-        if (this.checkRelationshipPartOf) {
-          this.createPartOfRelationship(cell);
-        }
-        break;
-    }
-  }
-
-  private checkRelationshipPartOf(cell): Boolean {
-    let check = cell.value.nodeName.toLowerCase() == 'processor';
+  private checkRelationshipPartOfSource(cell): Boolean {
+    let check = true; 
+    if (cell.value.nodeName.toLowerCase() == 'processor') {
+      check = false;
+    };
     if (!check) {
       let relationshipErrorDto = new ModalErrorDto();
       relationshipErrorDto.title = "Error";
@@ -198,7 +180,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.graph.getModel().beginUpdate();
     let doc = mxUtils.createXmlDocument();
     let id = this.modelService.createRelationship(RelationshipType.PartOf, Number(this.sourceCellRelationship.id),
-    Number(cell.id));
+      Number(cell.id));
     let partOfDoc = doc.createElement('partof');
     partOfDoc.setAttribute("name", "name");
     partOfDoc.setAttribute("id", id);
@@ -206,6 +188,55 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       this.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
     this.graph.getModel().endUpdate();
     this.updateTreeEmitter.emit(null);
+  }
+
+  private mouseUpGraph(sender, mouseEvent : mxMouseEvent) {
+    let cell: mxCell = mouseEvent.getCell();
+
+    if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
+      this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
+      let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
+      let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
+      lineRelationship.remove();
+      if (cell != null && this.checkRelationshipCellTarget(cell)) {
+        this.createRelationship(cell);
+      } else {
+        this.cancelCreateRelationship();
+      }
+    }
+  }
+
+  private checkRelationshipCellTarget(cell) : Boolean {
+    switch (this.relationship) {
+      case RelationshipType.PartOf:
+        return this.checkRelationshipPartOfTarget(cell);
+    }
+    return false;
+  }
+
+  private checkRelationshipPartOfTarget(cell) : Boolean {
+    let check = true;
+    if (cell.value.nodeName.toLowerCase() == 'processor') {
+      check = false;
+    };
+    if (cell.id == this.sourceCellRelationship.id) {
+      check = false;
+    }
+    if (!check) {
+      let relationshipErrorDto = new ModalErrorDto();
+      relationshipErrorDto.title = "Error";
+      relationshipErrorDto.body = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      this.relationshipErrorEmitter.emit(relationshipErrorDto);
+    }
+    return check;
+  }
+
+  private createRelationship(cell) {
+    switch (this.relationship) {
+      case RelationshipType.PartOf:
+        this.createPartOfRelationship(cell);
+        break;
+    }
   }
 
   private mouseMoveGraph(sender, mouseEvent: mxMouseEvent) {
@@ -353,7 +384,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   startRelationship(event: MouseEvent, relationshipType: RelationshipType) {
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
     this.relationship = relationshipType;
-    this.toolbarRelationship = <HTMLImageElement>event.target;
+    this.imageToolbarRelationship = <HTMLImageElement>event.target;
+    this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
   }
 
 }
