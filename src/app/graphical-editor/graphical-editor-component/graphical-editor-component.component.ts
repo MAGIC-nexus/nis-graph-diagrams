@@ -4,8 +4,8 @@ import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
-import { MatMenuTrigger } from '@angular/material';
-import { DiagramComponentHelper, ModalErrorDto } from '../diagram-component-helper';
+import { MatMenuTrigger, MatSnackBar } from '@angular/material';
+import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
 import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-component/processors-diagram-component-dto';
@@ -108,7 +108,8 @@ export class GraphicalEditorComponentComponent implements OnInit {
   constructor(
     public modelService: ModelService,
     private nzModalService: NzModalService,
-    private renderer: Renderer2) { }
+    private renderer: Renderer2,
+    private snackBarService: MatSnackBar) { }
 
   ngOnInit() {
     DiagramComponentHelper.setModelService(this.modelService);
@@ -391,10 +392,9 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.updateTree();
   }
 
-  showModalError(event: ModalErrorDto) {
-    this.nzModalService.error({
-      nzTitle: event.title,
-      nzContent: event.body,
+  showSnackBarError(event: SnackErrorDto) {
+    this.snackBarService.open(event.message,null, {
+      duration: 2000,
     });
   }
 

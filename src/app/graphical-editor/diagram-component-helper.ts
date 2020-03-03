@@ -73,9 +73,8 @@ export class DiagramComponentHelper {
 
 }
 
-export class ModalErrorDto {
-  title: string;
-  body: string;
+export class SnackErrorDto {
+  message: string;
 }
 
 export enum StatusCreatingRelationship {

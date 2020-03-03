@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, ModalErrorDto } from '../diagram-component-helper';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
 
@@ -23,7 +23,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   @Output("createInterfaceType") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
-  @Output("relationshipError") relationshipErrorEmitter = new EventEmitter<ModalErrorDto>();
+  @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
 
 
@@ -163,31 +163,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private checkRelationshipPartOfSource(cell): Boolean {
-    let check = true; 
     if (cell.value.nodeName.toLowerCase() != 'processor') {
-      check = false;
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
     };
-    if (!check) {
-      let relationshipErrorDto = new ModalErrorDto();
-      relationshipErrorDto.title = "Error";
-      relationshipErrorDto.body = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
-      this.relationshipErrorEmitter.emit(relationshipErrorDto);
-    }
-    return check;
-  }
-
-  private createPartOfRelationship(cell) {
-    this.graph.getModel().beginUpdate();
-    let doc = mxUtils.createXmlDocument();
-    let id = this.modelService.createRelationship(RelationshipType.PartOf, Number(this.sourceCellRelationship.id),
-      Number(cell.id));
-    let partOfDoc = doc.createElement('partof');
-    partOfDoc.setAttribute("name", "name");
-    partOfDoc.setAttribute("id", id);
-    this.graph.insertEdge(this.graph.getDefaultParent(), null, partOfDoc,
-      this.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
-    this.graph.getModel().endUpdate();
-    this.updateTreeEmitter.emit(null);
+    return true;
   }
 
   private mouseUpGraph(sender, mouseEvent : mxMouseEvent) {
@@ -215,20 +197,20 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private checkRelationshipPartOfTarget(cell) : Boolean {
-    let check = true;
     if (cell.value.nodeName.toLowerCase() != 'processor') {
-      check = false;
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
     };
-    if (cell.id == this.sourceCellRelationship.id) {
-      check = false;
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.id), Number(this.sourceCellRelationship.id));
+    if (messageError != "") {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = messageError;
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
     }
-    if (!check) {
-      let relationshipErrorDto = new ModalErrorDto();
-      relationshipErrorDto.title = "Error";
-      relationshipErrorDto.body = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
-      this.relationshipErrorEmitter.emit(relationshipErrorDto);
-    }
-    return check;
+    return true;
   }
 
   private createRelationship(cell) {
@@ -237,6 +219,19 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         this.createPartOfRelationship(cell);
         break;
     }
+  }
+
+  private createPartOfRelationship(cell) {
+    this.graph.getModel().beginUpdate();
+    let doc = mxUtils.createXmlDocument();
+    let id = this.modelService.createRelationship(RelationshipType.PartOf,Number(cell.id), Number(this.sourceCellRelationship.id));
+    let partOfDoc = doc.createElement('partof');
+    partOfDoc.setAttribute("name", "name");
+    partOfDoc.setAttribute("id", id);
+    this.graph.insertEdge(this.graph.getDefaultParent(), null, partOfDoc,
+      this.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
+    this.graph.getModel().endUpdate();
+    this.updateTreeEmitter.emit(null);
   }
 
   private mouseMoveGraph(sender, mouseEvent: mxMouseEvent) {

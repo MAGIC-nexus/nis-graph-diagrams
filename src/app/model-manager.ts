@@ -853,7 +853,17 @@ export class ModelService {
     }
 
     checkCanCreateRelationship(relationType: RelationshipType, originId, destinationId) {
-        
+        switch(relationType) {
+            case RelationshipType.PartOf:
+                return this.checkCanCreateRelationshipPartOf(originId, destinationId);
+        }
+    }
+
+    checkCanCreateRelationshipPartOf(originId, destinationId) {
+        if (originId == destinationId) {
+            return "Cannot make a relationship of the same entity"
+        }
+        return "";
     }
 
     deleteRelationship(relationshipId) {
