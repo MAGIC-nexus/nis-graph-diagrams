@@ -216,7 +216,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private checkRelationshipPartOfTarget(cell) : Boolean {
     let check = true;
-    if (cell.value.nodeName.toLowerCase() == 'processor') {
+    if (cell.value.nodeName.toLowerCase() != 'processor') {
       check = false;
     };
     if (cell.id == this.sourceCellRelationship.id) {
