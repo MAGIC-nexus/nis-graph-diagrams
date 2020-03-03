@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper } from '../diagram-component-helper';
-import { ModelService, EntityTypes } from '../../model-manager';
+import { DiagramComponentHelper, StatusCreatingRelationship, ModalErrorDto } from '../diagram-component-helper';
+import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
 
 @Component({
@@ -12,6 +12,8 @@ import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-compo
 })
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
 
+  RelationshipType = RelationshipType;
+
   @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
   @ViewChild('processorToolbar', { static: true }) processorToolbar: ElementRef;
 
@@ -21,9 +23,16 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   @Output("createInterfaceType") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
+  @Output("relationshipError") relationshipErrorEmitter = new EventEmitter<ModalErrorDto>();
+  @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
 
 
   private graph: mxGraph;
+
+  private relationship = DiagramComponentHelper.NOT_RELATIONSHIP;
+  private imageToolbarRelationship: HTMLImageElement;
+  private statusCreateRelationship = StatusCreatingRelationship.notCreating;
+  private sourceCellRelationship;
 
   constructor() { }
 
@@ -115,6 +124,128 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private graphMouseEvent() {
     this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
+    this.graph.addMouseListener(
+      {
+        mouseDown: this.mouseDownGraph.bind(this),
+        mouseMove: this.mouseMoveGraph.bind(this),
+        mouseUp: this.mouseUpGraph.bind(this),
+      }
+    )
+  }
+
+  private cancelCreateRelationship() {
+    this.relationship = DiagramComponentHelper.NOT_RELATIONSHIP;
+    this.imageToolbarRelationship.style.backgroundColor = "transparent";
+    this.graph.setCellStyles('movable', '1', this.graph.getChildCells());
+  }
+
+  private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
+    let cell: mxCell = mouseEvent.getCell();
+    if (this.relationship != DiagramComponentHelper.NOT_RELATIONSHIP &&
+      this.statusCreateRelationship == StatusCreatingRelationship.notCreating) {
+      if (cell != null && this.checkRelationshipCellSource(cell)) {
+        let svg = sender.container.getElementsByTagName("svg")[0];
+        DiagramComponentHelper.printLineCreateRelationship(svg, cell);
+        this.statusCreateRelationship = StatusCreatingRelationship.creating;
+        this.sourceCellRelationship = cell;
+      } else {
+        this.cancelCreateRelationship();
+      }
+    } 
+  }
+
+  private checkRelationshipCellSource(cell): Boolean {
+    switch (this.relationship) {
+      case RelationshipType.PartOf:
+        return this.checkRelationshipPartOfSource(cell);
+    }
+    return false;
+  }
+
+  private checkRelationshipPartOfSource(cell): Boolean {
+    let check = true; 
+    if (cell.value.nodeName.toLowerCase() == 'processor') {
+      check = false;
+    };
+    if (!check) {
+      let relationshipErrorDto = new ModalErrorDto();
+      relationshipErrorDto.title = "Error";
+      relationshipErrorDto.body = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      this.relationshipErrorEmitter.emit(relationshipErrorDto);
+    }
+    return check;
+  }
+
+  private createPartOfRelationship(cell) {
+    this.graph.getModel().beginUpdate();
+    let doc = mxUtils.createXmlDocument();
+    let id = this.modelService.createRelationship(RelationshipType.PartOf, Number(this.sourceCellRelationship.id),
+      Number(cell.id));
+    let partOfDoc = doc.createElement('partof');
+    partOfDoc.setAttribute("name", "name");
+    partOfDoc.setAttribute("id", id);
+    this.graph.insertEdge(this.graph.getDefaultParent(), null, partOfDoc,
+      this.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
+    this.graph.getModel().endUpdate();
+    this.updateTreeEmitter.emit(null);
+  }
+
+  private mouseUpGraph(sender, mouseEvent : mxMouseEvent) {
+    let cell: mxCell = mouseEvent.getCell();
+
+    if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
+      this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
+      let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
+      let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
+      lineRelationship.remove();
+      if (cell != null && this.checkRelationshipCellTarget(cell)) {
+        this.createRelationship(cell);
+      } else {
+        this.cancelCreateRelationship();
+      }
+    }
+  }
+
+  private checkRelationshipCellTarget(cell) : Boolean {
+    switch (this.relationship) {
+      case RelationshipType.PartOf:
+        return this.checkRelationshipPartOfTarget(cell);
+    }
+    return false;
+  }
+
+  private checkRelationshipPartOfTarget(cell) : Boolean {
+    let check = true;
+    if (cell.value.nodeName.toLowerCase() == 'processor') {
+      check = false;
+    };
+    if (cell.id == this.sourceCellRelationship.id) {
+      check = false;
+    }
+    if (!check) {
+      let relationshipErrorDto = new ModalErrorDto();
+      relationshipErrorDto.title = "Error";
+      relationshipErrorDto.body = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
+      this.relationshipErrorEmitter.emit(relationshipErrorDto);
+    }
+    return check;
+  }
+
+  private createRelationship(cell) {
+    switch (this.relationship) {
+      case RelationshipType.PartOf:
+        this.createPartOfRelationship(cell);
+        break;
+    }
+  }
+
+  private mouseMoveGraph(sender, mouseEvent: mxMouseEvent) {
+    let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
+    let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
+    if (this.statusCreateRelationship == StatusCreatingRelationship.creating &&
+      lineRelationship != undefined) {
+      DiagramComponentHelper.moveLineCreateRelationship(lineRelationship, mouseEvent);
+    }
   }
 
   private doubleClickGraph(graph, evt) {
@@ -247,6 +378,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     };
 
     new mxRubberband(graph);
+  }
+
+
+  startRelationship(event: MouseEvent, relationshipType: RelationshipType) {
+    (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
+    this.relationship = relationshipType;
+    this.imageToolbarRelationship = <HTMLImageElement>event.target;
+    this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
   }
 
 }

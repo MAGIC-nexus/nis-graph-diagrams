@@ -852,6 +852,10 @@ export class ModelService {
         return r.id;
     }
 
+    checkCanCreateRelationship(relationType: RelationshipType, originId, destinationId) {
+        
+    }
+
     deleteRelationship(relationshipId) {
         let r: Relationship = this.allObjects.get(relationshipId);
         if (r) {

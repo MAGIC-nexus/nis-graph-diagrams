@@ -82,12 +82,13 @@
           &nbsp;&nbsp;
           <button mat-flat-button (click)="showFormCreateDiagram('Processors')"
             matTooltip="New Processors diagram">Processors</button>
-          <button mat-icon-button (click)="modelService.exportGraphicalModelToSpreadsheet()" matTooltip="Generate into spreadsheet (overwrite workbook)"  >
+          <button mat-icon-button (click)="modelService.exportGraphicalModelToSpreadsheet()"
+            matTooltip="Generate into spreadsheet (overwrite workbook)">
             <mat-icon matListIcon>arrow_forward</mat-icon>
           </button>
-<!--          <button mat-icon-button matTooltip="Read from spreadsheet (overwrite diagrams)" >-->
-<!--            <mat-icon matListIcon>arrow_back</mat-icon>-->
-<!--          </button>-->
+          <!--          <button mat-icon-button matTooltip="Read from spreadsheet (overwrite diagrams)" >-->
+          <!--            <mat-icon matListIcon>arrow_back</mat-icon>-->
+          <!--          </button>-->
         </mat-toolbar-row>
       </mat-toolbar>
       <div fxFlex style="border: 2px solid red;">
@@ -103,8 +104,9 @@
             </ng-template>
 
             <app-processors-diagram-component *ngIf="item.value.type == 0" [diagramId]="item.value.id"
-            [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
-            (createInterfaceType)="showFormCreateProcessor($event)" [modelService]="modelService">
+              [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
+              (createInterfaceType)="showFormCreateProcessor($event)" [modelService]="modelService"
+              (relationshipError)="showModalError($event)" (updateTree)="updateTree()">
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
               [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)">

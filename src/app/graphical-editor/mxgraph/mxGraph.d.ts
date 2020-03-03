@@ -12,6 +12,7 @@ declare class mxGraph {
   mouseListeners;
   isMouseDown;
   model;
+  container;
   view;
   stylesheet;
   selectionModel;
@@ -122,6 +123,7 @@ declare class mxGraph {
   containsValidationErrorsResource;
   collapseExpandResource;
   graphHandler;
+  getChildCells()
   getTooltipForCell(cell);
   init(container);
   createHandlers(container);
