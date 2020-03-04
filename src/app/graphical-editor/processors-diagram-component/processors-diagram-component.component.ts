@@ -47,6 +47,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.eventsProcessorSubject();
     this.graphMouseEvent();
     this.customLabel();
+    this.contextMenu();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -105,7 +106,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
         graph.getModel().beginUpdate();
         let interfaceTypeId = element.getAttribute("data-node-id");
-        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id), 
+        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id),
           Number(interfaceTypeId));
         let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
         let doc = mxUtils.createXmlDocument();
@@ -165,9 +166,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);
       }
-    } 
+    }
   }
-  
+
 
   private checkRelationshipCellSource(cell): Boolean {
     switch (this.relationshipSelect) {
@@ -177,7 +178,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     return false;
   }
 
-  private mouseUpGraph(sender, mouseEvent : mxMouseEvent) {
+  private mouseUpGraph(sender, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
 
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
@@ -193,7 +194,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     }
   }
 
-  private checkRelationshipCellTarget(cell) : Boolean {
+  private checkRelationshipCellTarget(cell): Boolean {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfTarget(this, cell);
@@ -356,7 +357,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           if (portName.length < 3) {
             return portName;
           } else {
-            return portName.substring(0,3);
+            return portName.substring(0, 3);
           }
       }
     }
@@ -385,7 +386,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
                 }
               }
             };
-            processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId','')), newValue);
+            processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
             processorInstance.updateTreeEmitter.emit(null);
             this.getModel().execute(edit);
           }
@@ -404,6 +405,12 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case 'partof':
           return 'partof';
       }
+    };
+  }
+
+  private contextMenu() {
+    this.graph.popupMenuHandler = function (menu, cell, evt) {
+      return createPopupMenu(graph, menu, cell, evt);
     };
   }
 
