@@ -417,10 +417,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxEvent.disableContextMenu(this.graphContainer.nativeElement);
 
     let processorInstance = this;
-    (<HTMLDivElement>document.getElementsByClassName("cdk-overlay-container")[0]).oncontextmenu = (evt) => {
-      evt.preventDefault();
-      return false;
-    };
 
     function createPopupMenu(cell : mxCell, event : PointerEvent) {
       if (cell.value.nodeName.toLowerCase() == "processor") {
@@ -433,6 +429,10 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     }
 
     this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt : PointerEvent) {
+      (<HTMLDivElement>document.getElementsByClassName("cdk-overlay-container")[0]).oncontextmenu = (evt) => {
+        evt.preventDefault();
+        return false;
+      };
       if (cell != null) {
         return createPopupMenu(cell, evt);
       }

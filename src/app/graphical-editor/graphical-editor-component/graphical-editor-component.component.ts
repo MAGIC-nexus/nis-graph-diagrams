@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2, AfterViewInit } from '@angular/core';
 import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
@@ -15,7 +15,7 @@ import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-comp
   templateUrl: './graphical-editor-component.component.html',
   styleUrls: ['./graphical-editor-component.component.css']
 })
-export class GraphicalEditorComponentComponent implements OnInit {
+export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
@@ -114,6 +114,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
   ngOnInit() {
     DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
+  }
+
+  ngAfterViewInit() {
+    if (document.getElementsByClassName("cdk-overlay-container")[0] == undefined) {
+      let wrapPopup = document.createElement("div");
+      wrapPopup.className = "cdk-overlay-container";
+      document.body.append(wrapPopup);
+    }
   }
 
   private eventsProcessorSubject() {
