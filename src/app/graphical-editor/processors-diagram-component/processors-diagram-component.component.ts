@@ -148,9 +148,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     console.log(cellTarget);
     console.log(this.modelService);
 
-    if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-      this.showFormProcessor(cellTarget.getAttribute("entityId"));
-    }
+    // if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
+    //   this.showFormProcessor(cellTarget.getAttribute("entityId"));
+    // }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
