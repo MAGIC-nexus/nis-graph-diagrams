@@ -42,11 +42,12 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   ngAfterViewInit() {
     this.graph = new mxGraph(this.graphContainer.nativeElement);
-    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
     this.makeDraggableToolbar();
     this.overrideMethodsGraphPorts();
     this.eventsProcessorSubject();
     this.graphMouseEvent();
+    this.customLabel();
+    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
   private makeDraggableToolbar() {
@@ -74,8 +75,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let doc = mxUtils.createXmlDocument();
     let processorDoc = doc.createElement('processor');
     processorDoc.setAttribute('name', name);
-    processorDoc.setAttribute('id', id);
-    this.graph.insertVertex(this.graph.getDefaultParent(), id.toString(), processorDoc, pt.x, pt.y,
+    processorDoc.setAttribute('entityId', id);
+    this.graph.insertVertex(this.graph.getDefaultParent(), null, processorDoc, pt.x, pt.y,
       100, 80);
     this.graph.getModel().endUpdate();
     this.modelService.addEntityToDiagram(this.diagramId, id);
@@ -103,19 +104,21 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         graph.stopEditing(false);
 
         graph.getModel().beginUpdate();
-
+        let interfaceTypeId = element.getAttribute("data-node-id");
+        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id), 
+          Number(interfaceTypeId));
+        let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
         let doc = mxUtils.createXmlDocument();
         let port = doc.createElement('port');
-        port.setAttribute('name', 'in');
-        port.setAttribute('id', element.getAttribute("data-node-id"));
+        port.setAttribute('name', nameInterfaceType);
+        port.setAttribute('entityId', id);
 
         let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
           'fontSize=9;shape=ellipse;resizable=0;');
         v2.geometry.offset = new mxPoint(-15, -15);
         v2.geometry.relative = true;
         graph.getModel().endUpdate();
-        // Add Interface to the model
-        processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id), Number(port.id));
+
       }
 
     }
@@ -138,6 +141,16 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         mouseUp: this.mouseUpGraph.bind(this),
       }
     )
+  }
+
+  private doubleClickGraph(graph, evt) {
+    let cellTarget = evt.getProperty('cell');
+    console.log(cellTarget);
+    console.log(this.modelService);
+
+    // if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
+    //   this.showFormProcessor(cellTarget.getAttribute("entityId"));
+    // }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -202,14 +215,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating &&
       lineRelationship != undefined) {
       DiagramComponentHelper.moveLineCreateRelationship(lineRelationship, mouseEvent);
-    }
-  }
-
-  private doubleClickGraph(graph, evt) {
-    let cellTarget = evt.getProperty('cell');
-
-    if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-      this.showFormProcessor(cellTarget.getAttribute("id"));
     }
   }
 
@@ -335,6 +340,71 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     };
 
     new mxRubberband(graph);
+  }
+
+  private customLabel() {
+    let processorInstance = this;
+
+    this.graph.convertValueToString = (cell: mxCell) => {
+      switch (cell.value.nodeName.toLowerCase()) {
+        case 'processor':
+          return cell.getAttribute('name', 'Processor');
+        case 'partof':
+          return 'partof';
+        case 'port':
+          let portName = cell.getAttribute('name', 'Processor');
+          if (portName.length < 3) {
+            return portName;
+          } else {
+            return portName.substring(0,3);
+          }
+      }
+    }
+
+    this.graph.cellLabelChanged = function (cell: mxCell, newValue, autoSize) {
+      switch (cell.value.nodeName.toLowerCase()) {
+        case 'processor':
+          try {
+            let edit = {
+              cell: cell,
+              attribute: "name",
+              value: newValue,
+              previous: newValue,
+              execute: function () {
+                if (this.cell != null) {
+                  var tmp = this.cell.getAttribute(this.attribute);
+
+                  if (this.previous == null) {
+                    this.cell.value.removeAttribute(this.attribute);
+                  }
+                  else {
+                    this.cell.setAttribute(this.attribute, this.previous);
+                  }
+
+                  this.previous = tmp;
+                }
+              }
+            };
+            processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId','')), newValue);
+            processorInstance.updateTreeEmitter.emit(null);
+            this.getModel().execute(edit);
+          }
+          finally {
+            this.getModel().endUpdate();
+          }
+          break;
+      }
+      DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, this);
+    }
+
+    this.graph.getEditingValue = function (cell: mxCell) {
+      switch (cell.value.nodeName.toLowerCase()) {
+        case 'processor':
+          return cell.getAttribute('name', 'interfaceType');
+        case 'partof':
+          return 'partof';
+      }
+    };
   }
 
 }

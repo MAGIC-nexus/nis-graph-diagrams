@@ -705,6 +705,17 @@ export class ModelService {
         }
     }
 
+    updateEntityName(entityId : number, name : string) {
+        let e = this.allObjects.get(entityId);
+        if (e) {
+            if (e instanceof Processor || e instanceof InterfaceType) {
+                e.name = name;
+            }
+        } else {
+            return 0;
+        }
+    }
+
     readEntity(entityId: number): Processor | InterfaceType {
         let e = this.allObjects.get(entityId);
         if (e) {

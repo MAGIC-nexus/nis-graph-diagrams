@@ -124,6 +124,7 @@ declare class mxGraph {
   collapseExpandResource;
   graphHandler;
   getChildCells()
+  getChildEdges()
   getTooltipForCell(cell);
   init(container);
   createHandlers(container);

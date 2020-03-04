@@ -328,7 +328,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
 
   submitCreateInterfaceType(event: any) {
-    console.log(event.nameInterfaceType);
     event.preventDefault();
     this.createInterfaceType();
   }
@@ -342,8 +341,6 @@ export class GraphicalEditorComponentComponent implements OnInit {
   }
 
   showFormProcessor(event: ProcessorFormDto) {
-
-    console.log(event);
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formProcessorTitle,
