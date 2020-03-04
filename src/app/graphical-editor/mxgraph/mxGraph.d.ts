@@ -123,6 +123,10 @@ declare class mxGraph {
   containsValidationErrorsResource;
   collapseExpandResource;
   graphHandler;
+  popupMenuHandler : {
+    factoryMethod,
+  };
+  setTooltips(boolean);
   getChildCells()
   getChildEdges()
   getTooltipForCell(cell);
@@ -153,7 +157,6 @@ declare class mxGraph {
   startEditing(evt);
   startEditingAtCell(cell, evt);
   getEditingValue(cell, evt);
-  popupMenuHandler(graph, factoryMethod);
   stopEditing(cancel);
   labelChanged(cell, value, evt);
   cellLabelChanged(cell, value, autoSize);

@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
+import { MatMenuTrigger } from '@angular/material';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -25,6 +26,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
+
+  //ContextMenuProcessor
+  @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
+  contextMenuProcessorPosition = {
+    x: '0px',
+    y: '0px',
+  }
 
 
   graph: mxGraph;
@@ -148,10 +156,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let cellTarget = evt.getProperty('cell');
     console.log(cellTarget);
     console.log(this.modelService);
-
-    // if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-    //   this.showFormProcessor(cellTarget.getAttribute("entityId"));
-    // }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -409,9 +413,36 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private contextMenu() {
-    this.graph.popupMenuHandler = function (menu, cell, evt) {
-      return createPopupMenu(graph, menu, cell, evt);
+
+    mxEvent.disableContextMenu(this.graphContainer.nativeElement);
+
+    let processorInstance = this;
+    (<HTMLDivElement>document.getElementsByClassName("cdk-overlay-container")[0]).oncontextmenu = (evt) => {
+      evt.preventDefault();
+      return false;
     };
+
+    function createPopupMenu(cell : mxCell, event : PointerEvent) {
+      if (cell.value.nodeName.toLowerCase() == "processor") {
+        processorInstance.contextMenuProcessorPosition.x = event.clientX + 'px';
+        processorInstance.contextMenuProcessorPosition.y = event.clientY + 'px';
+        processorInstance.contextMenuProcessor.menuData = { 'cell': cell };
+        processorInstance.contextMenuProcessor.menu.focusFirstItem('mouse');
+        processorInstance.contextMenuProcessor.openMenu();
+      }
+    }
+
+    this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt : PointerEvent) {
+      if (cell != null) {
+        return createPopupMenu(cell, evt);
+      }
+    };
+  }
+
+  onContextMenuProcessorForm(cell: mxCell) {
+    if (cell != undefined && cell.value.nodeName == "processor") {
+      this.showFormProcessor(cell.getAttribute("entityId", ""));
+    }
   }
 
 }

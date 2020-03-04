@@ -3,8 +3,21 @@
 
 <div style="background-color: rgb(214, 214, 214);width: 40px; 
 position: absolute; top: 10px; left: 10px; border-radius: 5px; padding: 10px 5px;">
-    <img #processorToolbar src="assets/toolbar/rectangle.gif" alt="rectangle" style="width: 100%; height: auto; cursor: pointer;"/>
+  <img #processorToolbar src="assets/toolbar/rectangle.gif" alt="rectangle"
+    style="width: 100%; height: auto; cursor: pointer;" />
 
-    <img class="toolbar-relationship" (click)="imageToolbarRelationshipClick($event, RelationshipType.PartOf)" 
-    src="assets/toolbar/arrow.png" alt="rectangle" style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;"/>
+  <img class="toolbar-relationship" (click)="imageToolbarRelationshipClick($event, RelationshipType.PartOf)"
+    src="assets/toolbar/arrow.png" alt="rectangle"
+    style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;" />
 </div>
+
+
+<!-- Context Menu Processor-->
+<div style="visibility: hidden; position: fixed" [style.left]="contextMenuProcessorPosition.x"
+  [style.top]="contextMenuProcessorPosition.y" [matMenuTriggerFor]="contextMenuProcessor">
+</div>
+<mat-menu #contextMenuProcessor="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuProcessorForm(cell)">Edit</button>
+  </ng-template>
+</mat-menu>
