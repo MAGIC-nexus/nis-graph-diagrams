@@ -142,6 +142,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private doubleClickGraph(graph, evt) {
     let cellTarget = evt.getProperty('cell');
+    console.log(cellTarget);
 
     if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
       this.showFormProcessor(cellTarget.getAttribute("id"));

@@ -37,9 +37,10 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   ngAfterViewInit() {
     this.graph = new mxGraph(this.graphContainer.nativeElement);
-    this.customLabel();
-    this.graphMouseEvent();
     this.makeDraggableToolbar();
+    this.graphMouseEvent();
+    this.graphEvents();
+    this.customLabel();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -164,12 +165,26 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     }
   }
 
+  private graphEvents() {
+    this.graph.addListener(mxEvent.CELLS_MOVED, this.cellsMoveGraph.bind(this));
+  }
+
+  private cellsMoveGraph(graph, event: mxEventObject) {
+    let cellsMoved = event.properties.cells;
+    for (let cell of cellsMoved) {
+      if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
+        this.modelService.updateEntityAppearanceInDiagram(this.diagramId, cell.id, cell.geometry.width,
+          cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+      }
+    }
+  }
+
   private customLabel() {
     let modelService = this.modelService;
     let diagramId = this.diagramId;
 
     this.graph.convertValueToString = (cell: mxCell) => {
-      console.log("convertValueToString");
       switch (cell.value.nodeName.toLowerCase()) {
         case 'interfacetype':
           return cell.getAttribute('name', 'interfaceType');
@@ -190,20 +205,19 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
               execute: function () {
                 if (this.cell != null) {
                   var tmp = this.cell.getAttribute(this.attribute);
-    
+
                   if (this.previous == null) {
                     this.cell.value.removeAttribute(this.attribute);
                   }
                   else {
                     this.cell.setAttribute(this.attribute, this.previous);
                   }
-    
+
                   this.previous = tmp;
                 }
               }
             };
             modelService.updateEntityName(Number(cell.id), newValue);
-            console.log(modelService.readEntity(Number(cell.id)));
             this.getModel().execute(edit);
           }
           finally {
@@ -215,7 +229,12 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     }
 
     this.graph.getEditingValue = function (cell: mxCell) {
-      return cell.getAttribute('name','interfaceType')
+      switch (cell.value.nodeName.toLowerCase()) {
+        case 'interfacetype':
+          return cell.getAttribute('name', 'interfaceType');
+        case 'partof':
+          return 'partof';
+      }
     };
   }
 }

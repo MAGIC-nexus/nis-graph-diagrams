@@ -77,9 +77,10 @@ export class DiagramComponentHelper {
     component.relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
     component.imageToolbarRelationship.style.backgroundColor = "transparent";
     component.graph.setCellStyles('movable', '1', component.graph.getChildCells());
+    component.graph.setCellStyles('movable', '0', component.graph.getChildEdges());
   }
 
-  static checkRelationshipPartOfSource(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent, 
+  static checkRelationshipPartOfSource(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
     cell): Boolean {
     if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
       let relationshipErrorDto = new SnackErrorDto();
@@ -91,14 +92,14 @@ export class DiagramComponentHelper {
   }
 
   static checkRelationshipPartOfTarget(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
-    cell) : Boolean {
+    cell): Boolean {
     if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
       let relationshipErrorDto = new SnackErrorDto();
       relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
       component.snackBarErrorEmitter.emit(relationshipErrorDto);
       return false;
     };
-    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.id), 
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.id),
       Number(component.sourceCellRelationship.id));
     if (messageError != "") {
       let relationshipErrorDto = new SnackErrorDto();
@@ -113,15 +114,18 @@ export class DiagramComponentHelper {
     cell) {
     component.graph.getModel().beginUpdate();
     let doc = mxUtils.createXmlDocument();
-    let id = component.modelService.createRelationship(RelationshipType.PartOf, Number(component.sourceCellRelationship.id), 
-    Number(cell.id));
+    let id = component.modelService.createRelationship(RelationshipType.PartOf, Number(component.sourceCellRelationship.id),
+      Number(cell.id));
     let partOfDoc = doc.createElement('partof');
     partOfDoc.setAttribute("name", "name");
     partOfDoc.setAttribute("id", id);
     component.graph.insertEdge(component.graph.getDefaultParent(), null, partOfDoc,
-      component.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1;movable=0');
-      component.graph.getModel().endUpdate();
-      component.updateTreeEmitter.emit(null);
+      component.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
+    component.graph.getModel().endUpdate();
+    component.graph.setCellStyles('movable', '1', component.graph.getChildCells());
+    DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
+    component.graph.setCellStyles('movable', '0', component.graph.getChildCells());
+    component.updateTreeEmitter.emit(null);
   }
 
 }
