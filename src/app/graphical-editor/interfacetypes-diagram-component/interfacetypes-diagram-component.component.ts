@@ -69,7 +69,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let doc = mxUtils.createXmlDocument();
     let interfaceTypeDoc = doc.createElement('interfacetype');
     interfaceTypeDoc.setAttribute('name', name);
-    this.graph.insertVertex(this.graph.getDefaultParent(), id.toString(), interfaceTypeDoc, pt.x, pt.y,
+    interfaceTypeDoc.setAttribute('entityId', id);
+    this.graph.insertVertex(this.graph.getDefaultParent(), null, interfaceTypeDoc, pt.x, pt.y,
       100, 80);
     this.graph.getModel().endUpdate();
     this.modelService.addEntityToDiagram(this.diagramId, id);
@@ -98,6 +99,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   private doubleClickGraph(graph, evt) {
     let cellTarget = evt.getProperty('cell');
     console.log(cellTarget);
+    console.log(this.modelService);
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -170,19 +172,18 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   private cellsMoveGraph(graph, event: mxEventObject) {
-    let cellsMoved = event.properties.cells;
+    let cellsMoved: [mxCell] = event.properties.cells;
     for (let cell of cellsMoved) {
       if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
-        this.modelService.updateEntityAppearanceInDiagram(this.diagramId, cell.id, cell.geometry.width,
-          cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        this.modelService.updateEntityAppearanceInDiagram(this.diagramId, Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
         DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
       }
     }
   }
 
   private customLabel() {
-    let modelService = this.modelService;
-    let diagramId = this.diagramId;
+    let interfacetypeInstance = this;
 
     this.graph.convertValueToString = (cell: mxCell) => {
       switch (cell.value.nodeName.toLowerCase()) {
@@ -217,7 +218,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
                 }
               }
             };
-            modelService.updateEntityName(Number(cell.id), newValue);
+            interfacetypeInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId','')), newValue);
+            interfacetypeInstance.updateTreeEmitter.emit(null);
             this.getModel().execute(edit);
           }
           finally {
@@ -225,7 +227,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           }
           break;
       }
-      DiagramComponentHelper.updateGraphInModel(diagramId, this);
+      DiagramComponentHelper.updateGraphInModel(interfacetypeInstance.diagramId, this);
     }
 
     this.graph.getEditingValue = function (cell: mxCell) {
