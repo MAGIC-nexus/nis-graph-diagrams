@@ -27,7 +27,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
   imageToolbarRelationship: HTMLImageElement;
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
-  sourceCellRelationship;
+  sourceCellRelationship : mxCell;
 
   constructor() { }
 

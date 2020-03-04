@@ -32,7 +32,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
   imageToolbarRelationship: HTMLImageElement;
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
-  sourceCellRelationship;
+  sourceCellRelationship : mxCell;
 
   constructor() { }
 

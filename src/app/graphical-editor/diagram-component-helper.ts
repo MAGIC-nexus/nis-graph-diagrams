@@ -114,8 +114,8 @@ export class DiagramComponentHelper {
     cell) {
     component.graph.getModel().beginUpdate();
     let doc = mxUtils.createXmlDocument();
-    let id = component.modelService.createRelationship(RelationshipType.PartOf, Number(component.sourceCellRelationship.id),
-      Number(cell.id));
+    let id = component.modelService.createRelationship(RelationshipType.PartOf, 
+      Number(component.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
     let partOfDoc = doc.createElement('partof');
     partOfDoc.setAttribute("name", "name");
     partOfDoc.setAttribute("id", id);
