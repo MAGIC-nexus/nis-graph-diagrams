@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2, AfterViewInit } from '@angular/core';
 import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
@@ -6,7 +6,6 @@ import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
-import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-component/processors-diagram-component-dto';
 
@@ -15,7 +14,7 @@ import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-comp
   templateUrl: './graphical-editor-component.component.html',
   styleUrls: ['./graphical-editor-component.component.css']
 })
-export class GraphicalEditorComponentComponent implements OnInit {
+export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit {
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
@@ -24,6 +23,7 @@ export class GraphicalEditorComponentComponent implements OnInit {
   private readonly ID_INTERFACETYPES = -1;
 
   private modalRef: NzModalRef
+  // name;
 
   //Form Processor
   private proccesorIdForm: string;
@@ -114,6 +114,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
   ngOnInit() {
     DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
+  }
+
+  ngAfterViewInit() {
+    if (document.getElementsByClassName("cdk-overlay-container")[0] == undefined) {
+      let wrapPopup = document.createElement("div");
+      wrapPopup.className = "cdk-overlay-container";
+      document.body.append(wrapPopup);
+    }
   }
 
   private eventsProcessorSubject() {
@@ -340,7 +348,14 @@ export class GraphicalEditorComponentComponent implements OnInit {
     this.updateTree();
   }
 
+  doubleClickProcessorTree(node : TreeNode) {
+    let processorFormDto = new ProcessorFormDto();
+    processorFormDto.cellId = node.data.id;
+    this.showFormProcessor(processorFormDto);
+  }
+
   showFormProcessor(event: ProcessorFormDto) {
+    console.log(this.modelService.readEntity(Number(event.cellId)));
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formProcessorTitle,

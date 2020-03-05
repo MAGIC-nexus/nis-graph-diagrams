@@ -61,7 +61,7 @@
             <tree-node-expander [node]="node"></tree-node-expander>
             <div class="node-content-wrapper" [class.node-content-wrapper-active]="node.isActive"
               [class.node-content-wrapper-focused]="node.isFocused" (click)="node.mouseAction('click', $event)"
-              (dblclick)="node.mouseAction('dblClick', $event)" (contextmenu)="node.mouseAction('contextmenu', $event)"
+              (dblclick)="doubleClickProcessorTree(node)" (contextmenu)="node.mouseAction('contextmenu', $event)"
               (treeDrop)="node.onDrop($event)" [treeAllowDrop]="node.allowDrop" [treeDrag]="node"
               [treeDragEnabled]="node.allowDrag()">
 
@@ -182,11 +182,11 @@
   <ng-template #formProcessorContent>
     <form nz-form>
       <nz-form-item>
-        <nz-form-label [nzSpan]="3" nzFor="test">Test</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Please input your username!">
-          <input id="testFormProcessor" type="text" nz-input formControlName="test" />
+        <nz-form-label [nzSpan]="6" nzFor="email">Name</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+          <!-- <input [(ngModel)]="name" nz-input name="email" type="text"> -->
         </nz-form-control>
-      </nz-form-item>
+      </nz-form-item >
     </form>
   </ng-template>
   <ng-template #formProcessorFooter>

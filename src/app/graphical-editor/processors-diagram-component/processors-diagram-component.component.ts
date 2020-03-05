@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
+import { MatMenuTrigger } from '@angular/material';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -21,11 +22,18 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Input() diagramId: number;
   @Input() modelService: ModelService;
 
+  //Emitters
   @Output("createProccesor") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
 
+  //ContextMenuProcessor
+  @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
+  contextMenuProcessorPosition = {
+    x: '0px',
+    y: '0px',
+  }
 
   graph: mxGraph;
 
@@ -47,6 +55,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.eventsProcessorSubject();
     this.graphMouseEvent();
     this.customLabel();
+    this.contextMenu();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -105,20 +114,21 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
         graph.getModel().beginUpdate();
         let interfaceTypeId = element.getAttribute("data-node-id");
-        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id), 
+        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.getAttribute("entityId")),
           Number(interfaceTypeId));
-        let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
-        let doc = mxUtils.createXmlDocument();
-        let port = doc.createElement('port');
-        port.setAttribute('name', nameInterfaceType);
-        port.setAttribute('entityId', id);
-
-        let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-          'fontSize=9;shape=ellipse;resizable=0;');
-        v2.geometry.offset = new mxPoint(-15, -15);
-        v2.geometry.relative = true;
-        graph.getModel().endUpdate();
-
+          console.log(id);
+        if (id >= 0) {
+          let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
+          let doc = mxUtils.createXmlDocument();
+          let port = doc.createElement('port');
+          port.setAttribute('name', nameInterfaceType);
+          port.setAttribute('entityId', id);
+          let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
+            'fontSize=9;shape=ellipse;resizable=0;');
+          portVertex.geometry.offset = new mxPoint(-15, -15);
+          portVertex.geometry.relative = true;
+          graph.getModel().endUpdate();
+        }
       }
 
     }
@@ -147,10 +157,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let cellTarget = evt.getProperty('cell');
     console.log(cellTarget);
     console.log(this.modelService);
-
-    // if (cellTarget != undefined && cellTarget.value.nodeName == "processor") {
-    //   this.showFormProcessor(cellTarget.getAttribute("entityId"));
-    // }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -165,9 +171,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);
       }
-    } 
+    }
   }
-  
+
 
   private checkRelationshipCellSource(cell): Boolean {
     switch (this.relationshipSelect) {
@@ -177,7 +183,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     return false;
   }
 
-  private mouseUpGraph(sender, mouseEvent : mxMouseEvent) {
+  private mouseUpGraph(sender, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
 
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
@@ -193,7 +199,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     }
   }
 
-  private checkRelationshipCellTarget(cell) : Boolean {
+  private checkRelationshipCellTarget(cell): Boolean {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfTarget(this, cell);
@@ -356,7 +362,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           if (portName.length < 3) {
             return portName;
           } else {
-            return portName.substring(0,3);
+            return portName.substring(0, 3);
           }
       }
     }
@@ -385,7 +391,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
                 }
               }
             };
-            processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId','')), newValue);
+            processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
             processorInstance.updateTreeEmitter.emit(null);
             this.getModel().execute(edit);
           }
@@ -405,6 +411,39 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           return 'partof';
       }
     };
+  }
+
+  private contextMenu() {
+
+    mxEvent.disableContextMenu(this.graphContainer.nativeElement);
+
+    let processorInstance = this;
+
+    function createPopupMenu(cell: mxCell, event: PointerEvent) {
+      if (cell.value.nodeName.toLowerCase() == "processor") {
+        processorInstance.contextMenuProcessorPosition.x = event.clientX + 'px';
+        processorInstance.contextMenuProcessorPosition.y = event.clientY + 'px';
+        processorInstance.contextMenuProcessor.menuData = { 'cell': cell };
+        processorInstance.contextMenuProcessor.menu.focusFirstItem('mouse');
+        processorInstance.contextMenuProcessor.openMenu();
+      }
+    }
+
+    this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt: PointerEvent) {
+      (<HTMLDivElement>document.getElementsByClassName("cdk-overlay-container")[0]).oncontextmenu = (evt) => {
+        evt.preventDefault();
+        return false;
+      };
+      if (cell != null) {
+        return createPopupMenu(cell, evt);
+      }
+    };
+  }
+
+  onContextMenuProcessorForm(cell: mxCell) {
+    if (cell != undefined && cell.value.nodeName == "processor") {
+      this.showFormProcessor(cell.getAttribute("entityId", ""));
+    }
   }
 
 }
