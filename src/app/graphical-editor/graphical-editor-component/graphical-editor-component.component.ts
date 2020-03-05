@@ -6,7 +6,6 @@ import '../../model-manager';
 import { ModelService, DiagramType, Diagram } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
-import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-component/processors-diagram-component-dto';
 
@@ -24,6 +23,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   private readonly ID_INTERFACETYPES = -1;
 
   private modalRef: NzModalRef
+  // name;
 
   //Form Processor
   private proccesorIdForm: string;
@@ -348,7 +348,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.updateTree();
   }
 
+  doubleClickProcessorTree(node : TreeNode) {
+    let processorFormDto = new ProcessorFormDto();
+    processorFormDto.cellId = node.data.id;
+    this.showFormProcessor(processorFormDto);
+  }
+
   showFormProcessor(event: ProcessorFormDto) {
+    console.log(this.modelService.readEntity(Number(event.cellId)));
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formProcessorTitle,

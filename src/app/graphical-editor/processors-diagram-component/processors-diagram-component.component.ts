@@ -22,6 +22,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Input() diagramId: number;
   @Input() modelService: ModelService;
 
+  //Emitters
   @Output("createProccesor") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
@@ -33,7 +34,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     x: '0px',
     y: '0px',
   }
-
 
   graph: mxGraph;
 
@@ -114,20 +114,21 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
         graph.getModel().beginUpdate();
         let interfaceTypeId = element.getAttribute("data-node-id");
-        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.id),
+        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.getAttribute("entityId")),
           Number(interfaceTypeId));
-        let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
-        let doc = mxUtils.createXmlDocument();
-        let port = doc.createElement('port');
-        port.setAttribute('name', nameInterfaceType);
-        port.setAttribute('entityId', id);
-
-        let v2 = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-          'fontSize=9;shape=ellipse;resizable=0;');
-        v2.geometry.offset = new mxPoint(-15, -15);
-        v2.geometry.relative = true;
-        graph.getModel().endUpdate();
-
+          console.log(id);
+        if (id >= 0) {
+          let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
+          let doc = mxUtils.createXmlDocument();
+          let port = doc.createElement('port');
+          port.setAttribute('name', nameInterfaceType);
+          port.setAttribute('entityId', id);
+          let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
+            'fontSize=9;shape=ellipse;resizable=0;');
+          portVertex.geometry.offset = new mxPoint(-15, -15);
+          portVertex.geometry.relative = true;
+          graph.getModel().endUpdate();
+        }
       }
 
     }
@@ -418,7 +419,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
     let processorInstance = this;
 
-    function createPopupMenu(cell : mxCell, event : PointerEvent) {
+    function createPopupMenu(cell: mxCell, event: PointerEvent) {
       if (cell.value.nodeName.toLowerCase() == "processor") {
         processorInstance.contextMenuProcessorPosition.x = event.clientX + 'px';
         processorInstance.contextMenuProcessorPosition.y = event.clientY + 'px';
@@ -428,7 +429,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       }
     }
 
-    this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt : PointerEvent) {
+    this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt: PointerEvent) {
       (<HTMLDivElement>document.getElementsByClassName("cdk-overlay-container")[0]).oncontextmenu = (evt) => {
         evt.preventDefault();
         return false;

@@ -17,7 +17,8 @@ import {
   NzModalModule, 
   NzFormModule, 
   NzInputModule, 
-  NzButtonModule 
+  NzButtonModule, 
+  NzRadioModule
 } from 'ng-zorro-antd';
 
 import { GraphicalEditorComponentComponent } from './graphical-editor-component/graphical-editor-component.component';
@@ -27,6 +28,7 @@ import { MatTabsModule } from "@angular/material/tabs";
 import { AngularSplitModule } from 'angular-split'; // https://bertrandg.github.io/angular-split/#/
 import { TreeModule } from "angular-tree-component";
 import { HttpClientModule } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -34,6 +36,8 @@ import { HttpClientModule } from '@angular/common/http';
     InterfacetypesDiagramComponentComponent,
     ProcessorsDiagramComponentComponent],
   imports: [
+    ReactiveFormsModule,
+    FormsModule,
     CommonModule,
     AngularSplitModule.forChild(),
     TreeModule.forRoot(),
@@ -53,6 +57,7 @@ import { HttpClientModule } from '@angular/common/http';
     NzFormModule,
     NzInputModule,
     NzButtonModule,
+    NzRadioModule,
   ],
   exports: [
       GraphicalEditorComponentComponent,
