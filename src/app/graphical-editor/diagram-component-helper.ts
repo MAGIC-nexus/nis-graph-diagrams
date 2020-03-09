@@ -128,10 +128,58 @@ export class DiagramComponentHelper {
     component.updateTreeEmitter.emit(null);
   }
 
+  static changeNameEntityById(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent, 
+    name : string, id) {
+      let updateGraphXML = false;
+      component.graph.getModel().beginUpdate();
+      let cells : [mxCell] = component.graph.getChildCells();
+      for (let cell of cells) {
+        if (cell.getAttribute('entityId','') == id) {
+          cell.setAttribute('name', name);
+          try {
+            let edit = {
+              cell: cell,
+              attribute: "name",
+              value: name,
+              previous: name,
+              execute: function () {
+                if (this.cell != null) {
+                  var tmp = this.cell.getAttribute(this.attribute);
+
+                  if (this.previous == null) {
+                    this.cell.value.removeAttribute(this.attribute);
+                  }
+                  else {
+                    this.cell.setAttribute(this.attribute, this.previous);
+                  }
+
+                  this.previous = tmp;
+                }
+              }
+            };
+            component.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), name);
+            component.updateTreeEmitter.emit(null);
+            component.graph.getModel().execute(edit);
+          }
+          finally {
+            component.graph.getModel().endUpdate();
+          }
+          updateGraphXML = true;
+        }
+      }
+      if(updateGraphXML) DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
+      component.graph.getModel().endUpdate();
+  }
+
 }
 
 export class SnackErrorDto {
   message: string;
+}
+
+export interface ChangeNameEntityDto {
+  cellId,
+  name : string;
 }
 
 export enum StatusCreatingRelationship {

@@ -180,7 +180,7 @@
     <span class="title-modal">Form Processor</span>
   </ng-template>
   <ng-template #formProcessorContent>
-    <form nz-form>
+    <form (ngSubmit)="submitProcessorForm($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Name</nz-form-label>
         <nz-form-control [nzSpan]="18">
