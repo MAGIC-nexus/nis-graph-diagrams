@@ -681,6 +681,7 @@ export class ModelService {
                     e.functionalOrStructural = properties.functionalOrStructural;
                     e.accounted = properties.accounted;
                     e.subsystemType = properties.subsystemType;
+                    e.description = properties.description;
                     // TODO Copy Interfaces?
                     return 1; // OK
                 } else {
@@ -695,6 +696,7 @@ export class ModelService {
                     e.oppositeSubsystemType = properties.oppositeSubsystemType;
                     e.hierarchy = properties.hierarchy;
                     e.unit = properties.unit;
+                    e.description = properties.description;
                     return 1; // OK
                 } else {
                     return -1; // Wrong properties object

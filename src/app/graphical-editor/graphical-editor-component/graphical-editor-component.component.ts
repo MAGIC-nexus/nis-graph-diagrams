@@ -3,7 +3,10 @@ import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
-import { ModelService, DiagramType, Diagram } from '../../model-manager';
+import {
+  ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
+  ProcessorAccounted, ProcessorSubsystemType, Processor
+} from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
@@ -16,6 +19,10 @@ import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-comp
 })
 export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit {
 
+  ProcessorFunctionalOrStructuralEnum = ProcessorFunctionalOrStructural;
+  ProcessorAccountedEnum = ProcessorAccounted;
+  ProcessorSubsystemTypeEnum = ProcessorSubsystemType;
+
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
   private readonly ID_DIAGRAMS = -3;
@@ -23,10 +30,18 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   private readonly ID_INTERFACETYPES = -1;
 
   private modalRef: NzModalRef
-  // name;
 
   //Form Processor
-  private proccesorIdForm: string;
+  private proccesorIdForm;
+  private oldNameFormProcessor : string;
+  nameFormProcessor: string;
+  levelFormProcessor: string;
+  systemFormProcessor: string;
+  geolocationFormProcessor: string;
+  descriptionFormProcessor: string;
+  functionalOrStructuralFormProcessor: number;
+  accountedFormProcessor: number;
+  subsystemTypeFormProcessor: number;
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
@@ -207,6 +222,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzTitle: this.formCreateDiagramTitle,
       nzContent: this.formCreateDiagramContent,
       nzFooter: this.formCreateDiagramFooter,
+      nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
       let form = this.modalRef.getElement().getElementsByTagName("form")[0];
@@ -323,6 +339,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzTitle: this.formCreateInterfaceTypeTitle,
       nzContent: this.formCreateInterfaceTypeContent,
       nzFooter: this.formCreateInterfaceTypeFooter,
+      nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
@@ -348,28 +365,72 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.updateTree();
   }
 
-  doubleClickProcessorTree(node : TreeNode) {
+  doubleClickProcessorTree(node: TreeNode) {
     let processorFormDto = new ProcessorFormDto();
     processorFormDto.cellId = node.data.id;
     this.showFormProcessor(processorFormDto);
   }
 
   showFormProcessor(event: ProcessorFormDto) {
-    console.log(this.modelService.readEntity(Number(event.cellId)));
 
-    this.modalRef = this.nzModalService.create({
-      nzTitle: this.formProcessorTitle,
-      nzContent: this.formProcessorContent,
-      nzFooter: this.formProcessorFooter,
-    });
-    this.modalRef.afterOpen.subscribe(() => {
-      this.draggableModal();
-      let titles = document.getElementsByClassName("title-modal");
+    let processor = <Processor>this.modelService.readEntity(Number(event.cellId));
+    if (processor instanceof Processor) {
+      this.proccesorIdForm = event.cellId;
+      this.oldNameFormProcessor = processor.name;
+      this.nameFormProcessor = processor.name;
+      this.levelFormProcessor = processor.level;
+      this.systemFormProcessor = processor.system;
+      this.geolocationFormProcessor = processor.geolocation;
+      this.functionalOrStructuralFormProcessor = processor.functionalOrStructural;
+      this.accountedFormProcessor = processor.accounted;
+      this.subsystemTypeFormProcessor = processor.subsystemType;
+      this.descriptionFormProcessor = processor.description;
 
-      for (let i = 0; i < titles.length; i++) {
-        titles[0].parentElement.parentElement.style.cursor = "move";
-      }
-    });
+      this.modalRef = this.nzModalService.create({
+        nzTitle: this.formProcessorTitle,
+        nzContent: this.formProcessorContent,
+        nzFooter: this.formProcessorFooter,
+        nzWrapClassName: 'vertical-center-modal',
+        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+      });
+      this.modalRef.afterOpen.subscribe(() => {
+        this.draggableModal();
+        let titles = document.getElementsByClassName("title-modal");
+
+        for (let i = 0; i < titles.length; i++) {
+          titles[0].parentElement.parentElement.style.cursor = "move";
+        }
+      });
+
+    }
+  }
+
+  submitProcessorForm(event) {
+    event.preventDefault();
+    this.updateProcessor();
+  }
+
+  updateProcessor() {
+    this.modalRef.destroy();
+    let processor = new Processor();
+    processor.name = this.nameFormProcessor;
+    processor.level = this.levelFormProcessor;
+    processor.system = this.systemFormProcessor;
+    processor.geolocation = this.geolocationFormProcessor;
+    processor.functionalOrStructural = this.functionalOrStructuralFormProcessor;
+    processor.accounted = this.accountedFormProcessor;
+    processor.subsystemType = this.subsystemTypeFormProcessor;
+    processor.description = this.descriptionFormProcessor;
+    this.modelService.updateEntity(Number(this.proccesorIdForm), processor);
+    if (this.oldNameFormProcessor != this.nameFormProcessor) {
+      this.proccesorSubject.next({
+        name: "changeNameCellsById",
+        data: {
+          cellId: this.proccesorIdForm,
+          name: this.nameFormProcessor,
+        },
+      });
+    }
   }
 
   showFormCreateProcessor(event: CreateProcessorDto) {
@@ -380,6 +441,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzTitle: this.formCreateProcessorTitle,
       nzContent: this.formCreateProcessorContent,
       nzFooter: this.formCreateProcessorFooter,
+      nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
@@ -405,7 +467,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   showSnackBarError(event: SnackErrorDto) {
-    this.snackBarService.open(event.message,null, {
+    this.snackBarService.open(event.message, null, {
       duration: 2000,
     });
   }

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, ChangeNameEntityDto } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
@@ -100,6 +100,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case "portDraggable":
           this.portDraggable(event.data);
           break;
+        case "changeNameCellsById":
+          this.changeNameEntityById(event.data);
+          break;
       }
     });
   }
@@ -116,7 +119,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         let interfaceTypeId = element.getAttribute("data-node-id");
         let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.getAttribute("entityId")),
           Number(interfaceTypeId));
-          console.log(id);
         if (id >= 0) {
           let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
           let doc = mxUtils.createXmlDocument();
@@ -133,6 +135,10 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
     }
     mxUtils.makeDraggable(element, this.graph, funct);
+  }
+
+  private changeNameEntityById(event : ChangeNameEntityDto) {
+    DiagramComponentHelper.changeNameEntityById(this, event.name, event.cellId);
   }
 
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
@@ -155,8 +161,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private doubleClickGraph(graph, evt) {
     let cellTarget = evt.getProperty('cell');
-    console.log(cellTarget);
-    console.log(this.modelService);
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
