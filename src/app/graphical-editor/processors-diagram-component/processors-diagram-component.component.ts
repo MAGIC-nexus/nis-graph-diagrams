@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, ChangeNameEntityDto } from '../diagram-component-helper';
-import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
-import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
+import { ModelService, EntityTypes, RelationshipType, InterfaceType } from '../../model-manager';
+import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
@@ -27,6 +27,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
+  @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -114,15 +115,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cellTarget = graph.getCellAt(pt.x, pt.y);
       if (cellTarget != null && cellTarget.value.nodeName == "processor") {
         graph.stopEditing(false);
-
-        graph.getModel().beginUpdate();
         let interfaceTypeId = element.getAttribute("data-node-id");
         let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.getAttribute("entityId")),
           Number(interfaceTypeId));
         if (id >= 0) {
+          graph.getModel().beginUpdate();
           let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
           let doc = mxUtils.createXmlDocument();
-          let port = doc.createElement('port');
+          let port = doc.createElement('interface');
           port.setAttribute('name', nameInterfaceType);
           port.setAttribute('entityId', id);
           let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
@@ -130,6 +130,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           portVertex.geometry.offset = new mxPoint(-15, -15);
           portVertex.geometry.relative = true;
           graph.getModel().endUpdate();
+          DiagramComponentHelper.updateGraphInModel(processorsDiagramInstance.diagramId,
+             processorsDiagramInstance.graph);
         }
       }
 
@@ -149,7 +151,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private graphMouseEvent() {
-    this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
     this.graph.addMouseListener(
       {
         mouseDown: this.mouseDownGraph.bind(this),
@@ -157,10 +158,18 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         mouseUp: this.mouseUpGraph.bind(this),
       }
     )
+    this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
   }
 
   private doubleClickGraph(graph, evt) {
-    let cellTarget = evt.getProperty('cell');
+    let cellTarget : mxCell = evt.getProperty('cell');
+    if (cellTarget) {
+      switch(cellTarget.value.nodeName.toLowerCase()) {
+        case 'interface':
+          let interfaceDto : InterfaceFormDto = { cellId : cellTarget.getAttribute('entityId', '')};
+          this.interfaceFormEmitter.emit(interfaceDto);
+      }
+    }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -361,7 +370,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           return cell.getAttribute('name', 'Processor');
         case 'partof':
           return 'partof';
-        case 'port':
+        case 'interface':
           let portName = cell.getAttribute('name', 'Processor');
           if (portName.length < 3) {
             return portName;

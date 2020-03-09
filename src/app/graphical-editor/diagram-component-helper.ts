@@ -114,11 +114,11 @@ export class DiagramComponentHelper {
     cell) {
     component.graph.getModel().beginUpdate();
     let doc = mxUtils.createXmlDocument();
-    let id = component.modelService.createRelationship(RelationshipType.PartOf, 
+    let id = component.modelService.createRelationship(RelationshipType.PartOf,
       Number(component.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
     let partOfDoc = doc.createElement('partof');
     partOfDoc.setAttribute("name", "name");
-    partOfDoc.setAttribute("id", id);
+    partOfDoc.setAttribute("idRelationship", id);
     component.graph.insertEdge(component.graph.getDefaultParent(), null, partOfDoc,
       component.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
     component.graph.getModel().endUpdate();
@@ -128,47 +128,22 @@ export class DiagramComponentHelper {
     component.updateTreeEmitter.emit(null);
   }
 
-  static changeNameEntityById(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent, 
-    name : string, id) {
-      let updateGraphXML = false;
-      component.graph.getModel().beginUpdate();
-      let cells : [mxCell] = component.graph.getChildCells();
-      for (let cell of cells) {
-        if (cell.getAttribute('entityId','') == id) {
-          cell.setAttribute('name', name);
-          try {
-            let edit = {
-              cell: cell,
-              attribute: "name",
-              value: name,
-              previous: name,
-              execute: function () {
-                if (this.cell != null) {
-                  var tmp = this.cell.getAttribute(this.attribute);
-
-                  if (this.previous == null) {
-                    this.cell.value.removeAttribute(this.attribute);
-                  }
-                  else {
-                    this.cell.setAttribute(this.attribute, this.previous);
-                  }
-
-                  this.previous = tmp;
-                }
-              }
-            };
-            component.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), name);
-            component.updateTreeEmitter.emit(null);
-            component.graph.getModel().execute(edit);
-          }
-          finally {
-            component.graph.getModel().endUpdate();
-          }
-          updateGraphXML = true;
-        }
+  static changeNameEntityById(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
+    name: string, id) {
+    let updateGraphXML = false;
+    component.graph.getModel().beginUpdate();
+    let cells: [mxCell] = component.graph.getChildCells();
+    for (let cell of cells) {
+      if (cell.getAttribute('entityId', '') == id) {
+        cell.setAttribute('name', name);
+        component.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), name);
+        component.updateTreeEmitter.emit(null);
+        component.graph.getModel().endUpdate();
+        component.graph.refresh();
+        updateGraphXML = true;
       }
-      if(updateGraphXML) DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
-      component.graph.getModel().endUpdate();
+    }
+    if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
   }
 
 }
@@ -179,7 +154,7 @@ export class SnackErrorDto {
 
 export interface ChangeNameEntityDto {
   cellId,
-  name : string;
+  name: string;
 }
 
 export enum StatusCreatingRelationship {

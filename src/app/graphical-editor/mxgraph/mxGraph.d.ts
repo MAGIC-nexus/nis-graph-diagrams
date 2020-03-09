@@ -126,6 +126,7 @@ declare class mxGraph {
   popupMenuHandler : {
     factoryMethod,
   };
+  refresh();
   setTooltips(boolean);
   getChildCells()
   getChildEdges()

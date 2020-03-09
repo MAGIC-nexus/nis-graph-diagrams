@@ -795,6 +795,7 @@ export class ModelService {
             i.roegenType = properties.roegenType;
             i.orientation = properties.orientation;
             i.oppositeSubsystemType = properties.oppositeSubsystemType;
+            i.description = properties.description;
             return 0;
         } else {
             return -1; // Could not find Interface

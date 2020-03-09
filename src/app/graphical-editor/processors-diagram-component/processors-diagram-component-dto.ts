@@ -8,3 +8,7 @@ export class CreateProcessorDto {
 export class ProcessorFormDto {
     cellId;
 }
+
+export interface InterfaceFormDto {
+    cellId;
+}
