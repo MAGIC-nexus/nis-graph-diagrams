@@ -3,7 +3,8 @@ import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
-import { ModelService, DiagramType, Diagram } from '../../model-manager';
+import { ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural, 
+  ProcessorAccounted, ProcessorSubsystemType, Processor } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
@@ -16,6 +17,10 @@ import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-comp
 })
 export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit {
 
+  ProcessorFunctionalOrStructuralEnum = ProcessorFunctionalOrStructural;
+  ProcessorAccountedEnum = ProcessorAccounted;
+  ProcessorSubsystemTypeEnum = ProcessorSubsystemType;
+
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
   private readonly ID_DIAGRAMS = -3;
@@ -23,10 +28,16 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   private readonly ID_INTERFACETYPES = -1;
 
   private modalRef: NzModalRef
-  // name;
 
   //Form Processor
   private proccesorIdForm: string;
+  nameFromProcessor : string;
+  levelFromProcessor : string;
+  systemFromProcessor : string;
+  geolocationFromProcessor : string;
+  functionalOrStructuralFromProcessor : number;
+  accountedFromProcessor : number;
+  subsystemTypeFromProcessor : number;
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
@@ -207,6 +218,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzTitle: this.formCreateDiagramTitle,
       nzContent: this.formCreateDiagramContent,
       nzFooter: this.formCreateDiagramFooter,
+      nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
       let form = this.modalRef.getElement().getElementsByTagName("form")[0];
@@ -323,6 +335,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzTitle: this.formCreateInterfaceTypeTitle,
       nzContent: this.formCreateInterfaceTypeContent,
       nzFooter: this.formCreateInterfaceTypeFooter,
+      nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
@@ -355,12 +368,24 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   showFormProcessor(event: ProcessorFormDto) {
-    console.log(this.modelService.readEntity(Number(event.cellId)));
+
+    let processor = <Processor> this.modelService.readEntity(Number(event.cellId));
+    console.log(processor);
+    this.proccesorIdForm = event.cellId;
+    this.nameFromProcessor = processor.name;
+    this.levelFromProcessor = processor.level;
+    this.systemFromProcessor = processor.system;
+    this.geolocationFromProcessor = processor.geolocation;
+    this.functionalOrStructuralFromProcessor = processor.functionalOrStructural;
+    this.accountedFromProcessor = processor.accounted;
+    this.subsystemTypeFromProcessor = processor.subsystemType;
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formProcessorTitle,
       nzContent: this.formProcessorContent,
       nzFooter: this.formProcessorFooter,
+      nzWrapClassName: 'vertical-center-modal',
+      nzBodyStyle: { height : '350px', overflowY: 'scroll'},
     });
     this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
@@ -372,6 +397,17 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     });
   }
 
+  updateProcessor() {
+    console.log(this.nameFromProcessor);
+    console.log(this.levelFromProcessor);
+    console.log(this.systemFromProcessor);
+    console.log(this.geolocationFromProcessor);
+    console.log(this.functionalOrStructuralFromProcessor);
+    console.log(this.accountedFromProcessor);
+    console.log(this.subsystemTypeFromProcessor);
+
+  }
+
   showFormCreateProcessor(event: CreateProcessorDto) {
 
     this.createProcessorDto = event;
@@ -380,6 +416,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzTitle: this.formCreateProcessorTitle,
       nzContent: this.formCreateProcessorContent,
       nzFooter: this.formCreateProcessorFooter,
+      nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();

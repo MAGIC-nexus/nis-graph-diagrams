@@ -18,7 +18,7 @@ import {
   NzFormModule, 
   NzInputModule, 
   NzButtonModule, 
-  NzRadioModule
+  NzRadioModule,
 } from 'ng-zorro-antd';
 
 import { GraphicalEditorComponentComponent } from './graphical-editor-component/graphical-editor-component.component';
