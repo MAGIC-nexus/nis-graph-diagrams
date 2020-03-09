@@ -34,13 +34,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   //Form Processor
   private proccesorIdForm;
   private oldNameFormProcessor : string;
-  nameFromProcessor: string;
-  levelFromProcessor: string;
-  systemFromProcessor: string;
-  geolocationFromProcessor: string;
-  functionalOrStructuralFromProcessor: number;
-  accountedFromProcessor: number;
-  subsystemTypeFromProcessor: number;
+  nameFormProcessor: string;
+  levelFormProcessor: string;
+  systemFormProcessor: string;
+  geolocationFormProcessor: string;
+  descriptionFormProcessor: string;
+  functionalOrStructuralFormProcessor: number;
+  accountedFormProcessor: number;
+  subsystemTypeFormProcessor: number;
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
@@ -376,13 +377,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     if (processor instanceof Processor) {
       this.proccesorIdForm = event.cellId;
       this.oldNameFormProcessor = processor.name;
-      this.nameFromProcessor = processor.name;
-      this.levelFromProcessor = processor.level;
-      this.systemFromProcessor = processor.system;
-      this.geolocationFromProcessor = processor.geolocation;
-      this.functionalOrStructuralFromProcessor = processor.functionalOrStructural;
-      this.accountedFromProcessor = processor.accounted;
-      this.subsystemTypeFromProcessor = processor.subsystemType;
+      this.nameFormProcessor = processor.name;
+      this.levelFormProcessor = processor.level;
+      this.systemFormProcessor = processor.system;
+      this.geolocationFormProcessor = processor.geolocation;
+      this.functionalOrStructuralFormProcessor = processor.functionalOrStructural;
+      this.accountedFormProcessor = processor.accounted;
+      this.subsystemTypeFormProcessor = processor.subsystemType;
+      this.descriptionFormProcessor = processor.description;
 
       this.modalRef = this.nzModalService.create({
         nzTitle: this.formProcessorTitle,
@@ -411,20 +413,21 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   updateProcessor() {
     this.modalRef.destroy();
     let processor = new Processor();
-    processor.name = this.nameFromProcessor;
-    processor.level = this.levelFromProcessor;
-    processor.system = this.systemFromProcessor;
-    processor.geolocation = this.geolocationFromProcessor;
-    processor.functionalOrStructural = this.functionalOrStructuralFromProcessor;
-    processor.accounted = this.accountedFromProcessor;
-    processor.subsystemType = this.subsystemTypeFromProcessor;
+    processor.name = this.nameFormProcessor;
+    processor.level = this.levelFormProcessor;
+    processor.system = this.systemFormProcessor;
+    processor.geolocation = this.geolocationFormProcessor;
+    processor.functionalOrStructural = this.functionalOrStructuralFormProcessor;
+    processor.accounted = this.accountedFormProcessor;
+    processor.subsystemType = this.subsystemTypeFormProcessor;
+    processor.description = this.descriptionFormProcessor;
     this.modelService.updateEntity(Number(this.proccesorIdForm), processor);
-    if (this.oldNameFormProcessor != this.nameFromProcessor) {
+    if (this.oldNameFormProcessor != this.nameFormProcessor) {
       this.proccesorSubject.next({
         name: "changeNameCellsById",
         data: {
           cellId: this.proccesorIdForm,
-          name: this.nameFromProcessor,
+          name: this.nameFormProcessor,
         },
       });
     }

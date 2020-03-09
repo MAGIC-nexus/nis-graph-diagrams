@@ -184,31 +184,31 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Name</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="nameFromProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+          <input [(ngModel)]="nameFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Level</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="levelFromProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+          <input [(ngModel)]="levelFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">System</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="systemFromProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+          <input [(ngModel)]="systemFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Geolocation</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="geolocationFromProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+          <input [(ngModel)]="geolocationFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Funct/Struc</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="functionalOrStructuralFromProcessor" [ngModelOptions]="{standalone: true}">
+          <nz-radio-group [(ngModel)]="functionalOrStructuralFormProcessor" [ngModelOptions]="{standalone: true}">
             <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Functional">Functional</label>
             <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Structural">Structural</label>
             <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Notional">Notional</label>
@@ -218,7 +218,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Accounted</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="accountedFromProcessor" [ngModelOptions]="{standalone: true}">
+          <nz-radio-group [(ngModel)]="accountedFormProcessor" [ngModelOptions]="{standalone: true}">
             <label nz-radio [nzValue]="ProcessorAccountedEnum.Yes">Yes</label>
             <label nz-radio [nzValue]="ProcessorAccountedEnum.No">No</label>
           </nz-radio-group>
@@ -227,12 +227,18 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Subsystem Type</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="subsystemTypeFromProcessor" [ngModelOptions]="{standalone: true}">
+          <nz-radio-group [(ngModel)]="subsystemTypeFormProcessor" [ngModelOptions]="{standalone: true}">
             <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Local">Local</label>
             <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Environment">Environment</label>
             <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.External">External</label>
             <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.ExternalEnvironment">ExternalEnvironment</label>
           </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Description</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <textarea rows="4" nz-input [(ngModel)]="descriptionFormProcessor" [ngModelOptions]="{standalone: true}"></textarea>
         </nz-form-control>
       </nz-form-item>
     </form>
