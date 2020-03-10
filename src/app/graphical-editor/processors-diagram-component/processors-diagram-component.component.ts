@@ -1,14 +1,13 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, ChangeNameEntityDto } from '../diagram-component-helper';
-import { ModelService, EntityTypes, RelationshipType } from '../../model-manager';
-import { CreateProcessorDto, ProcessorFormDto } from './processors-diagram-component-dto';
+import { ModelService, EntityTypes, RelationshipType, InterfaceType, InterfaceOrientation } from '../../model-manager';
+import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
   selector: 'app-processors-diagram-component',
   templateUrl: './processors-diagram-component.component.html',
-  //template: '<div #graphContainer2 id="graphContainer2"></div>',
   styleUrls: ['./processors-diagram-component.component.css']
 })
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
@@ -27,6 +26,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
+  @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -40,7 +40,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
   imageToolbarRelationship: HTMLImageElement;
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
-  sourceCellRelationship : mxCell;
+  sourceCellRelationship: mxCell;
 
   constructor() { }
 
@@ -103,6 +103,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case "changeNameCellsById":
           this.changeNameEntityById(event.data);
           break;
+        case "changeInterfaceInGraph":
+          this.changeInterfaceInGraphEvent(event.data);
+          break;
       }
     });
   }
@@ -114,22 +117,23 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cellTarget = graph.getCellAt(pt.x, pt.y);
       if (cellTarget != null && cellTarget.value.nodeName == "processor") {
         graph.stopEditing(false);
-
-        graph.getModel().beginUpdate();
         let interfaceTypeId = element.getAttribute("data-node-id");
         let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.getAttribute("entityId")),
           Number(interfaceTypeId));
         if (id >= 0) {
+          graph.getModel().beginUpdate();
           let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
           let doc = mxUtils.createXmlDocument();
-          let port = doc.createElement('port');
+          let port = doc.createElement('interface');
           port.setAttribute('name', nameInterfaceType);
           port.setAttribute('entityId', id);
           let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-            'fontSize=9;shape=ellipse;resizable=0;');
+            'fontSize=9;shape=ellipse;resizable=0;fillColor=#FF8E8E;strokeColor=#FF0000');
           portVertex.geometry.offset = new mxPoint(-15, -15);
           portVertex.geometry.relative = true;
           graph.getModel().endUpdate();
+          DiagramComponentHelper.updateGraphInModel(processorsDiagramInstance.diagramId,
+            processorsDiagramInstance.graph);
         }
       }
 
@@ -137,15 +141,54 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(element, this.graph, funct);
   }
 
-  private changeNameEntityById(event : ChangeNameEntityDto) {
+  private changeNameEntityById(event: ChangeNameEntityDto) {
     DiagramComponentHelper.changeNameEntityById(this, event.name, event.cellId);
   }
 
+  private changeInterfaceInGraphEvent(event: ChangeInterfaceInGraphDto) {
+    let updateGraphXML = false;
+    let cells: [mxCell] = this.graph.getChildCells();
+    for (let cell of cells) {
+      if (cell.value.nodeName.toLowerCase() == 'processor') {
+        updateGraphXML = this.changeInterfaceInGraph(event, cell);
+      }
+    }
+    if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+  }
+
+  private changeInterfaceInGraph(event: ChangeInterfaceInGraphDto, cell: mxCell): boolean {
+    let updateGraphInXML = false;
+    if (cell.children) {
+      this.graph.getModel().beginUpdate();
+      for (let childProcessor of cell.children) {
+        if (childProcessor.value.nodeName.toLowerCase() == 'interface'
+          && childProcessor.getAttribute('entityId') == event.cellId) {
+          childProcessor.setAttribute('name', event.name);
+          if (event.orientation == InterfaceOrientation.Input) {
+            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
+            this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
+          }
+          if (event.orientation == InterfaceOrientation.Output) {
+            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
+            this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
+          }
+        }
+      }
+      this.graph.getModel().endUpdate();
+      this.graph.refresh();
+    }
+    return updateGraphInXML;
+  }
+
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
-    (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
     this.relationshipSelect = relationshipType;
+    if (this.imageToolbarRelationship != null) {
+      this.imageToolbarRelationship.style.backgroundColor = "transparent";
+    }
+    (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
     this.imageToolbarRelationship = <HTMLImageElement>event.target;
-    this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
+    let childCells = this.graph.getChildCells();
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
   }
 
   private graphMouseEvent() {
@@ -160,7 +203,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private doubleClickGraph(graph, evt) {
-    let cellTarget = evt.getProperty('cell');
+    let cellTarget: mxCell = evt.getProperty('cell');
+    if (cellTarget) {
+      switch (cellTarget.value.nodeName.toLowerCase()) {
+        case 'interface':
+          let interfaceDto: InterfaceFormDto = { cellId: cellTarget.getAttribute('entityId', '') };
+          this.interfaceFormEmitter.emit(interfaceDto);
+      }
+    }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
@@ -169,7 +219,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       this.statusCreateRelationship == StatusCreatingRelationship.notCreating) {
       if (cell != null && this.checkRelationshipCellSource(cell)) {
         let svg = sender.container.getElementsByTagName("svg")[0];
-        DiagramComponentHelper.printLineCreateRelationship(svg, cell);
+        DiagramComponentHelper.printLineCreateRelationship(svg, cell, mouseEvent);
         this.statusCreateRelationship = StatusCreatingRelationship.creating;
         this.sourceCellRelationship = cell;
       } else {
@@ -183,8 +233,21 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfSource(this, cell);
+      case RelationshipType.Exchange:
+        return this.checkRelationshipExchangeSource(cell);
     }
     return false;
+  }
+
+  private checkRelationshipExchangeSource(cell): boolean {
+    if (cell.value.nodeName.toLowerCase() != 'interface') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "exchange" should be the union between two entity of type "interface"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+
+    return true;
   }
 
   private mouseUpGraph(sender, mouseEvent: mxMouseEvent) {
@@ -207,8 +270,28 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfTarget(this, cell);
+      case RelationshipType.Exchange:
+        return this.checkRelationshipExchangeTarget(cell);
     }
     return false;
+  }
+
+  private checkRelationshipExchangeTarget(cell: mxCell): boolean {
+    if (cell.value.nodeName.toLowerCase() != 'interface') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "exchange" should be the union between two entity of type "interface"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.Exchange,
+      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
+    if (messageError != "") {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = messageError;
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    return true;
   }
 
   private createRelationship(cell) {
@@ -216,7 +299,26 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       case RelationshipType.PartOf:
         DiagramComponentHelper.createPartOfRelationship(this, cell);
         break;
+      case RelationshipType.Exchange:
+        this.createExchangeRelationship(cell);
     }
+  }
+
+  private createExchangeRelationship(cell: mxCell) {
+    this.graph.getModel().beginUpdate();
+    let doc = mxUtils.createXmlDocument();
+    let id = this.modelService.createRelationship(RelationshipType.Exchange,
+      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
+    let exchangeOfDoc = doc.createElement('exchange');
+    exchangeOfDoc.setAttribute("name", "name");
+    exchangeOfDoc.setAttribute("idRelationship", id);
+    this.graph.insertEdge(this.graph.getDefaultParent(), null, exchangeOfDoc,
+      this.sourceCellRelationship, cell, 'strokeColor=red;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
+    this.graph.getModel().endUpdate();
+    let childCells = this.graph.getChildCells();
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "1");
+    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
   }
 
   private mouseMoveGraph(sender, mouseEvent: mxMouseEvent) {
@@ -359,15 +461,17 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       switch (cell.value.nodeName.toLowerCase()) {
         case 'processor':
           return cell.getAttribute('name', 'Processor');
-        case 'partof':
-          return 'partof';
-        case 'port':
-          let portName = cell.getAttribute('name', 'Processor');
+        case 'interface':
+          let portName = cell.getAttribute('name', 'Processor').toUpperCase();
           if (portName.length < 3) {
             return portName;
           } else {
             return portName.substring(0, 3);
           }
+        case 'partof':
+          return 'partof';
+        case 'exchange':
+          return 'exchange';
       }
     }
 
@@ -413,6 +517,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           return cell.getAttribute('name', 'interfaceType');
         case 'partof':
           return 'partof';
+        case 'exchange':
+          return 'exchange';
       }
     };
   }

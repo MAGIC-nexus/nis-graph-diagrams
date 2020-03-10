@@ -36,18 +36,25 @@ export class DiagramComponentHelper {
     this.modelService.setDiagramGraph(diagramId, xml);
   }
 
-  static printLineCreateRelationship(svg: SVGElement, cell) {
+  static printLineCreateRelationship(svg: SVGElement, cell : mxCell, mouseEvent : mxMouseEvent) {
+    let x : number;
+    let y : number;
+    if (cell.value.nodeName.toLowerCase() == 'interface') {
+       x = mouseEvent.graphX;
+       y = mouseEvent.graphY;
+    } else {
+        x = cell.getGeometry().x + (cell.getGeometry().width / 2);
+        y = cell.getGeometry().y + (cell.getGeometry().height / 2);
+    }
     let line: SVGLineElement = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.classList.add("line-relationship");
     line.style.stroke = "black";
     line.style.strokeWidth = "2";
     line.style.stroke = "black";
-    let cellCenterX: number = cell.getGeometry().x + (cell.getGeometry().width / 2);
-    let cellCenterY: number = cell.getGeometry().y + (cell.getGeometry().height / 2);
-    line.setAttribute("x1", cellCenterX.toString());
-    line.setAttribute("x2", cellCenterX.toString());
-    line.setAttribute("y1", cellCenterY.toString());
-    line.setAttribute("y2", cellCenterY.toString());
+    line.setAttribute("x1", x.toString());
+    line.setAttribute("x2", x.toString());
+    line.setAttribute("y1", y.toString());
+    line.setAttribute("y2", y.toString());
     svg.append(line);
   }
 
@@ -76,7 +83,7 @@ export class DiagramComponentHelper {
   static cancelCreateRelationship(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent) {
     component.relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
     component.imageToolbarRelationship.style.backgroundColor = "transparent";
-    component.graph.setCellStyles('movable', '1', component.graph.getChildCells());
+    DiagramComponentHelper.changeStateMovableCells(component, component.graph.getChildCells(), "1");
     component.graph.setCellStyles('movable', '0', component.graph.getChildEdges());
   }
 
@@ -99,8 +106,8 @@ export class DiagramComponentHelper {
       component.snackBarErrorEmitter.emit(relationshipErrorDto);
       return false;
     };
-    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.id),
-      Number(component.sourceCellRelationship.id));
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.getAttribute("entityId", "")),
+      Number(component.sourceCellRelationship.getAttribute("entityId", "")));
     if (messageError != "") {
       let relationshipErrorDto = new SnackErrorDto();
       relationshipErrorDto.message = messageError;
@@ -114,61 +121,47 @@ export class DiagramComponentHelper {
     cell) {
     component.graph.getModel().beginUpdate();
     let doc = mxUtils.createXmlDocument();
-    let id = component.modelService.createRelationship(RelationshipType.PartOf, 
+    let id = component.modelService.createRelationship(RelationshipType.PartOf,
       Number(component.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
     let partOfDoc = doc.createElement('partof');
     partOfDoc.setAttribute("name", "name");
-    partOfDoc.setAttribute("id", id);
+    partOfDoc.setAttribute("idRelationship", id);
     component.graph.insertEdge(component.graph.getDefaultParent(), null, partOfDoc,
       component.sourceCellRelationship, cell, 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
     component.graph.getModel().endUpdate();
-    component.graph.setCellStyles('movable', '1', component.graph.getChildCells());
+    let childCells = component.graph.getChildCells();
+    DiagramComponentHelper.changeStateMovableCells(component, childCells, "1");
     DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
-    component.graph.setCellStyles('movable', '0', component.graph.getChildCells());
+    DiagramComponentHelper.changeStateMovableCells(component, childCells, "0");
     component.updateTreeEmitter.emit(null);
   }
 
-  static changeNameEntityById(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent, 
-    name : string, id) {
-      let updateGraphXML = false;
-      component.graph.getModel().beginUpdate();
-      let cells : [mxCell] = component.graph.getChildCells();
-      for (let cell of cells) {
-        if (cell.getAttribute('entityId','') == id) {
-          cell.setAttribute('name', name);
-          try {
-            let edit = {
-              cell: cell,
-              attribute: "name",
-              value: name,
-              previous: name,
-              execute: function () {
-                if (this.cell != null) {
-                  var tmp = this.cell.getAttribute(this.attribute);
-
-                  if (this.previous == null) {
-                    this.cell.value.removeAttribute(this.attribute);
-                  }
-                  else {
-                    this.cell.setAttribute(this.attribute, this.previous);
-                  }
-
-                  this.previous = tmp;
-                }
-              }
-            };
-            component.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), name);
-            component.updateTreeEmitter.emit(null);
-            component.graph.getModel().execute(edit);
-          }
-          finally {
-            component.graph.getModel().endUpdate();
-          }
-          updateGraphXML = true;
-        }
+  static changeNameEntityById(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
+    name: string, id) {
+    let updateGraphXML = false;
+    component.graph.getModel().beginUpdate();
+    let cells: [mxCell] = component.graph.getChildCells();
+    for (let cell of cells) {
+      if (cell.getAttribute('entityId', '') == id) {
+        cell.setAttribute('name', name);
+        component.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), name);
+        component.updateTreeEmitter.emit(null);
+        component.graph.getModel().endUpdate();
+        component.graph.refresh();
+        updateGraphXML = true;
       }
-      if(updateGraphXML) DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
-      component.graph.getModel().endUpdate();
+    }
+    if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
+  }
+
+  static changeStateMovableCells(component : ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
+     cells, typeMove : string) {
+    for (let cell of cells) {
+      component.graph.setCellStyles('movable', typeMove, [cell]);
+      if(cell.children) {
+        DiagramComponentHelper.changeStateMovableCells(component, cell.children, typeMove)
+      }
+    }
   }
 
 }
@@ -179,7 +172,7 @@ export class SnackErrorDto {
 
 export interface ChangeNameEntityDto {
   cellId,
-  name : string;
+  name: string;
 }
 
 export enum StatusCreatingRelationship {

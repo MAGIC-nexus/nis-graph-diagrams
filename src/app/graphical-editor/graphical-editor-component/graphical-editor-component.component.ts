@@ -5,12 +5,15 @@ import { NzModalRef, NzModalService } from 'ng-zorro-antd';
 import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
-  ProcessorAccounted, ProcessorSubsystemType, Processor
+  ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
+  Sphere, RoegenType, Interface, InterfaceType,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
-import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-component/processors-diagram-component-dto';
+import {
+  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
+} from '../processors-diagram-component/processors-diagram-component-dto';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -19,9 +22,13 @@ import { CreateProcessorDto, ProcessorFormDto } from '../processors-diagram-comp
 })
 export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit {
 
+  //Enums
   ProcessorFunctionalOrStructuralEnum = ProcessorFunctionalOrStructural;
   ProcessorAccountedEnum = ProcessorAccounted;
   ProcessorSubsystemTypeEnum = ProcessorSubsystemType;
+  InterfaceOrientationEnum = InterfaceOrientation;
+  SphereEnum = Sphere;
+  RoegenTypeEnum = RoegenType;
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
@@ -33,18 +40,32 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   //Form Processor
   private proccesorIdForm;
-  private oldNameFormProcessor : string;
+  private oldNameFormProcessor: string;
   nameFormProcessor: string;
   levelFormProcessor: string;
   systemFormProcessor: string;
   geolocationFormProcessor: string;
   descriptionFormProcessor: string;
-  functionalOrStructuralFormProcessor: number;
-  accountedFormProcessor: number;
-  subsystemTypeFormProcessor: number;
+  functionalOrStructuralFormProcessor: ProcessorFunctionalOrStructural;
+  accountedFormProcessor: ProcessorAccounted;
+  subsystemTypeFormProcessor: ProcessorSubsystemType;
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
+
+  //Form Interface
+  private interfaceIdForm;
+  private oldNameFormInterface: string;
+  nameFormInterface: string;
+  descriptionFormInterface: string;
+  orientationFormInterface: InterfaceOrientation;
+  private oldOrientationFormInterface: InterfaceOrientation;
+  sphereFormInterface: Sphere;
+  roegenTypeFormInterface: RoegenType;
+  oppositeSubsystemTypeFormInterface: ProcessorSubsystemType;
+  @ViewChild('formInterafaceTitle', { static: false }) formInterafaceTitle: TemplateRef<any>;
+  @ViewChild('formInterfaceContent', { static: false }) formInterfaceContent: TemplateRef<any>;
+  @ViewChild('formInterfaceFooter', { static: false }) formInterfaceFooter: TemplateRef<any>;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
@@ -454,8 +475,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   submitCreateProcessor(event: Event) {
-    event.preventDefault();
     this.createProcessor();
+    event.preventDefault();
   }
 
   createProcessor() {
@@ -464,6 +485,67 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     let name = form.nameInterfaceType.value.trim();
     this.createProcessorDto.component.createProcessor(name, this.createProcessorDto.pt);
     this.updateTree();
+  }
+
+  showFormInterface(event: InterfaceFormDto) {
+    let interfaceEntity = <Interface>this.modelService.readInterface(Number(event.cellId));
+    if (interfaceEntity instanceof Interface) {
+
+      this.interfaceIdForm = event.cellId;
+      this.nameFormInterface = interfaceEntity.name;
+      this.oldNameFormInterface = interfaceEntity.name;
+      this.descriptionFormInterface = interfaceEntity.description;
+      this.orientationFormInterface = interfaceEntity.orientation;
+      this.oldOrientationFormInterface = interfaceEntity.orientation;
+      this.roegenTypeFormInterface = interfaceEntity.roegenType;
+      this.oppositeSubsystemTypeFormInterface = interfaceEntity.oppositeSubsystemType;
+      this.sphereFormInterface = interfaceEntity.sphere;
+
+      this.modalRef = this.nzModalService.create({
+        nzTitle: this.formInterafaceTitle,
+        nzContent: this.formInterfaceContent,
+        nzFooter: this.formInterfaceFooter,
+        nzWrapClassName: 'vertical-center-modal',
+        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+      });
+      this.modalRef.afterOpen.subscribe(() => {
+        this.draggableModal();
+        let titles = document.getElementsByClassName("title-modal");
+
+        for (let i = 0; i < titles.length; i++) {
+          titles[0].parentElement.parentElement.style.cursor = "move";
+        }
+      });
+    }
+  }
+
+  submitInterfaceForm(event: Event) {
+    this.updateInterface();
+    event.preventDefault();
+  }
+
+  updateInterface() {
+    this.modalRef.destroy();
+    let interfaceEntity = new Interface();
+    interfaceEntity.name = this.nameFormInterface;
+    interfaceEntity.orientation = this.orientationFormInterface;
+    interfaceEntity.roegenType = this.roegenTypeFormInterface;
+    interfaceEntity.oppositeSubsystemType = this.oppositeSubsystemTypeFormInterface;
+    interfaceEntity.sphere = this.sphereFormInterface;
+    interfaceEntity.description = this.descriptionFormInterface;
+    this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
+    if (this.oldNameFormInterface != this.nameFormInterface ||
+      this.oldOrientationFormInterface != this.orientationFormInterface) {
+      let data: ChangeInterfaceInGraphDto = {
+        cellId: this.interfaceIdForm,
+        name: this.nameFormInterface,
+        orientation: this.orientationFormInterface,
+      };
+      this.proccesorSubject.next({
+        name: "changeInterfaceInGraph",
+        data: data,
+      });
+    }
   }
 
   showSnackBarError(event: SnackErrorDto) {
