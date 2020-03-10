@@ -12,7 +12,7 @@ import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
-  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto
+  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
 
 @Component({
@@ -55,16 +55,17 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   //Form Interface
   private interfaceIdForm;
-  private oldNameFormInterface : string;
+  private oldNameFormInterface: string;
   nameFormInterface: string;
   descriptionFormInterface: string;
   orientationFormInterface: InterfaceOrientation;
+  private oldOrientationFormInterface: InterfaceOrientation;
   sphereFormInterface: Sphere;
   roegenTypeFormInterface: RoegenType;
   oppositeSubsystemTypeFormInterface: ProcessorSubsystemType;
   @ViewChild('formInterafaceTitle', { static: false }) formInterafaceTitle: TemplateRef<any>;
   @ViewChild('formInterfaceContent', { static: false }) formInterfaceContent: TemplateRef<any>;
-  @ViewChild('formInterfaceeFooter', { static: false }) formInterfaceFooter: TemplateRef<any>;
+  @ViewChild('formInterfaceFooter', { static: false }) formInterfaceFooter: TemplateRef<any>;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
@@ -495,6 +496,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.oldNameFormInterface = interfaceEntity.name;
       this.descriptionFormInterface = interfaceEntity.description;
       this.orientationFormInterface = interfaceEntity.orientation;
+      this.oldOrientationFormInterface = interfaceEntity.orientation;
       this.roegenTypeFormInterface = interfaceEntity.roegenType;
       this.oppositeSubsystemTypeFormInterface = interfaceEntity.oppositeSubsystemType;
       this.sphereFormInterface = interfaceEntity.sphere;
@@ -517,17 +519,33 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  submitInterfaceForm(event : Event) {
-    // this.updateInterface();
+  submitInterfaceForm(event: Event) {
+    this.updateInterface();
     event.preventDefault();
   }
 
-  private updateInterface() {
+  updateInterface() {
     this.modalRef.destroy();
     let interfaceEntity = new Interface();
     interfaceEntity.name = this.nameFormInterface;
     interfaceEntity.orientation = this.orientationFormInterface;
     interfaceEntity.roegenType = this.roegenTypeFormInterface;
+    interfaceEntity.oppositeSubsystemType = this.oppositeSubsystemTypeFormInterface;
+    interfaceEntity.sphere = this.sphereFormInterface;
+    interfaceEntity.description = this.descriptionFormInterface;
+    this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
+    if (this.oldNameFormInterface != this.nameFormInterface ||
+      this.oldOrientationFormInterface != this.orientationFormInterface) {
+      let data: ChangeInterfaceInGraphDto = {
+        cellId: this.interfaceIdForm,
+        name: this.nameFormInterface,
+        orientation: this.orientationFormInterface,
+      };
+      this.proccesorSubject.next({
+        name: "changeInterfaceInGraph",
+        data: data,
+      });
+    }
   }
 
   showSnackBarError(event: SnackErrorDto) {

@@ -490,8 +490,10 @@ declare class mxCodec {
 }
 
 declare class mxGraphHandler {
-
-
   shouldRemoveCellsFromParent;
+}
 
+declare class mxConstants {
+  static readonly STYLE_FILLCOLOR;
+  static readonly STYLE_STROKECOLOR;
 }

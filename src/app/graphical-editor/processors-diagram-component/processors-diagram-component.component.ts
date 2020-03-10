@@ -1,14 +1,13 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, ChangeNameEntityDto } from '../diagram-component-helper';
-import { ModelService, EntityTypes, RelationshipType, InterfaceType } from '../../model-manager';
-import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto } from './processors-diagram-component-dto';
+import { ModelService, EntityTypes, RelationshipType, InterfaceType, InterfaceOrientation } from '../../model-manager';
+import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
   selector: 'app-processors-diagram-component',
   templateUrl: './processors-diagram-component.component.html',
-  //template: '<div #graphContainer2 id="graphContainer2"></div>',
   styleUrls: ['./processors-diagram-component.component.css']
 })
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
@@ -104,6 +103,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case "changeNameCellsById":
           this.changeNameEntityById(event.data);
           break;
+        case "changeInterfaceInGraph":
+          this.changeInterfaceInGraphEvent(event.data);
+          break;
       }
     });
   }
@@ -126,7 +128,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           port.setAttribute('name', nameInterfaceType);
           port.setAttribute('entityId', id);
           let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-            'fontSize=9;shape=ellipse;resizable=0;');
+            'fontSize=9;shape=ellipse;resizable=0;fillColor=#FF8E8E;strokeColor=#FF0000');
           portVertex.geometry.offset = new mxPoint(-15, -15);
           portVertex.geometry.relative = true;
           graph.getModel().endUpdate();
@@ -143,6 +145,41 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     DiagramComponentHelper.changeNameEntityById(this, event.name, event.cellId);
   }
 
+  private changeInterfaceInGraphEvent(event : ChangeInterfaceInGraphDto) {
+    let updateGraphXML = false;
+    let cells: [mxCell] = this.graph.getChildCells();
+    for (let cell of cells) {
+      if (cell.value.nodeName.toLowerCase() == 'processor') {
+        updateGraphXML = this.changeInterfaceInGraph(event, cell);
+      }
+    }
+    if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+  }
+
+  private changeInterfaceInGraph(event : ChangeInterfaceInGraphDto, cell : mxCell) : boolean {
+    let updateGraphInXML = false;
+    if (cell.children) {
+      this.graph.getModel().beginUpdate();
+      for(let childProcessor of cell.children) {
+        if(childProcessor.value.nodeName.toLowerCase() == 'interface' 
+        && childProcessor.getAttribute('entityId') == event.cellId) {
+          childProcessor.setAttribute('name', event.name);
+          if(event.orientation == InterfaceOrientation.Input) {
+            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
+            this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
+          }
+          if(event.orientation == InterfaceOrientation.Output) {
+            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
+            this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
+          }
+        }
+      }
+      this.graph.getModel().endUpdate();
+      this.graph.refresh();
+    }
+    return updateGraphInXML;
+  }
+
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
     this.relationshipSelect = relationshipType;
@@ -151,6 +188,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private graphMouseEvent() {
+    this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
     this.graph.addMouseListener(
       {
         mouseDown: this.mouseDownGraph.bind(this),
@@ -158,7 +196,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         mouseUp: this.mouseUpGraph.bind(this),
       }
     )
-    this.graph.addListener(mxEvent.DOUBLE_CLICK, this.doubleClickGraph.bind(this));
   }
 
   private doubleClickGraph(graph, evt) {
@@ -371,7 +408,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case 'partof':
           return 'partof';
         case 'interface':
-          let portName = cell.getAttribute('name', 'Processor');
+          let portName = cell.getAttribute('name', 'Processor').toUpperCase();
           if (portName.length < 3) {
             return portName;
           } else {
