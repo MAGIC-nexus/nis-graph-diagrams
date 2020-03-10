@@ -138,8 +138,9 @@
     <form (submit)="submitCreateDiagram($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="5">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input autocomplete="off" name="nameDiagram" type="text" nz-input />
+        <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateDiagram" [nzSpan]="18"
+        [(nzErrorTip)]="nameErrorTipFormCreateDiagram">
+          <input autocomplete="off" [(ngModel)]="nameFormCreateDiagram" type="text" nz-input [ngModelOptions]="{standalone: true}"/>
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -161,8 +162,9 @@
     <form (submit)="submitCreateProcessor($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="5">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input autocomplete="off" name="nameInterfaceType" type="text" nz-input />
+        <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateProcessor"
+        nzErrorTip="The name cannot be empty" [nzSpan]="18">
+          <input [(ngModel)]="nameFormCreateProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}"/>
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -328,8 +330,9 @@
     <form (submit)="submitCreateInterfaceType($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input autocomplete="off" name="nameInterfaceType" type="text" nz-input />
+        <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateInterfaceType"
+        nzErrorTip="The name cannot be empty" [nzSpan]="18">
+          <input autocomplete="off" [(ngModel)]="nameFormCreateInterfaceType" type="text" nz-input [ngModelOptions]="{standalone: true}"/>
         </nz-form-control>
       </nz-form-item>
     </form>

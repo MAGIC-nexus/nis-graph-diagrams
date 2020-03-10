@@ -70,18 +70,25 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
   private numberCreateDiagramProcessor = 1;
+  nameValidationFormCreateDiagram;
+  nameErrorTipFormCreateDiagram;
+  nameFormCreateDiagram;
   private typeCreateDiagram: string;
   @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle: TemplateRef<any>;
   @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent: TemplateRef<any>;
   @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter: TemplateRef<any>;
 
   //Form Create InterfaceType
+  nameFormCreateInterfaceType = "";
+  nameValidationFormCreateInterfaceType = "";
   @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter: TemplateRef<any>;
   createInterfaceTypeDto: CreateInterfaceTypeDto;
 
   //Form Create Processor
+  nameFormCreateProcessor = "";
+  nameValidationFormCreateProcessor = "";
   @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle: TemplateRef<any>;
   @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent: TemplateRef<any>;
   @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
@@ -238,6 +245,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   showFormCreateDiagram(typeDiagram: string) {
     this.typeCreateDiagram = typeDiagram;
+    this.nameValidationFormCreateDiagram = "";
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateDiagramTitle,
@@ -246,16 +254,15 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
-      let form = this.modalRef.getElement().getElementsByTagName("form")[0];
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
 
       switch (this.typeCreateDiagram) {
         case 'InterfaceTypes':
-          form.nameDiagram.value = 'InterfaceType #' + this.numberCreateDiagramInterfaceType;
+          this.nameFormCreateDiagram = 'InterfaceType #' + this.numberCreateDiagramInterfaceType;
           break;
         case 'Processors':
-          form.nameDiagram.value = 'Processor #' + this.numberCreateDiagramProcessor;
+          this.nameFormCreateDiagram = 'Processor #' + this.numberCreateDiagramProcessor;
           break;
       }
 
@@ -274,10 +281,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.createDiagram();
   }
 
-  createDiagram() {
+  createDiagram(): boolean {
+    if (this.nameFormCreateDiagram == "") {
+      this.nameValidationFormCreateDiagram = "error";
+      this.nameErrorTipFormCreateDiagram = "The name cannot be empty";
+      return false;
+    }
 
-    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let nameDiagram: string = form.nameDiagram.value.trim();
     let typeDiagram: DiagramType;
 
     switch (this.typeCreateDiagram) {
@@ -289,26 +299,27 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         break;
     }
 
-    let diagramId = this.modelService.createDiagram(nameDiagram, typeDiagram);
+    let diagramId = this.modelService.createDiagram(this.nameFormCreateDiagram.trim(), typeDiagram);
 
-    if (diagramId != -1) {
-      this.modalRef.destroy();
-      switch (this.typeCreateDiagram) {
-        case 'InterfaceTypes':
-          this.numberCreateDiagramInterfaceType++;
-          break;
-        case 'Processors':
-          this.numberCreateDiagramProcessor++;
-          break;
-      }
-      this.updateTree();
-      this.addTabDiagram(<number>diagramId);
-    } else {
-      this.nzModalService.error({
-        nzTitle: 'Could not create diagram',
-        nzContent: 'The name "' + nameDiagram + '" already exists',
-      });
+    if (diagramId == -1) {
+      this.nameValidationFormCreateDiagram = "error";
+      this.nameErrorTipFormCreateDiagram = `The name ${this.nameFormCreateDiagram.trim()} already exists`;
+      return false;
     }
+    
+    this.modalRef.destroy();
+    switch (this.typeCreateDiagram) {
+      case 'InterfaceTypes':
+        this.numberCreateDiagramInterfaceType++;
+        break;
+      case 'Processors':
+        this.numberCreateDiagramProcessor++;
+        break;
+    }
+    this.updateTree();
+    this.addTabDiagram(<number>diagramId);
+    return true;
+
   }
 
   getParentTreeNode(node: TreeNode): string {
@@ -354,6 +365,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   showFormCreateInterfaceType(event: CreateInterfaceTypeDto) {
+    this.nameValidationFormCreateInterfaceType = "";
+    this.nameFormCreateInterfaceType = "";
     this.createInterfaceTypeDto = event;
 
     this.modalRef = this.nzModalService.create({
@@ -378,12 +391,16 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.createInterfaceType();
   }
 
-  createInterfaceType() {
+  createInterfaceType() : boolean {
+    if (this.nameFormCreateInterfaceType == "") {
+      this.nameValidationFormCreateInterfaceType = "error";
+      return false;
+    }
     this.modalRef.destroy();
-    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let name = form.nameInterfaceType.value.trim();
-    this.createInterfaceTypeDto.component.createInterfaceType(name, this.createInterfaceTypeDto.pt);
+    this.createInterfaceTypeDto.component.createInterfaceType(this.nameFormCreateInterfaceType.trim(), 
+     this.createInterfaceTypeDto.pt);
     this.updateTree();
+    return true;
   }
 
   doubleClickProcessorTree(node: TreeNode) {
@@ -457,6 +474,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   showFormCreateProcessor(event: CreateProcessorDto) {
 
     this.createProcessorDto = event;
+    this.nameValidationFormCreateProcessor = "";
+    this.nameFormCreateProcessor = "";
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateProcessorTitle,
@@ -480,11 +499,17 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   createProcessor() {
-    this.modalRef.destroy();
-    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let name = form.nameInterfaceType.value.trim();
-    this.createProcessorDto.component.createProcessor(name, this.createProcessorDto.pt);
-    this.updateTree();
+    let validate = true;
+    this.nameFormCreateProcessor = this.nameFormCreateProcessor.trim();
+    if (this.nameFormCreateProcessor == "") {
+      validate = false;
+      this.nameValidationFormCreateProcessor = "error";
+    }
+    if (validate) {
+      this.modalRef.destroy();
+      this.createProcessorDto.component.createProcessor(this.nameFormCreateProcessor, this.createProcessorDto.pt);
+      this.updateTree();
+    }
   }
 
   showFormInterface(event: InterfaceFormDto) {

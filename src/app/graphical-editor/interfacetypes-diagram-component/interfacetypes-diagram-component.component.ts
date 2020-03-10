@@ -6,7 +6,6 @@ import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
 @Component({
   selector: 'app-interfacetypes-diagram-component',
   templateUrl: './interfacetypes-diagram-component.component.html',
-  //template: '<div #graphContainer1 id="graphContainer1" style="border: 1px solid orange"></div>',
   styleUrls: ['./interfacetypes-diagram-component.component.css']
 })
 export class InterfacetypesDiagramComponentComponent implements AfterViewInit, OnInit {
@@ -108,7 +107,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       this.statusCreateRelationship == StatusCreatingRelationship.notCreating) {
       if (cell != null && this.checkRelationshipCellSource(cell)) {
         let svg = sender.container.getElementsByTagName("svg")[0];
-        DiagramComponentHelper.printLineCreateRelationship(svg, cell);
+        DiagramComponentHelper.printLineCreateRelationship(svg, cell, mouseEvent);
         this.statusCreateRelationship = StatusCreatingRelationship.creating;
         this.sourceCellRelationship = cell;
       } else {

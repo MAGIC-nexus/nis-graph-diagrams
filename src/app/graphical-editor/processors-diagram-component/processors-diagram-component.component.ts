@@ -479,32 +479,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       switch (cell.value.nodeName.toLowerCase()) {
         case 'processor':
           try {
-            let edit = {
-              cell: cell,
-              attribute: "name",
-              value: newValue,
-              previous: newValue,
-              execute: function () {
-                if (this.cell != null) {
-                  var tmp = this.cell.getAttribute(this.attribute);
-
-                  if (this.previous == null) {
-                    this.cell.value.removeAttribute(this.attribute);
-                  }
-                  else {
-                    this.cell.setAttribute(this.attribute, this.previous);
-                  }
-
-                  this.previous = tmp;
-                }
-              }
-            };
+            this.getModel().beginUpdate();
+            cell.setAttribute('name', newValue);
             processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
-            processorInstance.updateTreeEmitter.emit(null);
-            this.getModel().execute(edit);
           }
           finally {
             this.getModel().endUpdate();
+            processorInstance.graph.refresh();
           }
           break;
       }
