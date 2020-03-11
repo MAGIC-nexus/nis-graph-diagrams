@@ -6,7 +6,7 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceType,
+  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
@@ -66,6 +66,9 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formInterafaceTitle', { static: false }) formInterafaceTitle: TemplateRef<any>;
   @ViewChild('formInterfaceContent', { static: false }) formInterfaceContent: TemplateRef<any>;
   @ViewChild('formInterfaceFooter', { static: false }) formInterfaceFooter: TemplateRef<any>;
+  //Interface Values
+  listInterfaceValues;
+  nextIdInterfaceValues;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
@@ -525,13 +528,26 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.roegenTypeFormInterface = interfaceEntity.roegenType;
       this.oppositeSubsystemTypeFormInterface = interfaceEntity.oppositeSubsystemType;
       this.sphereFormInterface = interfaceEntity.sphere;
-
+      this.listInterfaceValues = [];
+      this.nextIdInterfaceValues = 0;
+      let listInterfaceValues = interfaceEntity.values;
+      for (let interfaceValue of listInterfaceValues) {
+        this.listInterfaceValues.push({
+          id: this.nextIdInterfaceValues,
+          value: interfaceValue.value,
+          unit: interfaceValue.unit,
+          relativeTo: interfaceValue.relativeTo,
+          time: interfaceValue.time,
+          source: interfaceValue.source,
+        });
+        this.nextIdInterfaceValues++;
+      }
       this.modalRef = this.nzModalService.create({
         nzTitle: this.formInterafaceTitle,
         nzContent: this.formInterfaceContent,
         nzFooter: this.formInterfaceFooter,
         nzWrapClassName: 'vertical-center-modal',
-        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+        nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop:'0px' },
       });
       this.modalRef.afterOpen.subscribe(() => {
         this.draggableModal();
@@ -558,7 +574,19 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     interfaceEntity.oppositeSubsystemType = this.oppositeSubsystemTypeFormInterface;
     interfaceEntity.sphere = this.sphereFormInterface;
     interfaceEntity.description = this.descriptionFormInterface;
+    let interfaceValues = new Array<InterfaceValue>();
+    console.log(this.listInterfaceValues);
+    for(let interfaceValue of this.listInterfaceValues) {
+      let auxInterfaceValue = new InterfaceValue();
+      auxInterfaceValue.value = interfaceValue.value;
+      auxInterfaceValue.time = interfaceValue.time;
+      auxInterfaceValue.source = interfaceValue.source;
+      auxInterfaceValue.relativeTo = interfaceValue.relativeTo;
+      auxInterfaceValue.unit = interfaceValue.unit;
+      interfaceValues.push(auxInterfaceValue);
+    }
     this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
+    this.modelService.updateInterfaceValues(Number(this.interfaceIdForm), interfaceValues);
     if (this.oldNameFormInterface != this.nameFormInterface ||
       this.oldOrientationFormInterface != this.orientationFormInterface) {
       let data: ChangeInterfaceInGraphDto = {
@@ -571,6 +599,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         data: data,
       });
     }
+  }
+
+  changeListInterfaceValues(event) {
+    this.listInterfaceValues = event;
   }
 
   showSnackBarError(event: SnackErrorDto) {

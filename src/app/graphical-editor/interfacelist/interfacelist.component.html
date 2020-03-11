@@ -1,0 +1,59 @@
+<button nz-button (click)="addRow()" nzType="primary">Add</button>
+<nz-table #editRowTable nzBordered [nzData]="listOfData" [nzFrontPagination]="false" [nzShowPagination]="false">
+    <thead>
+        <tr>
+            <th>Value</th>
+            <th>Unit</th>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let data of editRowTable.data" class="editable-row">
+            <td>
+                <div class="editable-cell" *ngIf="editValueId !== data.id; else editValue">
+                    <div class="editable-cell-value-wrap" (click)="startEdit(data.id, $event, VALUE)">
+                        {{ data.value }}
+                    </div>
+                </div>
+                <ng-template #editValue>
+                    <input type="text" nz-input [(ngModel)]="data.value" (keyup)="keyUpEdit($event)"/>
+                </ng-template>
+            </td>
+            <td>
+                <div class="editable-cell" *ngIf="editUnitId !== data.id; else editUnit">
+                    <div class="editable-cell-value-wrap" (click)="startEdit(data.id, $event, UNIT)">
+                        {{ data.unit }}
+                    </div>
+                </div>
+                <ng-template #editUnit>
+                    <input type="text" nz-input [(ngModel)]="data.unit" (keyup)="keyUpEdit($event)"/>
+                </ng-template>
+            </td>
+            <td>
+                <div class="editable-cell" *ngIf="editTimeId !== data.id; else editTime">
+                    <div class="editable-cell-value-wrap" (click)="startEdit(data.id, $event, TIME)">
+                        {{ data.time }}
+                    </div>
+                </div>
+                <ng-template #editTime>
+                    <input type="text" nz-input [(ngModel)]="data.time" (keyup)="keyUpEdit($event)" />
+                </ng-template>
+            </td>
+            <td>
+                <div class="editable-cell" *ngIf="editSourceId !== data.id; else editSource">
+                    <div class="editable-cell-value-wrap" (click)="startEdit(data.id, $event, SOURCE)">
+                        {{ data.source }}
+                    </div>
+                </div>
+                <ng-template #editSource>
+                    <input type="text" nz-input [(ngModel)]="data.source" (keyup)="keyUpEdit($event)"/>
+                </ng-template>
+            </td>
+            <td>
+                <a nz-popconfirm nzTitle="Sure to delete?" (nzOnConfirm)="deleteRow(data.id)">Delete</a>
+            </td>
+        </tr>
+    </tbody>
+</nz-table>
