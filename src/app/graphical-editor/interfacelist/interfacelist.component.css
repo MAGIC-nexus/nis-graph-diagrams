@@ -8,6 +8,7 @@ button {
   }
 
   .editable-cell-value-wrap {
+    height: 30px;
     padding: 5px 12px;
     cursor: pointer;
   }
