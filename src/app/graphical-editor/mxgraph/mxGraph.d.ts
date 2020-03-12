@@ -7,6 +7,7 @@
 
 declare class mxGraph {
 
+  constructor();
   constructor(container: any);
 
   mouseListeners;

@@ -111,7 +111,8 @@
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
               [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)"
-              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()">
+              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
+              [interfaceTypeSubject]="interfaceTypeSubject">
             </app-interfacetypes-diagram-component>
           </mat-tab>
         </mat-tab-group>
@@ -138,8 +139,10 @@
     <form (submit)="submitCreateDiagram($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="5">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input autocomplete="off" name="nameDiagram" type="text" nz-input />
+        <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateDiagram" [nzSpan]="18"
+          [(nzErrorTip)]="nameErrorTipFormCreateDiagram">
+          <input autocomplete="off" [(ngModel)]="nameFormCreateDiagram" type="text" nz-input
+            [ngModelOptions]="{standalone: true}" />
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -161,8 +164,9 @@
     <form (submit)="submitCreateProcessor($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="5">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input autocomplete="off" name="nameInterfaceType" type="text" nz-input />
+        <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateProcessor" nzErrorTip="The name cannot be empty"
+          [nzSpan]="18">
+          <input [(ngModel)]="nameFormCreateProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}" />
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -239,7 +243,8 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Description</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <textarea rows="4" nz-input [(ngModel)]="descriptionFormProcessor" [ngModelOptions]="{standalone: true}"></textarea>
+          <textarea rows="4" nz-input [(ngModel)]="descriptionFormProcessor"
+            [ngModelOptions]="{standalone: true}"></textarea>
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -258,58 +263,67 @@
     <span class="title-modal">Edit interface</span>
   </ng-template>
   <ng-template #formInterfaceContent>
-    <form (submit)="submitInterfaceForm($event)" nz-form>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="nameFormInterface" nz-input type="text" [ngModelOptions]="{standalone: true}">
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Orientation</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="orientationFormInterface" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="InterfaceOrientationEnum.Input">Input</label>
-            <label nz-radio [nzValue]="InterfaceOrientationEnum.Output">Output</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Sphere</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="sphereFormInterface" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="SphereEnum.Biosphere">Biosphere</label>
-            <label nz-radio [nzValue]="SphereEnum.Technosphere">Technosphere</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">RoegenType</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="roegenTypeFormInterface" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="RoegenTypeEnum.Flow">Flow</label>
-            <label nz-radio [nzValue]="RoegenTypeEnum.Fund">Fund</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Opposite Subs.</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="oppositeSubsystemTypeFormInterface" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Local">Local</label>
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Environment">Environment</label>
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.External">External</label>
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.ExternalEnvironment">ExternalEnvironment</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Description</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <textarea rows="4" nz-input [(ngModel)]="descriptionFormInterface" [ngModelOptions]="{standalone: true}"></textarea>
-        </nz-form-control>
-      </nz-form-item>
-    </form>
+    <mat-tab-group animationDuration="0ms" fxFlex="auto">
+      <mat-tab label="Interface">
+        <form (submit)="submitInterfaceForm($event)" nz-form>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Name</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <input [(ngModel)]="nameFormInterface" nz-input type="text" [ngModelOptions]="{standalone: true}">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Orientation</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="orientationFormInterface" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="InterfaceOrientationEnum.Input">Input</label>
+                <label nz-radio [nzValue]="InterfaceOrientationEnum.Output">Output</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Sphere</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="sphereFormInterface" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="SphereEnum.Biosphere">Biosphere</label>
+                <label nz-radio [nzValue]="SphereEnum.Technosphere">Technosphere</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">RoegenType</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="roegenTypeFormInterface" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="RoegenTypeEnum.Flow">Flow</label>
+                <label nz-radio [nzValue]="RoegenTypeEnum.Fund">Fund</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Opposite Subs.</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="oppositeSubsystemTypeFormInterface" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Local">Local</label>
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Environment">Environment</label>
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.External">External</label>
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.ExternalEnvironment">ExternalEnvironment</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Description</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <textarea rows="4" nz-input [(ngModel)]="descriptionFormInterface"
+                [ngModelOptions]="{standalone: true}"></textarea>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </mat-tab>
+      <mat-tab label="Interface Values">
+        <app-interfacelist [listOfData]="listInterfaceValues" [nextId]="nextIdInterfaceValues"
+        (changeData)="changeListInterfaceValues($event)"></app-interfacelist>
+      </mat-tab>
+    </mat-tab-group>
   </ng-template>
   <ng-template #formInterfaceFooter>
     <button nz-button nzType="danger" (click)="closeModal()">
@@ -328,8 +342,10 @@
     <form (submit)="submitCreateInterfaceType($event)" nz-form>
       <nz-form-item>
         <nz-form-label [nzSpan]="6">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input autocomplete="off" name="nameInterfaceType" type="text" nz-input />
+        <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateInterfaceType"
+          nzErrorTip="The name cannot be empty" [nzSpan]="18">
+          <input autocomplete="off" [(ngModel)]="nameFormCreateInterfaceType" type="text" nz-input
+            [ngModelOptions]="{standalone: true}" />
         </nz-form-control>
       </nz-form-item>
     </form>

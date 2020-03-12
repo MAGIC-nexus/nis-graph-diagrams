@@ -507,11 +507,11 @@ export class ModelService {
     // Create an new, empty diagram of certain type
     createDiagram(diagramName: string, diagramType: DiagramType) {
         let found = false;
-        for (let id in this.diagrams) {
-            if (this.diagrams[id].name == diagramName) {
+        this.diagrams.forEach((value, key) => {
+            if(value.name == diagramName) {
                 found = true;
             }
-        }
+        });
         if (!found) {
             let diagram = new Diagram();
             diagram.id = this.getNewId();

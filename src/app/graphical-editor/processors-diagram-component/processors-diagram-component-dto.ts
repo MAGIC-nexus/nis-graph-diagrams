@@ -15,6 +15,7 @@ export interface InterfaceFormDto {
 }
 
 export interface ChangeInterfaceInGraphDto {
+    diagramId : number;
     cellId;
     name: string;
     orientation: InterfaceOrientation;

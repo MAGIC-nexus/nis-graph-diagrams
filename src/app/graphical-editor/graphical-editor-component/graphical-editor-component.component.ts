@@ -6,7 +6,7 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceType,
+  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
@@ -14,6 +14,7 @@ import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/inte
 import {
   CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
+import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -32,6 +33,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
+  interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
   private readonly ID_DIAGRAMS = -3;
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
@@ -66,22 +68,32 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formInterafaceTitle', { static: false }) formInterafaceTitle: TemplateRef<any>;
   @ViewChild('formInterfaceContent', { static: false }) formInterfaceContent: TemplateRef<any>;
   @ViewChild('formInterfaceFooter', { static: false }) formInterfaceFooter: TemplateRef<any>;
+  //Interface Values
+  listInterfaceValues;
+  nextIdInterfaceValues;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
   private numberCreateDiagramProcessor = 1;
+  nameValidationFormCreateDiagram;
+  nameErrorTipFormCreateDiagram;
+  nameFormCreateDiagram;
   private typeCreateDiagram: string;
   @ViewChild('formCreateDiagramTitle', { static: false }) formCreateDiagramTitle: TemplateRef<any>;
   @ViewChild('formCreateDiagramContent', { static: false }) formCreateDiagramContent: TemplateRef<any>;
   @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter: TemplateRef<any>;
 
   //Form Create InterfaceType
+  nameFormCreateInterfaceType = "";
+  nameValidationFormCreateInterfaceType = "";
   @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter: TemplateRef<any>;
   createInterfaceTypeDto: CreateInterfaceTypeDto;
 
   //Form Create Processor
+  nameFormCreateProcessor = "";
+  nameValidationFormCreateProcessor = "";
   @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle: TemplateRef<any>;
   @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent: TemplateRef<any>;
   @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
@@ -173,6 +185,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.nodes = this.modelService.getTreeModelView();
   }
 
+  private getAllDiagramsModel() {
+    return this.modelService.getTreeModelViewDiagrams();
+  }
+
   private addTabDiagram(diagramId: number) {
     let diagram: Diagram = this.modelService.readDiagram(diagramId);
     this.tabsDiagram.set(diagram.id, { id: diagram.id, name: diagram.name, type: diagram.diagramType });
@@ -238,6 +254,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   showFormCreateDiagram(typeDiagram: string) {
     this.typeCreateDiagram = typeDiagram;
+    this.nameValidationFormCreateDiagram = "";
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateDiagramTitle,
@@ -246,16 +263,15 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       nzWrapClassName: 'vertical-center-modal',
     });
     this.modalRef.afterOpen.subscribe(() => {
-      let form = this.modalRef.getElement().getElementsByTagName("form")[0];
       this.draggableModal();
       let titles = document.getElementsByClassName("title-modal");
 
       switch (this.typeCreateDiagram) {
         case 'InterfaceTypes':
-          form.nameDiagram.value = 'InterfaceType #' + this.numberCreateDiagramInterfaceType;
+          this.nameFormCreateDiagram = 'InterfaceType #' + this.numberCreateDiagramInterfaceType;
           break;
         case 'Processors':
-          form.nameDiagram.value = 'Processor #' + this.numberCreateDiagramProcessor;
+          this.nameFormCreateDiagram = 'Processor #' + this.numberCreateDiagramProcessor;
           break;
       }
 
@@ -274,10 +290,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.createDiagram();
   }
 
-  createDiagram() {
+  createDiagram(): boolean {
+    if (this.nameFormCreateDiagram == "") {
+      this.nameValidationFormCreateDiagram = "error";
+      this.nameErrorTipFormCreateDiagram = "The name cannot be empty";
+      return false;
+    }
 
-    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let nameDiagram: string = form.nameDiagram.value.trim();
     let typeDiagram: DiagramType;
 
     switch (this.typeCreateDiagram) {
@@ -289,26 +308,27 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         break;
     }
 
-    let diagramId = this.modelService.createDiagram(nameDiagram, typeDiagram);
+    let diagramId = this.modelService.createDiagram(this.nameFormCreateDiagram.trim(), typeDiagram);
 
-    if (diagramId != -1) {
-      this.modalRef.destroy();
-      switch (this.typeCreateDiagram) {
-        case 'InterfaceTypes':
-          this.numberCreateDiagramInterfaceType++;
-          break;
-        case 'Processors':
-          this.numberCreateDiagramProcessor++;
-          break;
-      }
-      this.updateTree();
-      this.addTabDiagram(<number>diagramId);
-    } else {
-      this.nzModalService.error({
-        nzTitle: 'Could not create diagram',
-        nzContent: 'The name "' + nameDiagram + '" already exists',
-      });
+    if (diagramId == -1) {
+      this.nameValidationFormCreateDiagram = "error";
+      this.nameErrorTipFormCreateDiagram = `The name ${this.nameFormCreateDiagram.trim()} already exists`;
+      return false;
     }
+
+    this.modalRef.destroy();
+    switch (this.typeCreateDiagram) {
+      case 'InterfaceTypes':
+        this.numberCreateDiagramInterfaceType++;
+        break;
+      case 'Processors':
+        this.numberCreateDiagramProcessor++;
+        break;
+    }
+    this.updateTree();
+    this.addTabDiagram(<number>diagramId);
+    return true;
+
   }
 
   getParentTreeNode(node: TreeNode): string {
@@ -354,6 +374,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   showFormCreateInterfaceType(event: CreateInterfaceTypeDto) {
+    this.nameValidationFormCreateInterfaceType = "";
+    this.nameFormCreateInterfaceType = "";
     this.createInterfaceTypeDto = event;
 
     this.modalRef = this.nzModalService.create({
@@ -378,12 +400,16 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.createInterfaceType();
   }
 
-  createInterfaceType() {
+  createInterfaceType(): boolean {
+    if (this.nameFormCreateInterfaceType == "") {
+      this.nameValidationFormCreateInterfaceType = "error";
+      return false;
+    }
     this.modalRef.destroy();
-    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let name = form.nameInterfaceType.value.trim();
-    this.createInterfaceTypeDto.component.createInterfaceType(name, this.createInterfaceTypeDto.pt);
+    this.createInterfaceTypeDto.component.createInterfaceType(this.nameFormCreateInterfaceType.trim(),
+      this.createInterfaceTypeDto.pt);
     this.updateTree();
+    return true;
   }
 
   doubleClickProcessorTree(node: TreeNode) {
@@ -444,12 +470,12 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     processor.description = this.descriptionFormProcessor;
     this.modelService.updateEntity(Number(this.proccesorIdForm), processor);
     if (this.oldNameFormProcessor != this.nameFormProcessor) {
+      for (let diagram of this.getAllDiagramsModel()) {
+        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), this.nameFormProcessor, this.proccesorIdForm);
+      }
       this.proccesorSubject.next({
-        name: "changeNameCellsById",
-        data: {
-          cellId: this.proccesorIdForm,
-          name: this.nameFormProcessor,
-        },
+        name: "refreshDiagram",
+        data: null,
       });
     }
   }
@@ -457,6 +483,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   showFormCreateProcessor(event: CreateProcessorDto) {
 
     this.createProcessorDto = event;
+    this.nameValidationFormCreateProcessor = "";
+    this.nameFormCreateProcessor = "";
 
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateProcessorTitle,
@@ -480,11 +508,17 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   createProcessor() {
-    this.modalRef.destroy();
-    let form = this.modalRef.getElement().getElementsByTagName("form")[0];
-    let name = form.nameInterfaceType.value.trim();
-    this.createProcessorDto.component.createProcessor(name, this.createProcessorDto.pt);
-    this.updateTree();
+    let validate = true;
+    this.nameFormCreateProcessor = this.nameFormCreateProcessor.trim();
+    if (this.nameFormCreateProcessor == "") {
+      validate = false;
+      this.nameValidationFormCreateProcessor = "error";
+    }
+    if (validate) {
+      this.modalRef.destroy();
+      this.createProcessorDto.component.createProcessor(this.nameFormCreateProcessor, this.createProcessorDto.pt);
+      this.updateTree();
+    }
   }
 
   showFormInterface(event: InterfaceFormDto) {
@@ -500,13 +534,26 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.roegenTypeFormInterface = interfaceEntity.roegenType;
       this.oppositeSubsystemTypeFormInterface = interfaceEntity.oppositeSubsystemType;
       this.sphereFormInterface = interfaceEntity.sphere;
-
+      this.listInterfaceValues = [];
+      this.nextIdInterfaceValues = 0;
+      let listInterfaceValues = interfaceEntity.values;
+      for (let interfaceValue of listInterfaceValues) {
+        this.listInterfaceValues.push({
+          id: this.nextIdInterfaceValues,
+          value: interfaceValue.value,
+          unit: interfaceValue.unit,
+          relativeTo: interfaceValue.relativeTo,
+          time: interfaceValue.time,
+          source: interfaceValue.source,
+        });
+        this.nextIdInterfaceValues++;
+      }
       this.modalRef = this.nzModalService.create({
         nzTitle: this.formInterafaceTitle,
         nzContent: this.formInterfaceContent,
         nzFooter: this.formInterfaceFooter,
         nzWrapClassName: 'vertical-center-modal',
-        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+        nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop: '0px' },
       });
       this.modalRef.afterOpen.subscribe(() => {
         this.draggableModal();
@@ -533,19 +580,38 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     interfaceEntity.oppositeSubsystemType = this.oppositeSubsystemTypeFormInterface;
     interfaceEntity.sphere = this.sphereFormInterface;
     interfaceEntity.description = this.descriptionFormInterface;
+    let interfaceValues = new Array<InterfaceValue>();
+    for (let interfaceValue of this.listInterfaceValues) {
+      let auxInterfaceValue = new InterfaceValue();
+      auxInterfaceValue.value = interfaceValue.value;
+      auxInterfaceValue.time = interfaceValue.time;
+      auxInterfaceValue.source = interfaceValue.source;
+      auxInterfaceValue.relativeTo = interfaceValue.relativeTo;
+      auxInterfaceValue.unit = interfaceValue.unit;
+      interfaceValues.push(auxInterfaceValue);
+    }
     this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
+    this.modelService.updateInterfaceValues(Number(this.interfaceIdForm), interfaceValues);
     if (this.oldNameFormInterface != this.nameFormInterface ||
       this.oldOrientationFormInterface != this.orientationFormInterface) {
-      let data: ChangeInterfaceInGraphDto = {
-        cellId: this.interfaceIdForm,
-        name: this.nameFormInterface,
-        orientation: this.orientationFormInterface,
-      };
+      for (let diagram of this.getAllDiagramsModel()) {
+        let data: ChangeInterfaceInGraphDto = {
+          diagramId: Number(diagram.id),
+          cellId: this.interfaceIdForm,
+          name: this.nameFormInterface,
+          orientation: this.orientationFormInterface,
+        };
+        ProcessorsDiagramComponentComponent.changeInterfaceInGraphEvent(data);
+      }
       this.proccesorSubject.next({
-        name: "changeInterfaceInGraph",
-        data: data,
+        name: "refreshDiagram",
+        data: null,
       });
     }
+  }
+
+  changeListInterfaceValues(event) {
+    this.listInterfaceValues = event;
   }
 
   showSnackBarError(event: SnackErrorDto) {

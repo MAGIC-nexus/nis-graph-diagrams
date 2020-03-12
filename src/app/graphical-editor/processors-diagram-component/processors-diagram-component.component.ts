@@ -12,6 +12,7 @@ import { MatMenuTrigger } from '@angular/material';
 })
 export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnInit {
 
+  //Enum
   RelationshipType = RelationshipType;
 
   @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
@@ -100,12 +101,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case "portDraggable":
           this.portDraggable(event.data);
           break;
-        case "changeNameCellsById":
-          this.changeNameEntityById(event.data);
-          break;
-        case "changeInterfaceInGraph":
-          this.changeInterfaceInGraphEvent(event.data);
-          break;
+        case 'refreshDiagram':
+          DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
       }
     });
   }
@@ -141,41 +138,84 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(element, this.graph, funct);
   }
 
-  private changeNameEntityById(event: ChangeNameEntityDto) {
-    DiagramComponentHelper.changeNameEntityById(this, event.name, event.cellId);
-  }
+  // private changeInterfaceInGraphEvent(event: ChangeInterfaceInGraphDto) {
+  //   let updateGraphXML = false;
+  //   let cells: [mxCell] = this.graph.getChildCells();
+  //   for (let cell of cells) {
+  //     if (cell.value.nodeName.toLowerCase() == 'processor') {
+  //       updateGraphXML = this.changeInterfaceInGraph(event, cell);
+  //     }
+  //   }
+  //   if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+  // }
 
-  private changeInterfaceInGraphEvent(event: ChangeInterfaceInGraphDto) {
-    let updateGraphXML = false;
-    let cells: [mxCell] = this.graph.getChildCells();
-    for (let cell of cells) {
-      if (cell.value.nodeName.toLowerCase() == 'processor') {
-        updateGraphXML = this.changeInterfaceInGraph(event, cell);
-      }
-    }
-    if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
-  }
+  // private changeInterfaceInGraph(event: ChangeInterfaceInGraphDto, cell: mxCell): boolean {
+  //   let updateGraphInXML = false;
+  //   if (cell.children) {
+  //     this.graph.getModel().beginUpdate();
+  //     for (let childProcessor of cell.children) {
+  //       if (childProcessor.value.nodeName.toLowerCase() == 'interface'
+  //         && childProcessor.getAttribute('entityId') == event.cellId) {
+  //         childProcessor.setAttribute('name', event.name);
+  //         if (event.orientation == InterfaceOrientation.Input) {
+  //           this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
+  //           this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
+  //         }
+  //         if (event.orientation == InterfaceOrientation.Output) {
+  //           this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
+  //           this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
+  //         }
+  //       }
+  //     }
+  //     this.graph.getModel().endUpdate();
+  //     this.graph.refresh();
+  //   }
+  //   return updateGraphInXML;
+  // }
 
-  private changeInterfaceInGraph(event: ChangeInterfaceInGraphDto, cell: mxCell): boolean {
-    let updateGraphInXML = false;
-    if (cell.children) {
-      this.graph.getModel().beginUpdate();
-      for (let childProcessor of cell.children) {
-        if (childProcessor.value.nodeName.toLowerCase() == 'interface'
-          && childProcessor.getAttribute('entityId') == event.cellId) {
-          childProcessor.setAttribute('name', event.name);
-          if (event.orientation == InterfaceOrientation.Input) {
-            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
-            this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
-          }
-          if (event.orientation == InterfaceOrientation.Output) {
-            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
-            this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
-          }
+  static changeInterfaceInGraphEvent(dto: ChangeInterfaceInGraphDto) {
+    let diagramXML = DiagramComponentHelper.modelService.getDiagramGraph(dto.diagramId);
+    if (diagramXML != "") {
+      let updateGraphXML = false;
+      let model = <any>new mxGraphModel();
+      let xmlDocument = mxUtils.parseXml(diagramXML);
+      let decodec = new mxCodec(xmlDocument);
+      decodec.decode(xmlDocument.documentElement, model);
+      let cells = model.cells;
+      for (let key in cells) {
+        if (cells[key].value != undefined && cells[key].value.nodeName.toLowerCase() == 'processor') {
+          updateGraphXML = ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model);
         }
       }
-      this.graph.getModel().endUpdate();
-      this.graph.refresh();
+      if (updateGraphXML) {
+        let encoder = new mxCodec(null);
+        let xml = mxUtils.getXml(encoder.encode(model));
+        DiagramComponentHelper.modelService.setDiagramGraph(Number(dto.diagramId), xml);
+      }
+    }
+  }
+
+  static changeInterfaceInGraph(dto: ChangeInterfaceInGraphDto, cell, model): boolean {
+    let updateGraphInXML = false;
+    if (cell.children) {
+      for (let childProcessor of cell.children) {
+        if (childProcessor.value.nodeName.toLowerCase() == 'interface'
+          && childProcessor.getAttribute('entityId') == dto.cellId) {
+          childProcessor.setAttribute('name', dto.name);
+          updateGraphInXML = true;
+          model.beginUpdate();
+          let graph = new mxGraph();
+          if (dto.orientation == InterfaceOrientation.Input) {
+            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
+            graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
+          }
+          if (dto.orientation == InterfaceOrientation.Output) {
+            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
+            graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
+          }
+          model.endUpdate();
+        }
+      }
     }
     return updateGraphInXML;
   }
@@ -478,37 +518,17 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.graph.cellLabelChanged = function (cell: mxCell, newValue, autoSize) {
       switch (cell.value.nodeName.toLowerCase()) {
         case 'processor':
-          try {
-            let edit = {
-              cell: cell,
-              attribute: "name",
-              value: newValue,
-              previous: newValue,
-              execute: function () {
-                if (this.cell != null) {
-                  var tmp = this.cell.getAttribute(this.attribute);
-
-                  if (this.previous == null) {
-                    this.cell.value.removeAttribute(this.attribute);
-                  }
-                  else {
-                    this.cell.setAttribute(this.attribute, this.previous);
-                  }
-
-                  this.previous = tmp;
-                }
-              }
-            };
-            processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
-            processorInstance.updateTreeEmitter.emit(null);
-            this.getModel().execute(edit);
+          for (let diagram of processorInstance.modelService.getTreeModelViewDiagrams()) {
+            DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), newValue,
+              Number(cell.getAttribute('entityId', '')));
           }
-          finally {
-            this.getModel().endUpdate();
-          }
-          break;
+          processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
+          processorInstance.proccesorSubject.next({
+            name: "refreshDiagram",
+            data: null,
+          });
+        break;
       }
-      DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, this);
     }
 
     this.graph.getEditingValue = function (cell: mxCell) {

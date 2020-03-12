@@ -154,6 +154,38 @@ export class DiagramComponentHelper {
     if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(component.diagramId, component.graph);
   }
 
+  static changeNameEntityOnlyXML(diagramId : number, name: string, id) {
+    let diagramXML = DiagramComponentHelper.modelService.getDiagramGraph(diagramId);
+    if (diagramXML != "") {
+      let updateGraphXML = false;
+      let model = <any> new mxGraphModel();
+      model.beginUpdate();
+      try {
+        let xmlDocument = mxUtils.parseXml(diagramXML);
+        let decodec = new mxCodec(xmlDocument);
+        decodec.decode(xmlDocument.documentElement, model);
+        let cells = model.cells;
+        for (let key in cells) {
+          if (cells[key].value != undefined && cells[key].getAttribute('entityId', '') == id) {
+            cells[key].setAttribute('name', name);
+            DiagramComponentHelper.modelService.updateEntityName(Number(cells[key].getAttribute('entityId', '')), name);
+            model.endUpdate();
+            updateGraphXML = true;
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        model.endUpdate();
+      }
+      if (updateGraphXML) {
+        let encoder = new mxCodec(null);
+        let xml = mxUtils.getXml(encoder.encode(model));
+        DiagramComponentHelper.modelService.setDiagramGraph(Number(diagramId), xml);
+      }
+    }
+  }
+
   static changeStateMovableCells(component : ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
      cells, typeMove : string) {
     for (let cell of cells) {
