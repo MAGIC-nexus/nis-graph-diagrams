@@ -872,17 +872,19 @@ export class ModelService {
                 return this.checkCanCreateRelationshipPartOf(originId, destinationId);
             case RelationshipType.Exchange:
                 return this.checkCanCreateRelationshipExchange(originId, destinationId);
+            case RelationshipType.InterfaceScale:
+                return this.checkCanCreateRelationshipInterfaceScale(originId, destinationId);
         }
     }
 
-    checkCanCreateRelationshipPartOf(originId, destinationId) {
+    checkCanCreateRelationshipPartOf(originId, destinationId) : string {
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
         }
         return "";
     }
 
-    checkCanCreateRelationshipExchange(originId, destinationId) {
+    checkCanCreateRelationshipExchange(originId, destinationId) : string {
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
         }
@@ -895,6 +897,20 @@ export class ModelService {
             if (interfaceOrigin.orientation != InterfaceOrientation.Output) {
                 return 'The source in an "exchange" type relationship should be of type output';
             }
+            return "";
+        } else {
+            return 'A relationship of type "exchange" should be the union between two entity of type "interface"';
+        }
+    }
+
+    checkCanCreateRelationshipInterfaceScale(originId, destinationId) : string {
+        if (originId == destinationId) {
+            return "Cannot make a relationship of the same entity"
+        }
+        let interfaceOrigin  = this.readInterface(originId);
+        let interfaceDestination = this.readInterface(destinationId);
+        if (interfaceOrigin instanceof Interface && interfaceDestination instanceof Interface) {
+            
             return "";
         } else {
             return 'A relationship of type "exchange" should be the union between two entity of type "interface"';

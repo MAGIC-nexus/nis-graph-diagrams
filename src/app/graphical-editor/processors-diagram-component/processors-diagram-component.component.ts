@@ -253,6 +253,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         return DiagramComponentHelper.checkRelationshipPartOfSource(this, cell);
       case RelationshipType.Exchange:
         return this.checkRelationshipExchangeSource(cell);
+      case RelationshipType.InterfaceScale:
+        return this.checkRelationshipInterfaceScaleSource(cell);
     }
     return false;
   }
@@ -261,6 +263,17 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (cell.value.nodeName.toLowerCase() != 'interface') {
       let relationshipErrorDto = new SnackErrorDto();
       relationshipErrorDto.message = 'A relationship of type "exchange" should be the union between two entity of type "interface"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+
+    return true;
+  }
+
+  private checkRelationshipInterfaceScaleSource(cell) : boolean {
+    if (cell.value.nodeName.toLowerCase() != 'interface') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "interfaceScale" should be the union between two entity of type "interface"';
       this.snackBarErrorEmitter.emit(relationshipErrorDto);
       return false;
     }
@@ -290,6 +303,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         return DiagramComponentHelper.checkRelationshipPartOfTarget(this, cell);
       case RelationshipType.Exchange:
         return this.checkRelationshipExchangeTarget(cell);
+      case RelationshipType.InterfaceScale:
+        return this.checkRelationshipInterfaceScaleTarget(cell);
     }
     return false;
   }
@@ -312,6 +327,24 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     return true;
   }
 
+  private checkRelationshipInterfaceScaleTarget(cell: mxCell): boolean {
+    if (cell.value.nodeName.toLowerCase() != 'interface') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "interfaceScale" should be the union between two entity of type "interface"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.InterfaceScale,
+      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
+    if (messageError != "") {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = messageError;
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    return true;
+  }
+
   private createRelationship(cell) {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
@@ -319,6 +352,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         break;
       case RelationshipType.Exchange:
         this.createExchangeRelationship(cell);
+        break;
+      case RelationshipType.InterfaceScale:
+        this.createInterfaceScaleRelationship(cell);
     }
   }
 
@@ -332,6 +368,23 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     exchangeOfDoc.setAttribute("idRelationship", id);
     this.graph.insertEdge(this.graph.getDefaultParent(), null, exchangeOfDoc,
       this.sourceCellRelationship, cell, 'strokeColor=red;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
+    this.graph.getModel().endUpdate();
+    let childCells = this.graph.getChildCells();
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "1");
+    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
+  }
+
+  private createInterfaceScaleRelationship(cell) {
+    this.graph.getModel().beginUpdate();
+    let doc = mxUtils.createXmlDocument();
+    let id = this.modelService.createRelationship(RelationshipType.InterfaceScale,
+      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
+    let exchangeOfDoc = doc.createElement('interfacescale');
+    exchangeOfDoc.setAttribute("name", "name");
+    exchangeOfDoc.setAttribute("idRelationship", id);
+    this.graph.insertEdge(this.graph.getDefaultParent(), null, exchangeOfDoc,
+      this.sourceCellRelationship, cell, 'strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
     this.graph.getModel().endUpdate();
     let childCells = this.graph.getChildCells();
     DiagramComponentHelper.changeStateMovableCells(this, childCells, "1");
@@ -487,9 +540,11 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             return portName.substring(0, 3);
           }
         case 'partof':
-          return 'partof';
+          return 'partOf';
         case 'exchange':
           return 'exchange';
+        case 'interfacescale':
+          return 'interfaceScale';
       }
     }
 
@@ -517,6 +572,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           return 'partof';
         case 'exchange':
           return 'exchange';
+        case 'interfacescale':
+          return 'interfaceScale';
       }
     };
   }
