@@ -43,6 +43,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.graphMouseEvent();
     this.graphEvents();
     this.customLabel();
+    this.overrideCellSelectable();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -188,8 +189,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
         this.modelService.updateEntityAppearanceInDiagram(this.diagramId, Number(cell.getAttribute("entityId", "")),
           cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
-        DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
       }
+      DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
     }
   }
 
@@ -231,5 +232,18 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           return 'partof';
       }
     };
+  }
+
+
+  private overrideCellSelectable() {
+    this.graph.isCellSelectable = function (cell) {
+      if (cell.value.nodeName.toLowerCase() == 'partof') {
+        return false;
+      }
+      var state = this.view.getState(cell);
+      var style = (state != null) ? state.style : this.getCellStyle(cell);
+
+      return this.isCellsSelectable() && !this.isCellLocked(cell) && style['selectable'] != 0;
+    }
   }
 }

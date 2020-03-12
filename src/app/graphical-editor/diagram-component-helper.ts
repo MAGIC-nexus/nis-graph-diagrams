@@ -89,10 +89,15 @@ export class DiagramComponentHelper {
 
   static checkRelationshipPartOfSource(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
     cell): Boolean {
+    let typeCells  = "";
+    if(component instanceof ProcessorsDiagramComponentComponent) typeCells = "processor";
+    else if(component instanceof InterfacetypesDiagramComponentComponent) typeCells = "interfaceType";
     if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
-      let relationshipErrorDto = new SnackErrorDto();
-      relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
-      component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      if (!cell.isEdge()) {
+        let relationshipErrorDto = new SnackErrorDto();
+        relationshipErrorDto.message = `A relationship of type "part of" should be the union between two boxes of type "${typeCells}"`;
+        component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      }
       return false;
     };
     return true;
@@ -100,10 +105,15 @@ export class DiagramComponentHelper {
 
   static checkRelationshipPartOfTarget(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
     cell): Boolean {
+    let typeCells  = "";
+    if(component instanceof ProcessorsDiagramComponentComponent) typeCells = "processor";
+    else if(component instanceof InterfacetypesDiagramComponentComponent) typeCells = "interfaceType";
     if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
-      let relationshipErrorDto = new SnackErrorDto();
-      relationshipErrorDto.message = 'A relationship of type "part of" should be the union between two boxes of type "processor"';
-      component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      if (!cell.isEdge()) {
+        let relationshipErrorDto = new SnackErrorDto();
+        relationshipErrorDto.message = `A relationship of type "part of" should be the union between two boxes of type "${typeCells}"`;
+        component.snackBarErrorEmitter.emit(relationshipErrorDto);
+      }
       return false;
     };
     let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.getAttribute("entityId", "")),

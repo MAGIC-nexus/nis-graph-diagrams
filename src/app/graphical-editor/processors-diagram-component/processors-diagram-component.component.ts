@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, ChangeNameEntityDto } from '../diagram-component-helper';
-import { ModelService, EntityTypes, RelationshipType, InterfaceType, InterfaceOrientation } from '../../model-manager';
-import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, } from '../diagram-component-helper';
+import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
+import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
+  , ExchangeFormDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
@@ -28,6 +29,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
+  @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<ExchangeFormDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -57,6 +59,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.graphMouseEvent();
     this.customLabel();
     this.contextMenu();
+    this.overrideCellSelectable();
+    this.eventCellsMoveGraph();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -138,43 +142,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(element, this.graph, funct);
   }
 
-  // private changeInterfaceInGraphEvent(event: ChangeInterfaceInGraphDto) {
-  //   let updateGraphXML = false;
-  //   let cells: [mxCell] = this.graph.getChildCells();
-  //   for (let cell of cells) {
-  //     if (cell.value.nodeName.toLowerCase() == 'processor') {
-  //       updateGraphXML = this.changeInterfaceInGraph(event, cell);
-  //     }
-  //   }
-  //   if (updateGraphXML) DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
-  // }
-
-  // private changeInterfaceInGraph(event: ChangeInterfaceInGraphDto, cell: mxCell): boolean {
-  //   let updateGraphInXML = false;
-  //   if (cell.children) {
-  //     this.graph.getModel().beginUpdate();
-  //     for (let childProcessor of cell.children) {
-  //       if (childProcessor.value.nodeName.toLowerCase() == 'interface'
-  //         && childProcessor.getAttribute('entityId') == event.cellId) {
-  //         childProcessor.setAttribute('name', event.name);
-  //         if (event.orientation == InterfaceOrientation.Input) {
-  //           this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
-  //           this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
-  //         }
-  //         if (event.orientation == InterfaceOrientation.Output) {
-  //           this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
-  //           this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
-  //         }
-  //       }
-  //     }
-  //     this.graph.getModel().endUpdate();
-  //     this.graph.refresh();
-  //   }
-  //   return updateGraphInXML;
-  // }
-
   static changeInterfaceInGraphEvent(dto: ChangeInterfaceInGraphDto) {
     let diagramXML = DiagramComponentHelper.modelService.getDiagramGraph(dto.diagramId);
+    console.log('entre');
     if (diagramXML != "") {
       let updateGraphXML = false;
       let model = <any>new mxGraphModel();
@@ -184,7 +154,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cells = model.cells;
       for (let key in cells) {
         if (cells[key].value != undefined && cells[key].value.nodeName.toLowerCase() == 'processor') {
-          updateGraphXML = ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model);
+          if(ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model)) updateGraphXML = true;
         }
       }
       if (updateGraphXML) {
@@ -245,10 +215,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private doubleClickGraph(graph, evt) {
     let cellTarget: mxCell = evt.getProperty('cell');
     if (cellTarget) {
+      console.log(cellTarget);
       switch (cellTarget.value.nodeName.toLowerCase()) {
         case 'interface':
           let interfaceDto: InterfaceFormDto = { cellId: cellTarget.getAttribute('entityId', '') };
           this.interfaceFormEmitter.emit(interfaceDto);
+        case 'exchange':
+          let exchangeDto : ExchangeFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
+          this.exchangeFormEmitter.emit(exchangeDto);
       }
     }
   }
@@ -527,7 +501,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             name: "refreshDiagram",
             data: null,
           });
-        break;
+          break;
       }
     }
 
@@ -574,6 +548,33 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (cell != undefined && cell.value.nodeName == "processor") {
       this.showFormProcessor(cell.getAttribute("entityId", ""));
     }
+  }
+
+  private overrideCellSelectable() {
+    this.graph.isCellSelectable = function (cell : mxCell) {
+      if (cell.isEdge()) {
+        return false;
+      }
+      var state = this.view.getState(cell);
+      var style = (state != null) ? state.style : this.getCellStyle(cell);
+
+      return this.isCellsSelectable() && !this.isCellLocked(cell) && style['selectable'] != 0;
+    }
+  }
+
+  private eventCellsMoveGraph() {
+    let processorInstance = this;
+    this.graph.addListener(mxEvent.CELLS_MOVED, function (sender, event) {
+      let cellsMoved: [mxCell] = event.properties.cells;
+      for (let cell of cellsMoved) {
+        if (cell.value.nodeName.toLowerCase() == 'processor') {
+          processorInstance.modelService.updateEntityAppearanceInDiagram(processorInstance.diagramId, Number(cell.getAttribute("entityId", "")),
+            cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        }
+      }
+      DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, processorInstance.graph);
+    });
+    
   }
 
 }

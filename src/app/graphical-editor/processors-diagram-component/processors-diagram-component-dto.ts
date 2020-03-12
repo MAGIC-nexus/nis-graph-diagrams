@@ -14,6 +14,10 @@ export interface InterfaceFormDto {
     cellId;
 }
 
+export interface ExchangeFormDto {
+    cellId;
+}
+
 export interface ChangeInterfaceInGraphDto {
     diagramId : number;
     cellId;
