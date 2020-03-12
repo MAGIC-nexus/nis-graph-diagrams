@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output,
 import { ModelService, Diagram, EntityTypes, RelationshipType, InterfaceType } from '../../model-manager';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-interfacetypes-diagram-component',
@@ -16,6 +17,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @ViewChild('interfaceTypeToolbar', { static: true }) interfaceTypeToolbar: ElementRef;
   @Input() diagramId: number;
   @Input() modelService: ModelService;
+  @Input() interfaceTypeSubject: Subject<{ name: string, data: any }>;
 
   @Output("createInterfaceType") createInterfaceTypeEmitter = new EventEmitter<CreateInterfaceTypeDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
@@ -26,7 +28,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
   imageToolbarRelationship: HTMLImageElement;
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
-  sourceCellRelationship : mxCell;
+  sourceCellRelationship: mxCell;
 
   constructor() { }
 
@@ -37,6 +39,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   ngAfterViewInit() {
     this.graph = new mxGraph(this.graphContainer.nativeElement);
     this.makeDraggableToolbar();
+    this.eventsProcessorSubject();
     this.graphMouseEvent();
     this.graphEvents();
     this.customLabel();
@@ -82,6 +85,15 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.relationshipSelect = relationshipType;
     this.imageToolbarRelationship = <HTMLImageElement>event.target;
     this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
+  }
+
+  private eventsProcessorSubject() {
+    this.interfaceTypeSubject.subscribe(event => {
+      switch (event.name) {
+        case 'refreshDiagram':
+          DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+      }
+    });
   }
 
   private graphMouseEvent() {
@@ -196,37 +208,19 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.graph.cellLabelChanged = function (cell: mxCell, newValue, autoSize) {
       switch (cell.value.nodeName.toLowerCase()) {
         case 'interfacetype':
-          try {
-            let edit = {
-              cell: cell,
-              attribute: "name",
-              value: newValue,
-              previous: newValue,
-              execute: function () {
-                if (this.cell != null) {
-                  var tmp = this.cell.getAttribute(this.attribute);
-
-                  if (this.previous == null) {
-                    this.cell.value.removeAttribute(this.attribute);
-                  }
-                  else {
-                    this.cell.setAttribute(this.attribute, this.previous);
-                  }
-
-                  this.previous = tmp;
-                }
-              }
-            };
-            interfacetypeInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId','')), newValue);
-            interfacetypeInstance.updateTreeEmitter.emit(null);
-            this.getModel().execute(edit);
+          for (let diagram of interfacetypeInstance.modelService.getTreeModelViewDiagrams()) {
+            DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), newValue,
+              Number(cell.getAttribute('entityId', '')));
           }
-          finally {
-            this.getModel().endUpdate();
-          }
+          interfacetypeInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
+          interfacetypeInstance.interfaceTypeSubject.next({
+            name: "refreshDiagram",
+            data: null,
+          });
+          DiagramComponentHelper.updateGraphInModel(interfacetypeInstance.diagramId, this);
           break;
       }
-      DiagramComponentHelper.updateGraphInModel(interfacetypeInstance.diagramId, this);
+
     }
 
     this.graph.getEditingValue = function (cell: mxCell) {

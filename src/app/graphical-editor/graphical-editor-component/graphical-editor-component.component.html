@@ -111,7 +111,8 @@
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
               [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)"
-              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()">
+              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
+              [interfaceTypeSubject]="interfaceTypeSubject">
             </app-interfacetypes-diagram-component>
           </mat-tab>
         </mat-tab-group>

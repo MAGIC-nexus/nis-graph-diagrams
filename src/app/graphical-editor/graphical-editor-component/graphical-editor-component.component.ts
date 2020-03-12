@@ -14,6 +14,7 @@ import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/inte
 import {
   CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
+import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -32,6 +33,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
+  interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
   private readonly ID_DIAGRAMS = -3;
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
@@ -183,6 +185,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.nodes = this.modelService.getTreeModelView();
   }
 
+  private getAllDiagramsModel() {
+    return this.modelService.getTreeModelViewDiagrams();
+  }
+
   private addTabDiagram(diagramId: number) {
     let diagram: Diagram = this.modelService.readDiagram(diagramId);
     this.tabsDiagram.set(diagram.id, { id: diagram.id, name: diagram.name, type: diagram.diagramType });
@@ -309,7 +315,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.nameErrorTipFormCreateDiagram = `The name ${this.nameFormCreateDiagram.trim()} already exists`;
       return false;
     }
-    
+
     this.modalRef.destroy();
     switch (this.typeCreateDiagram) {
       case 'InterfaceTypes':
@@ -394,14 +400,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.createInterfaceType();
   }
 
-  createInterfaceType() : boolean {
+  createInterfaceType(): boolean {
     if (this.nameFormCreateInterfaceType == "") {
       this.nameValidationFormCreateInterfaceType = "error";
       return false;
     }
     this.modalRef.destroy();
-    this.createInterfaceTypeDto.component.createInterfaceType(this.nameFormCreateInterfaceType.trim(), 
-     this.createInterfaceTypeDto.pt);
+    this.createInterfaceTypeDto.component.createInterfaceType(this.nameFormCreateInterfaceType.trim(),
+      this.createInterfaceTypeDto.pt);
     this.updateTree();
     return true;
   }
@@ -464,12 +470,12 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     processor.description = this.descriptionFormProcessor;
     this.modelService.updateEntity(Number(this.proccesorIdForm), processor);
     if (this.oldNameFormProcessor != this.nameFormProcessor) {
+      for (let diagram of this.getAllDiagramsModel()) {
+        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), this.nameFormProcessor, this.proccesorIdForm);
+      }
       this.proccesorSubject.next({
-        name: "changeNameCellsById",
-        data: {
-          cellId: this.proccesorIdForm,
-          name: this.nameFormProcessor,
-        },
+        name: "refreshDiagram",
+        data: null,
       });
     }
   }
@@ -547,7 +553,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         nzContent: this.formInterfaceContent,
         nzFooter: this.formInterfaceFooter,
         nzWrapClassName: 'vertical-center-modal',
-        nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop:'0px' },
+        nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop: '0px' },
       });
       this.modalRef.afterOpen.subscribe(() => {
         this.draggableModal();
@@ -575,8 +581,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     interfaceEntity.sphere = this.sphereFormInterface;
     interfaceEntity.description = this.descriptionFormInterface;
     let interfaceValues = new Array<InterfaceValue>();
-    console.log(this.listInterfaceValues);
-    for(let interfaceValue of this.listInterfaceValues) {
+    for (let interfaceValue of this.listInterfaceValues) {
       let auxInterfaceValue = new InterfaceValue();
       auxInterfaceValue.value = interfaceValue.value;
       auxInterfaceValue.time = interfaceValue.time;
@@ -589,14 +594,18 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateInterfaceValues(Number(this.interfaceIdForm), interfaceValues);
     if (this.oldNameFormInterface != this.nameFormInterface ||
       this.oldOrientationFormInterface != this.orientationFormInterface) {
-      let data: ChangeInterfaceInGraphDto = {
-        cellId: this.interfaceIdForm,
-        name: this.nameFormInterface,
-        orientation: this.orientationFormInterface,
-      };
+      for (let diagram of this.getAllDiagramsModel()) {
+        let data: ChangeInterfaceInGraphDto = {
+          diagramId: Number(diagram.id),
+          cellId: this.interfaceIdForm,
+          name: this.nameFormInterface,
+          orientation: this.orientationFormInterface,
+        };
+        ProcessorsDiagramComponentComponent.changeInterfaceInGraphEvent(data);
+      }
       this.proccesorSubject.next({
-        name: "changeInterfaceInGraph",
-        data: data,
+        name: "refreshDiagram",
+        data: null,
       });
     }
   }

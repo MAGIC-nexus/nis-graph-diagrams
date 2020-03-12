@@ -63,4 +63,8 @@ declare class mxCell {
 
   cloneValue();
 }
+
+declare class mxGraphModel {
+  
+}
 /******************      Model end     **************/
