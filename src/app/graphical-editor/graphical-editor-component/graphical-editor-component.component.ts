@@ -6,10 +6,10 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue, ExchangeRelationship,
+  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue, ExchangeRelationship, EntityRelationshipPartOf,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
-import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
+import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
   CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto
@@ -78,6 +78,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formExchangeTitle', { static: false }) formExchangeTitle: TemplateRef<any>;
   @ViewChild('formExchangeContent', { static: false }) formExchangeContent: TemplateRef<any>;
   @ViewChild('formExchangeFooter', { static: false }) formExchangeFooter: TemplateRef<any>;
+
+  //Form PartOf
+  partOfIdForm;
+  amountFormPartOf: string
+  @ViewChild('formPartOfTitle', { static: false }) formPartOfTitle: TemplateRef<any>;
+  @ViewChild('formPartOfContent', { static: false }) formPartOfContent: TemplateRef<any>;
+  @ViewChild('formPartOFooter', { static: false }) formPartOFooter: TemplateRef<any>;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
@@ -654,6 +661,40 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     exchange.weight = this.weightFormExchange;
 
     this.modelService.updateRelationship(Number(this.exchangeIdForm), exchange);
+  }
+
+  showFormPartOf(event : PartOfFormDto) {
+    this.partOfIdForm = event.cellId;
+    let partOf = this.modelService.readRelationship(Number(event.cellId));
+    this.amountFormPartOf = partOf.amount;
+
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formPartOfTitle,
+      nzContent: this.formPartOfContent,
+      nzFooter: this.formPartOFooter,
+      nzWrapClassName: 'vertical-center-modal',
+    });
+    this.modalRef.afterOpen.subscribe(() => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  submitPartOfForm(event : Event) {
+    this.updatePartOf();
+    event.preventDefault();
+  }
+
+  private updatePartOf() {
+    this.modalRef.destroy();
+    let partOf = new EntityRelationshipPartOf();
+    partOf.amount = this.amountFormPartOf;
+
+    this.modelService.updateRelationship(Number(this.partOfIdForm), partOf);
   }
 
   showSnackBarError(event: SnackErrorDto) {

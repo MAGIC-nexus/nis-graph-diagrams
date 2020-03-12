@@ -208,6 +208,11 @@ export class DiagramComponentHelper {
 
 }
 
+export enum StatusCreatingRelationship {
+  notCreating,
+  creating,
+}
+
 export class SnackErrorDto {
   message: string;
 }
@@ -217,7 +222,6 @@ export interface ChangeNameEntityDto {
   name: string;
 }
 
-export enum StatusCreatingRelationship {
-  notCreating,
-  creating,
+export interface PartOfFormDto {
+  cellId;
 }

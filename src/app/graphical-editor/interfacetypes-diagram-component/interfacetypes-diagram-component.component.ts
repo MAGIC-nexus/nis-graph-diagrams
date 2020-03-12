@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import { ModelService, Diagram, EntityTypes, RelationshipType, InterfaceType } from '../../model-manager';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto } from '../diagram-component-helper';
+import { ModelService, Diagram, EntityTypes, RelationshipType} from '../../model-manager';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
 
@@ -22,6 +22,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @Output("createInterfaceType") createInterfaceTypeEmitter = new EventEmitter<CreateInterfaceTypeDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
+  @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
 
   graph: mxGraph;
 
@@ -112,6 +113,14 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let cellTarget = evt.getProperty('cell');
     console.log(cellTarget);
     console.log(this.modelService);
+    if (cellTarget) {
+      console.log(cellTarget);
+      switch (cellTarget.value.nodeName.toLowerCase()) {
+        case 'partof':
+          let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          this.partOfFormEmitter.emit(partOfDto);
+      }
+    }
   }
 
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {

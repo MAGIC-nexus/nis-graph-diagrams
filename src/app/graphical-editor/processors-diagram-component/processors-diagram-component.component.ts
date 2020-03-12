@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, } from '../diagram-component-helper';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
   , ExchangeFormDto } from './processors-diagram-component-dto';
@@ -30,6 +30,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
   @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<ExchangeFormDto>();
+  @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -223,6 +224,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case 'exchange':
           let exchangeDto : ExchangeFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
           this.exchangeFormEmitter.emit(exchangeDto);
+        case 'partof':
+          let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          this.partOfFormEmitter.emit(partOfDto);
       }
     }
   }
@@ -574,7 +578,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       }
       DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, processorInstance.graph);
     });
-    
   }
 
 }
