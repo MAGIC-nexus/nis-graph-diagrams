@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, ChangeNameEntityDto } from '../diagram-component-helper';
-import { ModelService, EntityTypes, RelationshipType, InterfaceType, InterfaceOrientation } from '../../model-manager';
-import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, } from '../diagram-component-helper';
+import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
+import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
+  , ExchangeFormDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
@@ -28,6 +29,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
+  @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<ExchangeFormDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -218,6 +220,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case 'interface':
           let interfaceDto: InterfaceFormDto = { cellId: cellTarget.getAttribute('entityId', '') };
           this.interfaceFormEmitter.emit(interfaceDto);
+        case 'exchange':
+          let exchangeDto : ExchangeFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
+          this.exchangeFormEmitter.emit(exchangeDto);
       }
     }
   }
@@ -546,8 +551,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private overrideCellSelectable() {
-    this.graph.isCellSelectable = function (cell) {
-      if (cell.value.nodeName.toLowerCase() == 'partof') {
+    this.graph.isCellSelectable = function (cell : mxCell) {
+      if (cell.isEdge()) {
         return false;
       }
       var state = this.view.getState(cell);

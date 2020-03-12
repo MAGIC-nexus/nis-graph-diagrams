@@ -6,13 +6,13 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue,
+  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue, ExchangeRelationship,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
-  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
+  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
 import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 
@@ -71,6 +71,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   //Interface Values
   listInterfaceValues;
   nextIdInterfaceValues;
+
+  //Form Exchange
+  private exchangeIdForm;
+  weightFormExchange: string;
+  @ViewChild('formExchangeTitle', { static: false }) formExchangeTitle: TemplateRef<any>;
+  @ViewChild('formExchangeContent', { static: false }) formExchangeContent: TemplateRef<any>;
+  @ViewChild('formExchangeFooter', { static: false }) formExchangeFooter: TemplateRef<any>;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
@@ -548,6 +555,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         });
         this.nextIdInterfaceValues++;
       }
+
       this.modalRef = this.nzModalService.create({
         nzTitle: this.formInterafaceTitle,
         nzContent: this.formInterfaceContent,
@@ -612,6 +620,40 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   changeListInterfaceValues(event) {
     this.listInterfaceValues = event;
+  }
+
+  showFormExchange(event : ExchangeFormDto) {
+    this.exchangeIdForm = event.cellId;
+    let exchange = this.modelService.readRelationship(Number(event.cellId));
+    this.weightFormExchange = exchange.weight;
+
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formExchangeTitle,
+      nzContent: this.formExchangeContent,
+      nzFooter: this.formExchangeFooter,
+      nzWrapClassName: 'vertical-center-modal',
+    });
+    this.modalRef.afterOpen.subscribe(() => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  submitExchangeForm(event : Event) {
+    this.updateExchange();
+    event.preventDefault();
+  }
+
+  private updateExchange() {
+    this.modalRef.destroy();
+    let exchange = new ExchangeRelationship();
+    exchange.weight = this.weightFormExchange;
+
+    this.modelService.updateRelationship(Number(this.exchangeIdForm), exchange);
   }
 
   showSnackBarError(event: SnackErrorDto) {
