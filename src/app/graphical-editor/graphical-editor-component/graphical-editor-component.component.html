@@ -107,12 +107,13 @@
               [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
               (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
               (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
-              (interfaceForm)="showFormInterface($event)" (exchangeForm)="showFormExchange($event)">
+              (interfaceForm)="showFormInterface($event)" (exchangeForm)="showFormExchange($event)"
+              (partOfForm)="showFormPartOf($event)">
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
               [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)"
               (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
-              [interfaceTypeSubject]="interfaceTypeSubject">
+              [interfaceTypeSubject]="interfaceTypeSubject" (partOfForm)="showFormPartOf($event)">
             </app-interfacetypes-diagram-component>
           </mat-tab>
         </mat-tab-group>
@@ -378,6 +379,29 @@
       Cancel
     </button>
     <button nz-button nzType="primary" (click)="updateExchange()">
+      Confirm
+    </button>
+  </ng-template>
+
+  <!-- Modal PartOf -->
+  <ng-template #formPartOfTitle>
+    <span class="title-modal">Edit partof relationship</span>
+  </ng-template>
+  <ng-template #formPartOfContent>
+    <form (ngSubmit)="submitPartOfForm($event)" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Amount</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <input [(ngModel)]="amountFormPartOf" nz-input type="text" [ngModelOptions]="{standalone: true}">
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-template>
+  <ng-template #formPartOFooter>
+    <button nz-button nzType="danger" (click)="closeModal()">
+      Cancel
+    </button>
+    <button nz-button nzType="primary" (click)="updatePartOf()">
       Confirm
     </button>
   </ng-template>
