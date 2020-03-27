@@ -6,7 +6,7 @@
       <button mat-flat-button>Clear Filter</button>
 
       <!-- Tree root -->
-      <tree-root #treeRoot [nodes]="nodes" [options]="options">
+      <tree-root (updateData)="updateDataTree($event)" #treeRoot [nodes]="nodes" [options]="options">
 
         <ng-template #treeNodeTemplate let-node let-index="index">
           <span (mouseover)="mouseOverTree($event)" [attr.data-node-id]="node.data.id"

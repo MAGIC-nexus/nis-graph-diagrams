@@ -31,7 +31,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   SphereEnum = Sphere;
   RoegenTypeEnum = RoegenType;
 
-  @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
+  @ViewChild('treeRoot', { static: false }) treeRoot;
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
   interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
   private readonly ID_DIAGRAMS = -3;
@@ -120,7 +120,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   actionMappingTree: IActionMapping = {
     mouse: {
-
       dblClick: (tree, node, $event) => {
         if (node.level > 1) {
           let parentNode = node;
@@ -138,8 +137,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       contextMenu: (tree, node, $event) => {
         $event.preventDefault();
       }
-    }
-
+    },
 
   }
 
@@ -198,6 +196,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   private updateTree() {
     this.nodes = this.modelService.getTreeModelView();
+  }
+
+  updateDataTree(event) {
+    const nodesFirstLevel = [this.treeRoot.treeModel.getNodeById(this.ID_DIAGRAMS), 
+      this.treeRoot.treeModel.getNodeById(this.ID_INTERFACETYPES),  this.treeRoot.treeModel.getNodeById(this.ID_PROCESSOR)];
+      for(let node of nodesFirstLevel) {
+        node.expand();
+      }
   }
 
   private getAllDiagramsModel() {
