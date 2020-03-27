@@ -21,6 +21,7 @@ import {
   NzRadioModule,
   NzTableModule,
   NzPopconfirmModule,
+  NzListModule,
 } from 'ng-zorro-antd';
 
 import { GraphicalEditorComponentComponent } from './graphical-editor-component/graphical-editor-component.component';
@@ -64,6 +65,7 @@ import { InterfacelistComponent } from './interfacelist/interfacelist.component'
     NzRadioModule,
     NzTableModule,
     NzPopconfirmModule,
+    NzListModule,
   ],
   exports: [
       GraphicalEditorComponentComponent,

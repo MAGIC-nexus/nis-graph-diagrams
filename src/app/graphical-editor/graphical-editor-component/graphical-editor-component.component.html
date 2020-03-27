@@ -186,69 +186,90 @@
     <span class="title-modal">Edit processor</span>
   </ng-template>
   <ng-template #formProcessorContent>
-    <form (ngSubmit)="submitProcessorForm($event)" nz-form>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Name</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="nameFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Level</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="levelFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">System</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="systemFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Geolocation</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <input [(ngModel)]="geolocationFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Funct/Struc</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="functionalOrStructuralFormProcessor" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Functional">Functional</label>
-            <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Structural">Structural</label>
-            <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Notional">Notional</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Accounted</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="accountedFormProcessor" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="ProcessorAccountedEnum.Yes">Yes</label>
-            <label nz-radio [nzValue]="ProcessorAccountedEnum.No">No</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Subsystem Type</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <nz-radio-group [(ngModel)]="subsystemTypeFormProcessor" [ngModelOptions]="{standalone: true}">
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Local">Local</label>
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Environment">Environment</label>
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.External">External</label>
-            <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.ExternalEnvironment">ExternalEnvironment</label>
-          </nz-radio-group>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6">Description</nz-form-label>
-        <nz-form-control [nzSpan]="18">
-          <textarea rows="4" nz-input [(ngModel)]="descriptionFormProcessor"
-            [ngModelOptions]="{standalone: true}"></textarea>
-        </nz-form-control>
-      </nz-form-item>
-    </form>
+    <mat-tab-group animationDuration="0ms" fxFlex="auto">
+
+      <mat-tab label="Processor">
+        <form (ngSubmit)="submitProcessorForm($event)" nz-form>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Name</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <input [(ngModel)]="nameFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Level</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <input [(ngModel)]="levelFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">System</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <input [(ngModel)]="systemFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Geolocation</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <input [(ngModel)]="geolocationFormProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}">
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Funct/Struc</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="functionalOrStructuralFormProcessor" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Functional">Functional</label>
+                <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Structural">Structural</label>
+                <label nz-radio [nzValue]="ProcessorFunctionalOrStructuralEnum.Notional">Notional</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Accounted</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="accountedFormProcessor" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="ProcessorAccountedEnum.Yes">Yes</label>
+                <label nz-radio [nzValue]="ProcessorAccountedEnum.No">No</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Subsystem Type</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <nz-radio-group [(ngModel)]="subsystemTypeFormProcessor" [ngModelOptions]="{standalone: true}">
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Local">Local</label>
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.Environment">Environment</label>
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.External">External</label>
+                <label nz-radio [nzValue]="ProcessorSubsystemTypeEnum.ExternalEnvironment">ExternalEnvironment</label>
+              </nz-radio-group>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label [nzSpan]="6">Description</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+              <textarea rows="4" nz-input [(ngModel)]="descriptionFormProcessor"
+                [ngModelOptions]="{standalone: true}"></textarea>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </mat-tab>
+
+      <mat-tab label="Interfaces">
+        <nz-list [nzDataSource]="interfacesFormProcessor" nzSize="small" nzBordered [nzRenderItem]="interfaceList" 
+        [ngStyle]="{'margin-top': '20px'}">
+          <ng-template #interfaceList let-item>
+            <nz-list-item>
+              <nz-list-item-meta [nzTitle]="nzTitle">
+                <ng-template #nzTitle>
+                  <a (click)="showFormInterface( {cellId : item.id} )">{{ item.name }}</a>
+                </ng-template>
+              </nz-list-item-meta>
+            </nz-list-item>
+          </ng-template>
+        </nz-list>
+      </mat-tab>
+
+    </mat-tab-group>
   </ng-template>
   <ng-template #formProcessorFooter>
     <button nz-button nzType="danger" (click)="closeModal()">
@@ -322,7 +343,7 @@
       </mat-tab>
       <mat-tab label="Interface Values">
         <app-interfacelist [listOfData]="listInterfaceValues" [nextId]="nextIdInterfaceValues"
-        (changeData)="changeListInterfaceValues($event)"></app-interfacelist>
+          (changeData)="changeListInterfaceValues($event)"></app-interfacelist>
       </mat-tab>
     </mat-tab-group>
   </ng-template>
@@ -359,7 +380,7 @@
       Confirm
     </button>
   </ng-template>
-  
+
   <!-- Modal Exchange -->
   <ng-template #formExchangeTitle>
     <span class="title-modal">Edit exchange relationship</span>

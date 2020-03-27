@@ -51,6 +51,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   functionalOrStructuralFormProcessor: ProcessorFunctionalOrStructural;
   accountedFormProcessor: ProcessorAccounted;
   subsystemTypeFormProcessor: ProcessorSubsystemType;
+  interfacesFormProcessor : Interface[];
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
@@ -446,13 +447,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.accountedFormProcessor = processor.accounted;
       this.subsystemTypeFormProcessor = processor.subsystemType;
       this.descriptionFormProcessor = processor.description;
+      this.interfacesFormProcessor = processor.interfaces;
 
       this.modalRef = this.nzModalService.create({
         nzTitle: this.formProcessorTitle,
         nzContent: this.formProcessorContent,
         nzFooter: this.formProcessorFooter,
         nzWrapClassName: 'vertical-center-modal',
-        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+        nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop: '0px' },
       });
       this.modalRef.afterOpen.subscribe(() => {
         this.draggableModal();
