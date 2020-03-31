@@ -6,13 +6,13 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue, ExchangeRelationship, EntityRelationshipPartOf,
+  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue, ExchangeRelationship, EntityRelationshipPartOf, ScaleRelationship,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
-  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto
+  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto, ScaleFormDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
 import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 
@@ -86,6 +86,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formPartOfTitle', { static: false }) formPartOfTitle: TemplateRef<any>;
   @ViewChild('formPartOfContent', { static: false }) formPartOfContent: TemplateRef<any>;
   @ViewChild('formPartOFooter', { static: false }) formPartOFooter: TemplateRef<any>;
+
+  //Form Scale
+  scaleIdForm;
+  scaleFormScale: string
+  @ViewChild('formScaleTitle', { static: false }) formScaleTitle: TemplateRef<any>;
+  @ViewChild('formScaleContent', { static: false }) formScaleContent: TemplateRef<any>;
+  @ViewChild('formScaleFooter', { static: false }) formScaleFooter: TemplateRef<any>;
 
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
@@ -703,6 +710,41 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     partOf.amount = this.amountFormPartOf;
 
     this.modelService.updateRelationship(Number(this.partOfIdForm), partOf);
+  }
+
+  showFormScale(event : ScaleFormDto) {
+    this.scaleIdForm = event.cellId;
+    let scale : ScaleRelationship = this.modelService.readRelationship(Number(event.cellId));
+    console.log(scale);
+    this.scaleFormScale = scale.scale;
+
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formScaleTitle,
+      nzContent: this.formScaleContent,
+      nzFooter: this.formScaleFooter,
+      nzWrapClassName: 'vertical-center-modal',
+    });
+    this.modalRef.afterOpen.subscribe(() => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  submitScaleForm(event : Event) {
+    this.updateScale();
+    event.preventDefault();
+  }
+
+  private updateScale() {
+    this.modalRef.destroy();
+    let scale = new ScaleRelationship();
+    scale.scale = this.scaleFormScale;
+
+    this.modelService.updateRelationship(Number(this.scaleIdForm), scale);
   }
 
   showSnackBarError(event: SnackErrorDto) {

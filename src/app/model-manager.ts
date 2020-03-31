@@ -836,6 +836,7 @@ export class ModelService {
             case RelationshipType.InterfaceScale: {
                 r = new ScaleRelationship();
                 r.scale = "";
+                break;
             }
             case RelationshipType.InterfaceTypeScale: {
                 r = new InterfaceTypeScaleChange();
@@ -844,6 +845,7 @@ export class ModelService {
                 r.scale = "";
                 r.originUnit = "";
                 r.destinationUnit = "";
+                break;
             }
         }
         r.id = this.getNewId();

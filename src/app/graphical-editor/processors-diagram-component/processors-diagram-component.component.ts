@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
 import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
-  , ExchangeFormDto } from './processors-diagram-component-dto';
+  , ExchangeFormDto, ScaleFormDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
@@ -31,6 +31,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
   @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<ExchangeFormDto>();
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
+  @Output("scaleForm") scaleFormEmitter = new EventEmitter<ScaleFormDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -221,12 +222,19 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         case 'interface':
           let interfaceDto: InterfaceFormDto = { cellId: cellTarget.getAttribute('entityId', '') };
           this.interfaceFormEmitter.emit(interfaceDto);
+          break;
         case 'exchange':
           let exchangeDto : ExchangeFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
           this.exchangeFormEmitter.emit(exchangeDto);
+          break;
         case 'partof':
           let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
           this.partOfFormEmitter.emit(partOfDto);
+          break;
+        case 'interfacescale': 
+          let scaleDto : ScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          this.scaleFormEmitter.emit(scaleDto);
+          break;
       }
     }
   }
@@ -261,9 +269,11 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private checkRelationshipExchangeSource(cell): boolean {
     if (cell.value.nodeName.toLowerCase() != 'interface') {
-      let relationshipErrorDto = new SnackErrorDto();
-      relationshipErrorDto.message = 'A relationship of type "exchange" should be the union between two entity of type "interface"';
-      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      if (!cell.isEdge()) {
+        let relationshipErrorDto = new SnackErrorDto();
+        relationshipErrorDto.message = 'A relationship of type "exchange" should be the union between two entity of type "interface"';
+        this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      }
       return false;
     }
 
@@ -272,9 +282,11 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private checkRelationshipInterfaceScaleSource(cell) : boolean {
     if (cell.value.nodeName.toLowerCase() != 'interface') {
-      let relationshipErrorDto = new SnackErrorDto();
-      relationshipErrorDto.message = 'A relationship of type "interfaceScale" should be the union between two entity of type "interface"';
-      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      if (!cell.isEdge()) {
+        let relationshipErrorDto = new SnackErrorDto();
+        relationshipErrorDto.message = 'A relationship of type "interfaceScale" should be the union between two entity of type "interface"';
+        this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      }
       return false;
     }
 
