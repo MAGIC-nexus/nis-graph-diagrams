@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ModelService, Diagram, EntityTypes, RelationshipType} from '../../model-manager';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
-import { CreateInterfaceTypeDto } from './interfacetypes-diagram-component-dto';
+import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -23,6 +23,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
+  @Output("interfaceTypeScaleForm") interfaceTypeScaleFormEmitter = new EventEmitter<InterfaceTypeScaleFormDto>();
 
   graph: mxGraph;
 
@@ -119,6 +120,10 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         case 'partof':
           let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
           this.partOfFormEmitter.emit(partOfDto);
+          break;
+        case 'interfacetypescale':
+          let interfacetypescaleDto : InterfaceTypeScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          this.interfaceTypeScaleFormEmitter.emit(interfacetypescaleDto);
       }
     }
   }
@@ -143,8 +148,23 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfSource(this, cell);
+      case RelationshipType.InterfaceTypeScale:
+        return this.checkRelationshipInterfaceTypeScaleSource(cell);
     }
     return false;
+  }
+
+  private checkRelationshipInterfaceTypeScaleSource(cell): boolean {
+    if (cell.value.nodeName.toLowerCase() != 'interfacetype') {
+      if (!cell.isEdge()) {
+        let relationshipErrorDto = new SnackErrorDto();
+        relationshipErrorDto.message = 'A relationship of type "interfaceTypeScale" should be the union between two entity of type "interfaceType"';
+        this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      }
+      return false;
+    }
+
+    return true;
   }
 
   private mouseUpGraph(sender, mouseEvent: mxMouseEvent) {
@@ -167,8 +187,28 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
         return DiagramComponentHelper.checkRelationshipPartOfTarget(this, cell);
+      case RelationshipType.InterfaceTypeScale:
+        return this.checkRelationshipInterfaceTypeScaleTarget(cell);
     }
     return false;
+  }
+
+  private checkRelationshipInterfaceTypeScaleTarget(cell: mxCell): boolean {
+    if (cell.value.nodeName.toLowerCase() != 'interfacetype') {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = 'A relationship of type "interfaceTypeScale" should be the union between two entity of type "interfaceType"';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.InterfaceTypeScale,
+      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
+    if (messageError != "") {
+      let relationshipErrorDto = new SnackErrorDto();
+      relationshipErrorDto.message = messageError;
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    return true;
   }
 
   private createRelationship(cell) {
@@ -176,7 +216,27 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       case RelationshipType.PartOf:
         DiagramComponentHelper.createPartOfRelationship(this, cell);
         break;
+      case RelationshipType.InterfaceTypeScale:
+        this.createInterfaceTypeScaleRelationship(cell);
+        break;
     }
+  }
+
+  private createInterfaceTypeScaleRelationship(cell) {
+    this.graph.getModel().beginUpdate();
+    let doc = mxUtils.createXmlDocument();
+    let id = this.modelService.createRelationship(RelationshipType.InterfaceTypeScale,
+      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
+    let interfaceTypeScale = doc.createElement('interfacetypescale');
+    interfaceTypeScale.setAttribute("name", "name");
+    interfaceTypeScale.setAttribute("idRelationship", id);
+    this.graph.insertEdge(this.graph.getDefaultParent(), null, interfaceTypeScale,
+      this.sourceCellRelationship, cell, 'strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
+    this.graph.getModel().endUpdate();
+    let childCells = this.graph.getChildCells();
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "1");
+    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+    DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
   }
 
   private mouseMoveGraph(sender, mouseEvent: mxMouseEvent) {
@@ -212,6 +272,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           return cell.getAttribute('name', 'interfaceType');
         case 'partof':
           return 'partof';
+        case 'interfacetypescale':
+          return 'interfacetypescale';
       }
     }
 
@@ -239,6 +301,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           return cell.getAttribute('name', 'interfaceType');
         case 'partof':
           return 'partof';
+        case 'interfacetypescale':
+          return 'interfacetypescale';
       }
     };
   }
@@ -246,7 +310,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   private overrideCellSelectable() {
     this.graph.isCellSelectable = function (cell) {
-      if (cell.value.nodeName.toLowerCase() == 'partof') {
+      if (cell.isEdge()) {
         return false;
       }
       var state = this.view.getState(cell);

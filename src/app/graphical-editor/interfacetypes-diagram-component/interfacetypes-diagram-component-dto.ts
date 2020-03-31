@@ -4,3 +4,7 @@ export class CreateInterfaceTypeDto {
     pt: mxPoint;
     component: InterfacetypesDiagramComponentComponent;
 }
+
+export interface InterfaceTypeScaleFormDto {
+    cellId;
+}

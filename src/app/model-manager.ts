@@ -327,6 +327,14 @@ export class ModelService {
         return tmp;
     }
 
+    listProcessors() {
+        let tmp : Processor[] = [];
+        this.processors.forEach( (processors, id) => {
+            tmp.push(processors);
+        });
+        return tmp;
+    }
+
     // Get a RO perspective of a diagram in a mxGraph compatible structure. Afterwards, the controller would invoke code in example "https://jgraph.github.io/mxgraph/javascript/examples/codec.html"
     getDiagramGraph(diagramId: number) {
         let graph: string = "";
@@ -840,8 +848,8 @@ export class ModelService {
             }
             case RelationshipType.InterfaceTypeScale: {
                 r = new InterfaceTypeScaleChange();
-                r.originContextProcessorId = 0;
-                r.destinationContextProcessorId = 0;
+                r.originContextProcessorId = null;
+                r.destinationContextProcessorId = null;
                 r.scale = "";
                 r.originUnit = "";
                 r.destinationUnit = "";
@@ -876,17 +884,19 @@ export class ModelService {
                 return this.checkCanCreateRelationshipExchange(originId, destinationId);
             case RelationshipType.InterfaceScale:
                 return this.checkCanCreateRelationshipInterfaceScale(originId, destinationId);
+            case RelationshipType.InterfaceTypeScale:
+                return this.checkCanCreateRelationshipInterfaceTypeScale(originId, destinationId);
         }
     }
 
-    checkCanCreateRelationshipPartOf(originId, destinationId) : string {
+    private checkCanCreateRelationshipPartOf(originId, destinationId) : string {
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
         }
         return "";
     }
 
-    checkCanCreateRelationshipExchange(originId, destinationId) : string {
+    private checkCanCreateRelationshipExchange(originId, destinationId) : string {
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
         }
@@ -905,7 +915,7 @@ export class ModelService {
         }
     }
 
-    checkCanCreateRelationshipInterfaceScale(originId, destinationId) : string {
+    private checkCanCreateRelationshipInterfaceScale(originId, destinationId) : string {
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
         }
@@ -916,6 +926,20 @@ export class ModelService {
             return "";
         } else {
             return 'A relationship of type "exchange" should be the union between two entity of type "interface"';
+        }
+    }
+
+    private checkCanCreateRelationshipInterfaceTypeScale(originId, destinationId) : string {
+        if (originId == destinationId) {
+            return "Cannot make a relationship of the same entity"
+        }
+        let interfaceOrigin  = this.readEntity(originId);
+        let interfaceDestination = this.readEntity(destinationId);
+        if (interfaceOrigin instanceof InterfaceType && interfaceDestination instanceof InterfaceType) {
+            
+            return "";
+        } else {
+            return 'A relationship of type "interfaceTypeScale" should be the union between two entity of type "interfaceType"';
         }
     }
 
