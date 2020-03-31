@@ -6,13 +6,13 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceType, InterfaceValue, ExchangeRelationship, EntityRelationshipPartOf,
+  Sphere, RoegenType, Interface, InterfaceValue, ExchangeRelationship, EntityRelationshipPartOf, ScaleRelationship, InterfaceTypeScaleChange,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
-import { CreateInterfaceTypeDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
+import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
-  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto
+  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto, ScaleFormDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
 import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
 
@@ -31,12 +31,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   SphereEnum = Sphere;
   RoegenTypeEnum = RoegenType;
 
-  @ViewChild('treeRoot', { static: false }) treeRoot: ElementRef;
-  proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
-  interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
+  @ViewChild('treeRoot', { static: false }) treeRoot;
   private readonly ID_DIAGRAMS = -3;
   private readonly ID_PROCESSOR = -2;
   private readonly ID_INTERFACETYPES = -1;
+
+  proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
+  interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
 
   private modalRef: NzModalRef
 
@@ -51,6 +52,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   functionalOrStructuralFormProcessor: ProcessorFunctionalOrStructural;
   accountedFormProcessor: ProcessorAccounted;
   subsystemTypeFormProcessor: ProcessorSubsystemType;
+  interfacesFormProcessor : Interface[];
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
@@ -86,6 +88,25 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formPartOfContent', { static: false }) formPartOfContent: TemplateRef<any>;
   @ViewChild('formPartOFooter', { static: false }) formPartOFooter: TemplateRef<any>;
 
+  //Form Scale
+  scaleIdForm;
+  scaleFormScale: string
+  @ViewChild('formScaleTitle', { static: false }) formScaleTitle: TemplateRef<any>;
+  @ViewChild('formScaleContent', { static: false }) formScaleContent: TemplateRef<any>;
+  @ViewChild('formScaleFooter', { static: false }) formScaleFooter: TemplateRef<any>;
+
+  //Form InterfaceScaleForm
+  interfaceTypeScaleIdForm;
+  listProcessors : Processor[];
+  destinationContextProcessorIdFormInterfaceTypeScale;
+  originContextProcessorIdFormInterfaceTypeScale;
+  destinationUnitFormInterfaceTypeScale;
+  originUnitFormInterfaceTypeScale;
+  scaleFormInterfaceTypeScale;
+  @ViewChild('formInterfaceTypeScaleTitle', { static: false }) formInterfaceTypeScaleTitle: TemplateRef<any>;
+  @ViewChild('formInterfaceTypeScaleContent', { static: false }) formInterfaceTypeScaleContent: TemplateRef<any>;
+  @ViewChild('formInterfaceTypeScaleFooter', { static: false }) formInterfaceTypeScaleFooter: TemplateRef<any>;
+
   //Form Create Diagram
   private numberCreateDiagramInterfaceType = 1;
   private numberCreateDiagramProcessor = 1;
@@ -119,7 +140,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   actionMappingTree: IActionMapping = {
     mouse: {
-
       dblClick: (tree, node, $event) => {
         if (node.level > 1) {
           let parentNode = node;
@@ -137,8 +157,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       contextMenu: (tree, node, $event) => {
         $event.preventDefault();
       }
-    }
-
+    },
 
   }
 
@@ -197,6 +216,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   private updateTree() {
     this.nodes = this.modelService.getTreeModelView();
+  }
+
+  updateDataTree(event) {
+    const nodesFirstLevel = [this.treeRoot.treeModel.getNodeById(this.ID_DIAGRAMS), 
+      this.treeRoot.treeModel.getNodeById(this.ID_INTERFACETYPES),  this.treeRoot.treeModel.getNodeById(this.ID_PROCESSOR)];
+      for(let node of nodesFirstLevel) {
+        node.expand();
+      }
   }
 
   private getAllDiagramsModel() {
@@ -446,13 +473,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.accountedFormProcessor = processor.accounted;
       this.subsystemTypeFormProcessor = processor.subsystemType;
       this.descriptionFormProcessor = processor.description;
+      this.interfacesFormProcessor = processor.interfaces;
 
       this.modalRef = this.nzModalService.create({
         nzTitle: this.formProcessorTitle,
         nzContent: this.formProcessorContent,
         nzFooter: this.formProcessorFooter,
         nzWrapClassName: 'vertical-center-modal',
-        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+        nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop: '0px' },
       });
       this.modalRef.afterOpen.subscribe(() => {
         this.draggableModal();
@@ -697,12 +725,107 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateRelationship(Number(this.partOfIdForm), partOf);
   }
 
+  showFormScale(event : ScaleFormDto) {
+    this.scaleIdForm = event.cellId;
+    let scale : ScaleRelationship = this.modelService.readRelationship(Number(event.cellId));
+    console.log(scale);
+    this.scaleFormScale = scale.scale;
+
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formScaleTitle,
+      nzContent: this.formScaleContent,
+      nzFooter: this.formScaleFooter,
+      nzWrapClassName: 'vertical-center-modal',
+    });
+    this.modalRef.afterOpen.subscribe(() => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  submitScaleForm(event : Event) {
+    this.updateScale();
+    event.preventDefault();
+  }
+
+  updateScale() {
+    this.modalRef.destroy();
+    let scale = new ScaleRelationship();
+    scale.scale = this.scaleFormScale;
+
+    this.modelService.updateRelationship(Number(this.scaleIdForm), scale);
+  }
+
   showSnackBarError(event: SnackErrorDto) {
     this.snackBarService.open(event.message, null, {
       duration: 2000,
     });
   }
 
+  showFormInterfaceTypeScale(event : InterfaceTypeScaleFormDto) {
+    this.interfaceTypeScaleIdForm = event.cellId;
+    this.listProcessors = this.modelService.listProcessors();
+    let interfaceTypeScale : InterfaceTypeScaleChange = this.modelService.readRelationship(Number(event.cellId));
+    if (interfaceTypeScale.destinationContextProcessorId == null) {
+      this.destinationContextProcessorIdFormInterfaceTypeScale = null;
+    } else {
+      this.destinationContextProcessorIdFormInterfaceTypeScale = interfaceTypeScale.destinationContextProcessorId;
+    }
+    if (interfaceTypeScale.originContextProcessorId == null) {
+      this.originContextProcessorIdFormInterfaceTypeScale = null;
+    } else {
+      this.originContextProcessorIdFormInterfaceTypeScale = interfaceTypeScale.originContextProcessorId;
+    }
+    this.scaleFormInterfaceTypeScale = interfaceTypeScale.scale;
+    this.destinationUnitFormInterfaceTypeScale = interfaceTypeScale.destinationUnit;
+    this.originUnitFormInterfaceTypeScale = interfaceTypeScale.originUnit;
 
+    this.modalRef = this.nzModalService.create({
+      nzTitle: this.formInterfaceTypeScaleTitle,
+      nzContent: this.formInterfaceTypeScaleContent,
+      nzFooter: this.formInterfaceTypeScaleFooter,
+      nzWrapClassName: 'vertical-center-modal',
+    });
+    this.modalRef.afterOpen.subscribe(() => {
+      this.draggableModal();
+      let titles = document.getElementsByClassName("title-modal");
+
+      for (let i = 0; i < titles.length; i++) {
+        titles[0].parentElement.parentElement.style.cursor = "move";
+      }
+    });
+  }
+
+  submitInterfaceTypeScaleForm(event : Event) {
+    this.updateInterfaceTypeScale();
+    event.preventDefault();
+  }
+
+  updateInterfaceTypeScale() {
+    this.modalRef.destroy();
+    let scale = new InterfaceTypeScaleChange();
+    
+    scale.scale = this.scaleFormInterfaceTypeScale;
+    scale.destinationUnit = this.destinationUnitFormInterfaceTypeScale;
+    scale.originUnit = this.originUnitFormInterfaceTypeScale;
+    if (this.destinationContextProcessorIdFormInterfaceTypeScale == null) {
+      scale.destinationContextProcessorId = null;
+    } else {
+      scale.destinationContextProcessorId = Number(this.destinationContextProcessorIdFormInterfaceTypeScale);
+    }
+    if (this.originContextProcessorIdFormInterfaceTypeScale == null) {
+      scale.originContextProcessorId = null;
+    } else {
+      scale.originContextProcessorId = Number(this.originContextProcessorIdFormInterfaceTypeScale);
+    }
+
+    console.log(scale);
+
+    this.modelService.updateRelationship(Number(this.interfaceTypeScaleIdForm), scale);
+  }
 
 }

@@ -18,6 +18,10 @@ export interface ExchangeFormDto {
     cellId;
 }
 
+export interface ScaleFormDto {
+    cellId;
+}
+
 export interface ChangeInterfaceInGraphDto {
     diagramId : number;
     cellId;
