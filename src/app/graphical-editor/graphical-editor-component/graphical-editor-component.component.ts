@@ -233,7 +233,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     })
   }
 
-  private updateTree() {
+  updateTree() {
     this.nodes = this.modelService.getTreeModelView();
   }
 
@@ -766,7 +766,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     event.preventDefault();
   }
 
-  private updateExchange() {
+  updateExchange() {
     this.modalRef.destroy();
     let exchange = new ExchangeRelationship();
     exchange.weight = this.weightFormExchange;
@@ -800,7 +800,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     event.preventDefault();
   }
 
-  private updatePartOf() {
+  updatePartOf() {
     this.modalRef.destroy();
     let partOf = new EntityRelationshipPartOf();
     partOf.amount = this.amountFormPartOf;
