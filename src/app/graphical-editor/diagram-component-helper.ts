@@ -225,3 +225,7 @@ export interface ChangeNameEntityDto {
 export interface PartOfFormDto {
   cellId;
 }
+
+export interface CellDto {
+  cellId;
+}
