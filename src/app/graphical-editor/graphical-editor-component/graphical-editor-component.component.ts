@@ -6,15 +6,20 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceValue, ExchangeRelationship, EntityRelationshipPartOf, ScaleRelationship, InterfaceTypeScaleChange,
+  Sphere, RoegenType, Interface, InterfaceValue, ExchangeRelationship, 
+  EntityRelationshipPartOf, ScaleRelationship, InterfaceTypeScaleChange, InterfaceType,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
-import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
-import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
+import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto, CellDto } from '../diagram-component-helper';
+import { 
+  CreateInterfaceTypeDto, InterfaceTypeScaleFormDto 
+} from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
-  CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto, ExchangeFormDto, ScaleFormDto
+  CreateProcessorDto,  ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
-import { ProcessorsDiagramComponentComponent } from '../processors-diagram-component/processors-diagram-component.component';
+import { 
+  ProcessorsDiagramComponentComponent 
+} from '../processors-diagram-component/processors-diagram-component.component';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -56,6 +61,20 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
+
+  //Form InterfaceType
+  private interfaceTypeIdForm;
+  private oldNameFormInterfaceType : string;
+  nameFormInterfaceType : string;
+  sphereFormInterfaceType : Sphere;
+  roegenTypeFormInterfaceType : RoegenType;
+  oppositeSubsystemTypeFormInterfaceType : ProcessorSubsystemType;
+  hierarchyFormInterfaceType: string;
+  unitFormInterfaceType : string;
+  descriptionFormInterfaceType : string;
+  @ViewChild('formInterfaceTypeTitle', { static: false }) formInterfaceTypeTitle: TemplateRef<any>;
+  @ViewChild('formInterfaceTypeContent', { static: false }) formInterfaceTypeContent: TemplateRef<any>;
+  @ViewChild('formInterfaceTypeFooter', { static: false }) formInterfaceTypeFooter: TemplateRef<any>;
 
   //Form Interface
   private interfaceIdForm;
@@ -406,6 +425,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         name: "portDraggable",
         data: clone
       });
+      this.interfaceTypeSubject.next({
+        name: 'interfaceTypeDraggableTree',
+        data: clone,
+      })
     }
   }
 
@@ -448,18 +471,19 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
     this.modalRef.destroy();
     this.createInterfaceTypeDto.component.createInterfaceType(this.nameFormCreateInterfaceType.trim(),
-      this.createInterfaceTypeDto.pt);
+      this.createInterfaceTypeDto.pt, null);
     this.updateTree();
     return true;
   }
 
   doubleClickProcessorTree(node: TreeNode) {
-    let processorFormDto = new ProcessorFormDto();
-    processorFormDto.cellId = node.data.id;
+    let processorFormDto : CellDto = {
+      cellId : node.data.id,
+    };
     this.showFormProcessor(processorFormDto);
   }
 
-  showFormProcessor(event: ProcessorFormDto) {
+  showFormProcessor(event: CellDto) {
 
     let processor = <Processor>this.modelService.readEntity(Number(event.cellId));
     if (processor instanceof Processor) {
@@ -522,6 +546,65 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
+  showFormInterfaceType(event : CellDto) {
+    let interfaceType = this.modelService.readEntity(Number(event.cellId));
+
+    if (interfaceType instanceof InterfaceType) {
+      this.interfaceTypeIdForm = interfaceType.id;
+      this.oldNameFormInterfaceType = interfaceType.name;
+      this.nameFormInterfaceType = interfaceType.name;
+      this.sphereFormInterfaceType = interfaceType.sphere;
+      this.roegenTypeFormInterfaceType = interfaceType.roegenType;
+      this.oppositeSubsystemTypeFormInterfaceType = interfaceType.oppositeSubsystemType;
+      this.hierarchyFormInterfaceType = interfaceType.hierarchy;
+      this.unitFormInterfaceType = interfaceType.unit;
+      this.descriptionFormInterfaceType = interfaceType.description;
+
+      this.modalRef = this.nzModalService.create({
+        nzTitle: this.formInterfaceTypeTitle,
+        nzContent: this.formInterfaceTypeContent,
+        nzFooter: this.formInterfaceTypeFooter,
+        nzWrapClassName: 'vertical-center-modal',
+        nzBodyStyle: { height: '350px', overflowY: 'scroll' },
+      });
+      this.modalRef.afterOpen.subscribe(() => {
+        this.draggableModal();
+        let titles = document.getElementsByClassName("title-modal");
+  
+        for (let i = 0; i < titles.length; i++) {
+          titles[0].parentElement.parentElement.style.cursor = "move";
+        }
+      });
+    }
+  }
+
+  submitInterfaceTypeForm(event : Event) {
+    this.updateInterfaceType();
+    event.preventDefault();
+  }
+
+  updateInterfaceType() {
+    this.modalRef.destroy();
+    let interfaceType = new InterfaceType();
+    interfaceType.name = this.nameFormInterfaceType;
+    interfaceType.sphere = this.sphereFormInterfaceType;
+    interfaceType.roegenType = this.roegenTypeFormInterfaceType;
+    interfaceType.oppositeSubsystemType = this.oppositeSubsystemTypeFormInterfaceType;
+    interfaceType.hierarchy = this.hierarchyFormInterfaceType;
+    interfaceType.unit = this.unitFormInterfaceType;
+    interfaceType.description = this.descriptionFormInterfaceType;
+    this.modelService.updateEntity(Number(this.interfaceTypeIdForm), interfaceType);
+    if (this.oldNameFormInterfaceType != this.nameFormInterfaceType) {
+      for (let diagram of this.getAllDiagramsModel()) {
+        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), this.nameFormInterfaceType, this.interfaceTypeIdForm);
+      }
+      this.interfaceTypeSubject.next({
+        name: "refreshDiagram",
+        data: null,
+      });
+    }
+  }
+
   showFormCreateProcessor(event: CreateProcessorDto) {
 
     this.createProcessorDto = event;
@@ -563,7 +646,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  showFormInterface(event: InterfaceFormDto) {
+  showFormInterface(event: CellDto) {
     let interfaceEntity = <Interface>this.modelService.readInterface(Number(event.cellId));
     if (interfaceEntity instanceof Interface) {
 
@@ -657,7 +740,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.listInterfaceValues = event;
   }
 
-  showFormExchange(event : ExchangeFormDto) {
+  showFormExchange(event : CellDto) {
     this.exchangeIdForm = event.cellId;
     let exchange = this.modelService.readRelationship(Number(event.cellId));
     this.weightFormExchange = exchange.weight;
@@ -725,7 +808,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateRelationship(Number(this.partOfIdForm), partOf);
   }
 
-  showFormScale(event : ScaleFormDto) {
+  showFormScale(event : CellDto) {
     this.scaleIdForm = event.cellId;
     let scale : ScaleRelationship = this.modelService.readRelationship(Number(event.cellId));
     console.log(scale);

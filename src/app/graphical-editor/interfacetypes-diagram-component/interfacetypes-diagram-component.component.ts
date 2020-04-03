@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ModelService, Diagram, EntityTypes, RelationshipType} from '../../model-manager';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto } from '../diagram-component-helper';
+import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, CellDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
 
@@ -23,6 +23,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
+  @Output("interfaceTypeForm") interfaceTypeFormEmitter = new EventEmitter<CellDto>();
   @Output("interfaceTypeScaleForm") interfaceTypeScaleFormEmitter = new EventEmitter<InterfaceTypeScaleFormDto>();
 
   graph: mxGraph;
@@ -41,7 +42,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   ngAfterViewInit() {
     this.graph = new mxGraph(this.graphContainer.nativeElement);
     this.makeDraggableToolbar();
-    this.eventsProcessorSubject();
+    this.eventsInterfaceTypeSubject();
     this.graphMouseEvent();
     this.graphEvents();
     this.customLabel();
@@ -68,9 +69,10 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     mxUtils.makeDraggable(this.interfaceTypeToolbar.nativeElement, this.graph, functionInterfaceType, dragElement);
   }
 
-  createInterfaceType(name: string, pt: mxPoint) {
+  //Create InterfaceType in diagram, if id is null then create new a InterfaceType
+  createInterfaceType(name: string, pt: mxPoint, id) {
     this.graph.getModel().beginUpdate();
-    let id = this.modelService.createEntity(EntityTypes.InterfaceType, name);
+    if (id == null) id = this.modelService.createEntity(EntityTypes.InterfaceType, name);
     let doc = mxUtils.createXmlDocument();
     let interfaceTypeDoc = doc.createElement('interfacetype');
     interfaceTypeDoc.setAttribute('name', name);
@@ -90,13 +92,31 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
   }
 
-  private eventsProcessorSubject() {
+  private eventsInterfaceTypeSubject() {
     this.interfaceTypeSubject.subscribe(event => {
       switch (event.name) {
         case 'refreshDiagram':
           DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+          break;
+        case 'interfaceTypeDraggableTree':
+          this.interfaceTypeDraggableTree(event.data);
+          break;
       }
     });
+  }
+
+  private interfaceTypeDraggableTree(element: HTMLElement) {
+    console.log(element);
+    let interfaceDiagramInstance = this;
+    const funct = (graph, evt, cell) => {
+      let pt: mxPoint = graph.getPointForEvent(evt);
+      interfaceDiagramInstance.createInterfaceType(element.innerText, pt, element.getAttribute('data-node-id'));
+    }
+    let dragElement = document.createElement("img");
+    dragElement.setAttribute("src", "assets/toolbar/rectangle.gif");
+    dragElement.style.height = "20px";
+    dragElement.style.width = "20px";
+    mxUtils.makeDraggable(element, this.graph, funct);
   }
 
   private graphMouseEvent() {
@@ -111,11 +131,10 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   private doubleClickGraph(graph, evt) {
-    let cellTarget = evt.getProperty('cell');
+    let cellTarget : mxCell = evt.getProperty('cell');
     console.log(cellTarget);
     console.log(this.modelService);
     if (cellTarget) {
-      console.log(cellTarget);
       switch (cellTarget.value.nodeName.toLowerCase()) {
         case 'partof':
           let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
@@ -124,6 +143,11 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         case 'interfacetypescale':
           let interfacetypescaleDto : InterfaceTypeScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
           this.interfaceTypeScaleFormEmitter.emit(interfacetypescaleDto);
+          break;
+        case 'interfacetype':
+          let interfaceTypeDto : CellDto = { cellId: cellTarget.getAttribute('entityId', '')}
+          this.interfaceTypeFormEmitter.emit(interfaceTypeDto);
+          break;
       }
     }
   }

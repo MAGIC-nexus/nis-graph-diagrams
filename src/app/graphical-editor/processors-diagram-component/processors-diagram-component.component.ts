@@ -2,8 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output,
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
-import { CreateProcessorDto, ProcessorFormDto, InterfaceFormDto, ChangeInterfaceInGraphDto
-  , ExchangeFormDto, ScaleFormDto } from './processors-diagram-component-dto';
+import { CreateProcessorDto, ChangeInterfaceInGraphDto, CellDto } from './processors-diagram-component-dto';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
@@ -25,13 +24,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   //Emitters
   @Output("createProccesor") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
-  @Output("processorForm") processorFormEmitter = new EventEmitter<ProcessorFormDto>();
+  @Output("processorForm") processorFormEmitter = new EventEmitter<CellDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
   @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
-  @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<InterfaceFormDto>();
-  @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<ExchangeFormDto>();
+  @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<CellDto>();
+  @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<CellDto>();
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
-  @Output("scaleForm") scaleFormEmitter = new EventEmitter<ScaleFormDto>();
+  @Output("scaleForm") scaleFormEmitter = new EventEmitter<CellDto>();
 
   //ContextMenuProcessor
   @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
@@ -109,6 +108,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           break;
         case 'refreshDiagram':
           DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+          break;
       }
     });
   }
@@ -220,11 +220,11 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       console.log(cellTarget);
       switch (cellTarget.value.nodeName.toLowerCase()) {
         case 'interface':
-          let interfaceDto: InterfaceFormDto = { cellId: cellTarget.getAttribute('entityId', '') };
+          let interfaceDto: CellDto = { cellId: cellTarget.getAttribute('entityId', '') };
           this.interfaceFormEmitter.emit(interfaceDto);
           break;
         case 'exchange':
-          let exchangeDto : ExchangeFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
+          let exchangeDto : CellDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
           this.exchangeFormEmitter.emit(exchangeDto);
           break;
         case 'partof':
@@ -232,7 +232,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           this.partOfFormEmitter.emit(partOfDto);
           break;
         case 'interfacescale': 
-          let scaleDto : ScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          let scaleDto : CellDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
           this.scaleFormEmitter.emit(scaleDto);
           break;
       }
@@ -414,8 +414,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private showFormProcessor(cellId) {
-    let processorFormDto = new ProcessorFormDto();
-    processorFormDto.cellId = cellId;
+    let processorFormDto : CellDto = {
+      cellId: cellId
+    };
     this.processorFormEmitter.emit(processorFormDto);
   }
 
