@@ -1,5 +1,5 @@
 import { ProcessorsDiagramComponentComponent } from './processors-diagram-component.component';
-import { InterfaceOrientation } from 'src/app/model-manager';
+import { InterfaceOrientation } from '../../model-manager';
 
 export class CreateProcessorDto {
     pt: mxPoint;
