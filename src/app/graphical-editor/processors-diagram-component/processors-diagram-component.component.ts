@@ -2,7 +2,8 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output,
 import { Subject } from 'rxjs';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, } from '../diagram-component-helper';
 import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
-import { CreateProcessorDto, ChangeInterfaceInGraphDto, CellDto } from './processors-diagram-component-dto';
+import { CreateProcessorDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
+import { CellDto } from '../diagram-component-helper';
 import { MatMenuTrigger } from '@angular/material';
 
 @Component({
