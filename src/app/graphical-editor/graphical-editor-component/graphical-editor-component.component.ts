@@ -20,6 +20,7 @@ import {
 import { 
   ProcessorsDiagramComponentComponent 
 } from '../processors-diagram-component/processors-diagram-component.component';
+import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -212,6 +213,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     private snackBarService: MatSnackBar) { }
 
   ngOnInit() {
+    DiagramComponentHelper.setInterfaceTypeSubject(this.interfaceTypeSubject);
     DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
   }
@@ -470,8 +472,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       return false;
     }
     this.modalRef.destroy();
-    this.createInterfaceTypeDto.component.createInterfaceType(this.nameFormCreateInterfaceType.trim(),
-      this.createInterfaceTypeDto.pt, null);
+    this.createInterfaceTypeDto.component.graph.getModel().beginUpdate();
+    InterfacetypesDiagramComponentComponent.createInterfaceType(this.createInterfaceTypeDto.component.diagramId,
+      this.createInterfaceTypeDto.component.graph,this.nameFormCreateInterfaceType.trim(),this.createInterfaceTypeDto.pt, 
+      null);
+    this.createInterfaceTypeDto.component.graph.getModel().endUpdate();
+    DiagramComponentHelper.loadDiagram(this.createInterfaceTypeDto.component.diagramId,
+      this.createInterfaceTypeDto.component.graph); 
     this.updateTree();
     return true;
   }

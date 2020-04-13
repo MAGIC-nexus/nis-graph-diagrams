@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import { ModelService, Diagram, EntityTypes, RelationshipType} from '../../model-manager';
+import { ModelService, Diagram, EntityTypes, RelationshipType, EntityRelationshipPartOf, Relationship } from '../../model-manager';
 import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, CellDto } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
@@ -16,7 +16,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   @ViewChild('graphContainer', { static: true }) graphContainer: ElementRef;
   @ViewChild('interfaceTypeToolbar', { static: true }) interfaceTypeToolbar: ElementRef;
   @Input() diagramId: number;
-  @Input() modelService: ModelService;
   @Input() interfaceTypeSubject: Subject<{ name: string, data: any }>;
 
   @Output("createInterfaceType") createInterfaceTypeEmitter = new EventEmitter<CreateInterfaceTypeDto>();
@@ -69,27 +68,52 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     mxUtils.makeDraggable(this.interfaceTypeToolbar.nativeElement, this.graph, functionInterfaceType, dragElement);
   }
 
-  //Create InterfaceType in diagram, if id is null then create new a InterfaceType
-  createInterfaceType(name: string, pt: mxPoint, id) {
-    this.graph.getModel().beginUpdate();
-    if (id == null) id = this.modelService.createEntity(EntityTypes.InterfaceType, name);
-    let doc = mxUtils.createXmlDocument();
-    let interfaceTypeDoc = doc.createElement('interfacetype');
-    interfaceTypeDoc.setAttribute('name', name);
-    interfaceTypeDoc.setAttribute('entityId', id);
-    this.graph.insertVertex(this.graph.getDefaultParent(), null, interfaceTypeDoc, pt.x, pt.y,
-      100, 80);
-    this.graph.getModel().endUpdate();
-    this.modelService.addEntityToDiagram(this.diagramId, id);
-    this.modelService.updateEntityAppearanceInDiagram(this.diagramId, id, 100, 80, pt.x, pt.y);
-    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+
+  static createInterfaceType(diagramId, graph, name: string, pt: mxPoint, entityId) {
+      try {
+        if (entityId == null) entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.InterfaceType, name);
+        let doc = mxUtils.createXmlDocument();
+        let interfaceTypeDoc = doc.createElement('interfacetype');
+        interfaceTypeDoc.setAttribute('name', name);
+        interfaceTypeDoc.setAttribute('entityId', entityId);
+        let newCellInterfaceType = graph.insertVertex(graph.getDefaultParent(), null, interfaceTypeDoc, pt.x, pt.y,
+          100, 80);
+        DiagramComponentHelper.modelService.addEntityToDiagram(diagramId, entityId);
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(diagramId,
+          entityId, 100, 80, pt.x, pt.y);
+        let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(entityId));
+        let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(entityId));
+        InterfacetypesDiagramComponentComponent.addPartOfRelationships(graph, newCellInterfaceType, childrensRelationship,
+          parentsRelationship);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        let encoder = new mxCodec(null);
+        let xml = mxUtils.getXml(encoder.encode(graph.getModel()));
+        DiagramComponentHelper.modelService.setDiagramGraph(Number(diagramId), xml);
+      }
+  }
+
+  static addPartOfRelationships(graph : mxGraph, newCell, childrensRelationship: Relationship[], 
+    parentsRelationship : Relationship[]) {
+    for(let childrenRelationship of childrensRelationship) {
+      if(childrenRelationship instanceof EntityRelationshipPartOf) {
+        DiagramComponentHelper.printPartOfRelationship(graph, newCell, childrenRelationship);
+      }
+    }
+    for(let parentRelationship of parentsRelationship) {
+      if(parentRelationship instanceof EntityRelationshipPartOf) {
+        DiagramComponentHelper.printPartOfRelationship(graph, newCell, parentRelationship);
+      }
+    }
   }
 
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
     this.relationshipSelect = relationshipType;
     this.imageToolbarRelationship = <HTMLImageElement>event.target;
-    this.graph.setCellStyles('movable', '0', this.graph.getChildCells());
+    this.statusCreateRelationship =  StatusCreatingRelationship.creating;
+    DiagramComponentHelper.changeStateMovableCells(this,this.graph.getChildCells(),"0");
   }
 
   private eventsInterfaceTypeSubject() {
@@ -97,6 +121,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       switch (event.name) {
         case 'refreshDiagram':
           DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+          if (this.statusCreateRelationship == StatusCreatingRelationship.creating) 
+          DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
           break;
         case 'interfaceTypeDraggableTree':
           this.interfaceTypeDraggableTree(event.data);
@@ -106,11 +132,14 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   private interfaceTypeDraggableTree(element: HTMLElement) {
-    console.log(element);
     let interfaceDiagramInstance = this;
     const funct = (graph, evt, cell) => {
       let pt: mxPoint = graph.getPointForEvent(evt);
-      interfaceDiagramInstance.createInterfaceType(element.innerText, pt, element.getAttribute('data-node-id'));
+      interfaceDiagramInstance.graph.getModel().beginUpdate();
+      InterfacetypesDiagramComponentComponent.createInterfaceType(interfaceDiagramInstance.diagramId,
+        interfaceDiagramInstance.graph, element.innerText, pt, element.getAttribute('data-node-id'));
+      interfaceDiagramInstance.graph.getModel().endUpdate();
+      DiagramComponentHelper.loadDiagram(interfaceDiagramInstance.diagramId, interfaceDiagramInstance.graph);
     }
     let dragElement = document.createElement("img");
     dragElement.setAttribute("src", "assets/toolbar/rectangle.gif");
@@ -131,21 +160,21 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   private doubleClickGraph(graph, evt) {
-    let cellTarget : mxCell = evt.getProperty('cell');
+    let cellTarget: mxCell = evt.getProperty('cell');
     console.log(cellTarget);
-    console.log(this.modelService);
+    console.log(DiagramComponentHelper.modelService);
     if (cellTarget) {
       switch (cellTarget.value.nodeName.toLowerCase()) {
         case 'partof':
-          let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          let partOfDto: PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') };
           this.partOfFormEmitter.emit(partOfDto);
           break;
         case 'interfacetypescale':
-          let interfacetypescaleDto : InterfaceTypeScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          let interfacetypescaleDto: InterfaceTypeScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') };
           this.interfaceTypeScaleFormEmitter.emit(interfacetypescaleDto);
           break;
         case 'interfacetype':
-          let interfaceTypeDto : CellDto = { cellId: cellTarget.getAttribute('entityId', '')}
+          let interfaceTypeDto: CellDto = { cellId: cellTarget.getAttribute('entityId', '') }
           this.interfaceTypeFormEmitter.emit(interfaceTypeDto);
           break;
       }
@@ -155,7 +184,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
     if (this.relationshipSelect != DiagramComponentHelper.NOT_RELATIONSHIP &&
-      this.statusCreateRelationship == StatusCreatingRelationship.notCreating) {
+      this.statusCreateRelationship == StatusCreatingRelationship.creating) {
       if (cell != null && this.checkRelationshipCellSource(cell)) {
         let svg = sender.container.getElementsByTagName("svg")[0];
         DiagramComponentHelper.printLineCreateRelationship(svg, cell, mouseEvent);
@@ -195,7 +224,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let cell: mxCell = mouseEvent.getCell();
 
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
-      this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
       let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
       let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
       lineRelationship.remove();
@@ -203,6 +231,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         this.createRelationship(cell);
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);
+        this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
       }
     }
   }
@@ -224,7 +253,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       this.snackBarErrorEmitter.emit(relationshipErrorDto);
       return false;
     }
-    let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.InterfaceTypeScale,
+    let messageError = DiagramComponentHelper.modelService.checkCanCreateRelationship(RelationshipType.InterfaceTypeScale,
       Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
     if (messageError != "") {
       let relationshipErrorDto = new SnackErrorDto();
@@ -238,7 +267,9 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   private createRelationship(cell) {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
-        DiagramComponentHelper.createPartOfRelationship(this, cell);
+        DiagramComponentHelper.createPartOfRelationship(this.sourceCellRelationship.getAttribute("entityId", ""), 
+        cell.getAttribute("entityId", ""));
+        this.updateTreeEmitter.emit(null);
         break;
       case RelationshipType.InterfaceTypeScale:
         this.createInterfaceTypeScaleRelationship(cell);
@@ -249,7 +280,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   private createInterfaceTypeScaleRelationship(cell) {
     this.graph.getModel().beginUpdate();
     let doc = mxUtils.createXmlDocument();
-    let id = this.modelService.createRelationship(RelationshipType.InterfaceTypeScale,
+    let id = DiagramComponentHelper.modelService.createRelationship(RelationshipType.InterfaceTypeScale,
       Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
     let interfaceTypeScale = doc.createElement('interfacetypescale');
     interfaceTypeScale.setAttribute("name", "name");
@@ -280,7 +311,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let cellsMoved: [mxCell] = event.properties.cells;
     for (let cell of cellsMoved) {
       if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
-        this.modelService.updateEntityAppearanceInDiagram(this.diagramId, Number(cell.getAttribute("entityId", "")),
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(this.diagramId, Number(cell.getAttribute("entityId", "")),
           cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
       }
       DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
@@ -304,11 +335,11 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.graph.cellLabelChanged = function (cell: mxCell, newValue, autoSize) {
       switch (cell.value.nodeName.toLowerCase()) {
         case 'interfacetype':
-          for (let diagram of interfacetypeInstance.modelService.getTreeModelViewDiagrams()) {
+          for (let diagram of DiagramComponentHelper.modelService.getTreeModelViewDiagrams()) {
             DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), newValue,
               Number(cell.getAttribute('entityId', '')));
           }
-          interfacetypeInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
+          DiagramComponentHelper.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
           interfacetypeInstance.interfaceTypeSubject.next({
             name: "refreshDiagram",
             data: null,

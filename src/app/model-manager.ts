@@ -1019,6 +1019,24 @@ export class ModelService {
         return children;
     }
 
+    getRelationshipChildren(parentId: number) {
+        let children = new Array<Relationship>();
+        for (let relId of this.entitiesRelationships.get(parentId)) { //
+            let r = this.allObjects.get(relId);
+            if (r.destinationId == parentId) children.push(r);
+        }
+        return children;
+    }
+
+    getRelationshipParent(parentId: number) {
+        let children = new Array<Relationship>();
+        for (let relId of this.entitiesRelationships.get(parentId)) { //
+            let r = this.allObjects.get(relId);
+            if (r.originId == parentId) children.push(r);
+        }
+        return children;
+    }
+
     getEntityPartOfParents(childId: number) {
         let parents = new Array<number>();
         for (let relId of this.entitiesRelationships.get(childId)) { //
