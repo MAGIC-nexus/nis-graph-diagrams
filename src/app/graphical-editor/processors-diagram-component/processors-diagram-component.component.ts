@@ -108,6 +108,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           this.portDraggable(event.data);
           break;
         case 'refreshDiagram':
+          if (this.statusCreateRelationship == StatusCreatingRelationship.creating) 
+          DiagramComponentHelper.changeStateMovableCells(this,this.graph.getChildCells(),"0");
           DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
           break;
       }
@@ -202,6 +204,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.imageToolbarRelationship = <HTMLImageElement>event.target;
     let childCells = this.graph.getChildCells();
     DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
+    this.statusCreateRelationship =  StatusCreatingRelationship.creating;
   }
 
   private graphMouseEvent() {
@@ -243,11 +246,10 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private mouseDownGraph(sender: mxGraph, mouseEvent: mxMouseEvent) {
     let cell: mxCell = mouseEvent.getCell();
     if (this.relationshipSelect != DiagramComponentHelper.NOT_RELATIONSHIP &&
-      this.statusCreateRelationship == StatusCreatingRelationship.notCreating) {
+      this.statusCreateRelationship == StatusCreatingRelationship.creating) {
       if (cell != null && this.checkRelationshipCellSource(cell)) {
         let svg = sender.container.getElementsByTagName("svg")[0];
         DiagramComponentHelper.printLineCreateRelationship(svg, cell, mouseEvent);
-        this.statusCreateRelationship = StatusCreatingRelationship.creating;
         this.sourceCellRelationship = cell;
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);
@@ -298,7 +300,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let cell: mxCell = mouseEvent.getCell();
 
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
-      this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
       let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
       let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
       lineRelationship.remove();
@@ -306,6 +307,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         this.createRelationship(cell);
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);
+        this.statusCreateRelationship = StatusCreatingRelationship.notCreating;
       }
     }
   }
@@ -361,7 +363,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private createRelationship(cell) {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
-        DiagramComponentHelper.createPartOfRelationship(this, cell);
+        DiagramComponentHelper.createPartOfRelationship(this.sourceCellRelationship.getAttribute("entityId", ""), 
+        cell.getAttribute("entityId", ""));
+        this.updateTreeEmitter.emit(null);
         break;
       case RelationshipType.Exchange:
         this.createExchangeRelationship(cell);

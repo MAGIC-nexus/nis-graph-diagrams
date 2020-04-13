@@ -111,7 +111,7 @@
               (partOfForm)="showFormPartOf($event)" (scaleForm)="showFormScale($event)">
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
-              [modelService]="modelService" (createInterfaceType)="showFormCreateInterfaceType($event)"
+              (createInterfaceType)="showFormCreateInterfaceType($event)"
               (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
               [interfaceTypeSubject]="interfaceTypeSubject" (partOfForm)="showFormPartOf($event)"
               (interfaceTypeScaleForm)="showFormInterfaceTypeScale($event)" (interfaceTypeForm)="showFormInterfaceType($event)">

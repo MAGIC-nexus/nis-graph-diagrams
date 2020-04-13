@@ -3,6 +3,10 @@
 
 declare class mxCell {
 
+  constructor();
+  constructor(value, geometry, style);
+  constructor(value, geometry);
+
   id: any;
   value;
   geometry;
@@ -65,6 +69,12 @@ declare class mxCell {
 }
 
 declare class mxGraphModel {
+  
+}
+
+declare class mxGeometry {
+
+  constructor(x, y, width, height);
   
 }
 /******************      Model end     **************/
