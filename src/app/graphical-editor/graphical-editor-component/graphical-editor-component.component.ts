@@ -661,7 +661,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.createProcessorDto.component.graph.getModel().beginUpdate();
       let entityId = ProcessorsDiagramComponentComponent.createProcessor(this.nameFormCreateProcessor.trim());
       ProcessorsDiagramComponentComponent.printProcessor(this.createProcessorDto.component.diagramId,
-        this.createProcessorDto.component.graph, this.nameFormCreateProcessor.trim(), this.createProcessorDto.pt,
+        this.createProcessorDto.component.graph, this.createProcessorDto.pt,
         entityId);
       this.createProcessorDto.component.graph.getModel().endUpdate();
       DiagramComponentHelper.loadDiagram(this.createProcessorDto.component.diagramId,
