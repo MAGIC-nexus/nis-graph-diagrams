@@ -130,8 +130,9 @@ declare class mxGraph {
   connectionHandler;
   refresh();
   setTooltips(boolean);
-  getChildCells()
-  getChildEdges()
+  getChildCells();
+  getChildCells(parent);
+  getChildEdges();
   getTooltipForCell(cell);
   init(container);
   createHandlers(container);

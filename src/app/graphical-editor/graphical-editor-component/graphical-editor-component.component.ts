@@ -213,6 +213,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     private snackBarService: MatSnackBar) { }
 
   ngOnInit() {
+    DiagramComponentHelper.setProcessorSubject(this.proccesorSubject);
     DiagramComponentHelper.setInterfaceTypeSubject(this.interfaceTypeSubject);
     DiagramComponentHelper.setModelService(this.modelService);
     this.eventsProcessorSubject();
@@ -431,6 +432,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         name: 'interfaceTypeDraggableTree',
         data: clone,
       })
+    } else if (target.getAttribute("data-node-parent") == "Processors") {
+      let clone = target.cloneNode(true);
+      target.parentNode.replaceChild(clone, target);
+      this.renderer.listen(clone, "mouseout", this.mouseOutTree.bind(this));
+      this.proccesorSubject.next({
+        name: 'processorDraggableTree',
+        data: clone,
+      })
     }
   }
 
@@ -472,10 +481,11 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       return false;
     }
     this.modalRef.destroy();
+    let entityId = InterfacetypesDiagramComponentComponent.createInterfaceType(this.nameFormCreateInterfaceType.trim());
     this.createInterfaceTypeDto.component.graph.getModel().beginUpdate();
-    InterfacetypesDiagramComponentComponent.createInterfaceType(this.createInterfaceTypeDto.component.diagramId,
+    InterfacetypesDiagramComponentComponent.printInterfaceType(this.createInterfaceTypeDto.component.diagramId,
       this.createInterfaceTypeDto.component.graph,this.nameFormCreateInterfaceType.trim(),this.createInterfaceTypeDto.pt, 
-      null);
+      entityId);
     this.createInterfaceTypeDto.component.graph.getModel().endUpdate();
     DiagramComponentHelper.loadDiagram(this.createInterfaceTypeDto.component.diagramId,
       this.createInterfaceTypeDto.component.graph); 
@@ -648,7 +658,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
     if (validate) {
       this.modalRef.destroy();
-      this.createProcessorDto.component.createProcessor(this.nameFormCreateProcessor, this.createProcessorDto.pt);
+      this.createProcessorDto.component.graph.getModel().beginUpdate();
+      let entityId = ProcessorsDiagramComponentComponent.createProcessor(this.nameFormCreateProcessor.trim());
+      ProcessorsDiagramComponentComponent.printProcessor(this.createProcessorDto.component.diagramId,
+        this.createProcessorDto.component.graph, this.createProcessorDto.pt,
+        entityId);
+      this.createProcessorDto.component.graph.getModel().endUpdate();
+      DiagramComponentHelper.loadDiagram(this.createProcessorDto.component.diagramId,
+        this.createProcessorDto.component.graph)
       this.updateTree();
     }
   }

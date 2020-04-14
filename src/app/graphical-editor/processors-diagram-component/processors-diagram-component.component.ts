@@ -1,7 +1,21 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { Subject } from 'rxjs';
-import { DiagramComponentHelper, StatusCreatingRelationship, SnackErrorDto, PartOfFormDto, } from '../diagram-component-helper';
-import { ModelService, EntityTypes, RelationshipType, InterfaceOrientation } from '../../model-manager';
+import {
+  DiagramComponentHelper,
+  StatusCreatingRelationship,
+  SnackErrorDto,
+  PartOfFormDto,
+} from '../diagram-component-helper';
+import {
+  ModelService,
+  EntityTypes,
+  RelationshipType,
+  InterfaceOrientation,
+  Relationship,
+  EntityRelationshipPartOf,
+  Processor,
+  Interface
+} from '../../model-manager';
 import { CreateProcessorDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
 import { CellDto } from '../diagram-component-helper';
 import { MatMenuTrigger } from '@angular/material';
@@ -85,62 +99,135 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(this.processorToolbar.nativeElement, this.graph, functionProcessor, dragElement);
   }
 
-  createProcessor(name: string, pt: mxPoint) {
-    this.graph.getModel().beginUpdate();
-    let id = this.modelService.createEntity(EntityTypes.Processor, name);
-    let doc = mxUtils.createXmlDocument();
-    let processorDoc = doc.createElement('processor');
-    processorDoc.setAttribute('name', name);
-    processorDoc.setAttribute('entityId', id);
-    this.graph.insertVertex(this.graph.getDefaultParent(), null, processorDoc, pt.x, pt.y,
-      100, 80);
-    this.graph.getModel().endUpdate();
-    this.modelService.addEntityToDiagram(this.diagramId, id);
-    this.modelService.updateEntityAppearanceInDiagram(this.diagramId, id, 100, 80, pt.x, pt.y);
-    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
+  static createProcessor(name: string) {
+    return DiagramComponentHelper.modelService.createEntity(EntityTypes.Processor, name);
   }
 
-  private eventsProcessorSubject() {
+  static printProcessor(diagramId, graph, pt: mxPoint, entityId) {
+    try {
+      let entityModel = <Processor>DiagramComponentHelper.modelService.readEntity(Number(entityId));
+      console.log(entityModel);
+      let doc = mxUtils.createXmlDocument();
+      let processorDoc = doc.createElement('processor');
+      processorDoc.setAttribute('name', entityModel.name);
+      processorDoc.setAttribute('entityId', entityId);
+      let newCellProcessor = graph.insertVertex(graph.getDefaultParent(), null, processorDoc, pt.x, pt.y,
+        100, 80);
+      DiagramComponentHelper.modelService.addEntityToDiagram(diagramId, entityId);
+      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(diagramId,
+        entityId, 100, 80, pt.x, pt.y);
+      for (let interfaceModel of entityModel.interfaces) {
+        ProcessorsDiagramComponentComponent.printCellInterface(interfaceModel.id, newCellProcessor, graph);
+      }
+      let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(entityId));
+      let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(entityId));
+      ProcessorsDiagramComponentComponent.addPartOfRelationships(graph, newCellProcessor, childrensRelationship,
+        parentsRelationship);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      let encoder = new mxCodec(null);
+      let xml = mxUtils.getXml(encoder.encode(graph.getModel()));
+      DiagramComponentHelper.modelService.setDiagramGraph(Number(diagramId), xml);
+    }
+  }
 
+  static addPartOfRelationships(graph: mxGraph, newCell, childrensRelationship: Relationship[],
+    parentsRelationship: Relationship[]) {
+    for (let childrenRelationship of childrensRelationship) {
+      if (childrenRelationship instanceof EntityRelationshipPartOf) {
+        DiagramComponentHelper.printPartOfRelationship(graph, newCell, childrenRelationship);
+      }
+    }
+    for (let parentRelationship of parentsRelationship) {
+      if (parentRelationship instanceof EntityRelationshipPartOf) {
+        DiagramComponentHelper.printPartOfRelationship(graph, newCell, parentRelationship);
+      }
+    }
+  }
+
+  static createInterface(processorId, interfaceTypeId) {
+    const interfaceId = DiagramComponentHelper.modelService.createInterface(Number(processorId), interfaceTypeId);
+
+    DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
+      try {
+        let diagramGraph = DiagramComponentHelper.getDiagram(key);
+        for (let cell of diagramGraph.getChildCells()) {
+          if (cell.getAttribute("entityId") == processorId) {
+            diagramGraph.getModel().beginUpdate();
+            ProcessorsDiagramComponentComponent.printCellInterface(interfaceId, cell, diagramGraph);
+            diagramGraph.getModel().endUpdate();
+            DiagramComponentHelper.updateGraphInModel(key, diagramGraph);
+          }
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    });
+
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+  }
+
+  static printCellInterface(entityId, cellTarget, graph: mxGraph) {
+    let interfaceModel = <Interface>DiagramComponentHelper.modelService.readInterface(Number(entityId));
+    let doc = mxUtils.createXmlDocument();
+    let port = doc.createElement('interface');
+    port.setAttribute('name', interfaceModel.name);
+    port.setAttribute('entityId', interfaceModel.id);
+    let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
+      'fontSize=9;shape=ellipse;resizable=0;fillColor=#FF8E8E;strokeColor=#FF0000', true);
+    portVertex.geometry.offset = new mxPoint(-15, -15);
+    portVertex.geometry.relative = true;
+  }
+
+
+  private eventsProcessorSubject() {
     this.proccesorSubject.subscribe(event => {
       switch (event.name) {
         case "portDraggable":
           this.portDraggable(event.data);
           break;
         case 'refreshDiagram':
-          if (this.statusCreateRelationship == StatusCreatingRelationship.creating) 
-          DiagramComponentHelper.changeStateMovableCells(this,this.graph.getChildCells(),"0");
           DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+          if (this.statusCreateRelationship == StatusCreatingRelationship.creating)
+            DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
+          break;
+        case 'processorDraggableTree':
+          this.proccesorDraggableTree(event.data);
           break;
       }
     });
   }
 
+  private proccesorDraggableTree(element: HTMLElement) {
+    let proccesorDiagramInstance = this;
+    const funct = (graph, evt, cell) => {
+      let pt: mxPoint = graph.getPointForEvent(evt);
+      proccesorDiagramInstance.graph.getModel().beginUpdate();
+      ProcessorsDiagramComponentComponent.printProcessor(proccesorDiagramInstance.diagramId,
+        proccesorDiagramInstance.graph, pt, element.getAttribute('data-node-id'));
+      proccesorDiagramInstance.graph.getModel().endUpdate();
+      DiagramComponentHelper.loadDiagram(proccesorDiagramInstance.diagramId, proccesorDiagramInstance.graph);
+    }
+    let dragElement = document.createElement("img");
+    dragElement.setAttribute("src", "assets/toolbar/rectangle.gif");
+    dragElement.style.height = "20px";
+    dragElement.style.width = "20px";
+    mxUtils.makeDraggable(element, this.graph, funct);
+  }
+
   private portDraggable(element: HTMLElement) {
-    let processorsDiagramInstance = this;
     var funct = function (graph, evt, cell) {
       let pt: mxPoint = graph.getPointForEvent(evt);
       let cellTarget = graph.getCellAt(pt.x, pt.y);
       if (cellTarget != null && cellTarget.value.nodeName == "processor") {
         graph.stopEditing(false);
         let interfaceTypeId = element.getAttribute("data-node-id");
-        let id = processorsDiagramInstance.modelService.createInterface(Number(cellTarget.getAttribute("entityId")),
+        ProcessorsDiagramComponentComponent.createInterface(Number(cellTarget.getAttribute("entityId")),
           Number(interfaceTypeId));
-        if (id >= 0) {
-          graph.getModel().beginUpdate();
-          let nameInterfaceType = processorsDiagramInstance.modelService.readEntity(Number(interfaceTypeId)).name;
-          let doc = mxUtils.createXmlDocument();
-          let port = doc.createElement('interface');
-          port.setAttribute('name', nameInterfaceType);
-          port.setAttribute('entityId', id);
-          let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-            'fontSize=9;shape=ellipse;resizable=0;fillColor=#FF8E8E;strokeColor=#FF0000');
-          portVertex.geometry.offset = new mxPoint(-15, -15);
-          portVertex.geometry.relative = true;
-          graph.getModel().endUpdate();
-          DiagramComponentHelper.updateGraphInModel(processorsDiagramInstance.diagramId,
-            processorsDiagramInstance.graph);
-        }
       }
 
     }
@@ -159,7 +246,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cells = model.cells;
       for (let key in cells) {
         if (cells[key].value != undefined && cells[key].value.nodeName.toLowerCase() == 'processor') {
-          if(ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model)) updateGraphXML = true;
+          if (ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model)) updateGraphXML = true;
         }
       }
       if (updateGraphXML) {
@@ -204,7 +291,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.imageToolbarRelationship = <HTMLImageElement>event.target;
     let childCells = this.graph.getChildCells();
     DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
-    this.statusCreateRelationship =  StatusCreatingRelationship.creating;
+    this.statusCreateRelationship = StatusCreatingRelationship.creating;
   }
 
   private graphMouseEvent() {
@@ -228,15 +315,15 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           this.interfaceFormEmitter.emit(interfaceDto);
           break;
         case 'exchange':
-          let exchangeDto : CellDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
+          let exchangeDto: CellDto = { cellId: cellTarget.getAttribute('idRelationship', '') }
           this.exchangeFormEmitter.emit(exchangeDto);
           break;
         case 'partof':
-          let partOfDto : PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+          let partOfDto: PartOfFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') };
           this.partOfFormEmitter.emit(partOfDto);
           break;
-        case 'interfacescale': 
-          let scaleDto : CellDto = { cellId: cellTarget.getAttribute('idRelationship', '')};
+        case 'interfacescale':
+          let scaleDto: CellDto = { cellId: cellTarget.getAttribute('idRelationship', '') };
           this.scaleFormEmitter.emit(scaleDto);
           break;
       }
@@ -283,7 +370,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     return true;
   }
 
-  private checkRelationshipInterfaceScaleSource(cell) : boolean {
+  private checkRelationshipInterfaceScaleSource(cell): boolean {
     if (cell.value.nodeName.toLowerCase() != 'interface') {
       if (!cell.isEdge()) {
         let relationshipErrorDto = new SnackErrorDto();
@@ -363,8 +450,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   private createRelationship(cell) {
     switch (this.relationshipSelect) {
       case RelationshipType.PartOf:
-        DiagramComponentHelper.createPartOfRelationship(this.sourceCellRelationship.getAttribute("entityId", ""), 
-        cell.getAttribute("entityId", ""));
+        DiagramComponentHelper.createPartOfRelationship(this.sourceCellRelationship.getAttribute("entityId", ""),
+          cell.getAttribute("entityId", ""));
         this.updateTreeEmitter.emit(null);
         break;
       case RelationshipType.Exchange:
@@ -419,7 +506,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private showFormProcessor(cellId) {
-    let processorFormDto : CellDto = {
+    let processorFormDto: CellDto = {
       cellId: cellId
     };
     this.processorFormEmitter.emit(processorFormDto);
@@ -630,7 +717,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   private overrideCellSelectable() {
-    this.graph.isCellSelectable = function (cell : mxCell) {
+    this.graph.isCellSelectable = function (cell: mxCell) {
       if (cell.isEdge()) {
         return false;
       }

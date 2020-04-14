@@ -7,6 +7,7 @@ export class DiagramComponentHelper {
 
   static modelService: ModelService;
   static interfaceTypeSubject: Subject<{ name: string, data: any }>;
+  static processorSubject: Subject<{ name: string, data: any }>;
 
   static readonly NOT_RELATIONSHIP = -1;
   static readonly STYLE_PART_OF = 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
@@ -15,8 +16,12 @@ export class DiagramComponentHelper {
     DiagramComponentHelper.modelService = modelService;
   }
 
-  static setInterfaceTypeSubject(interfaceTypeSubject : Subject<{ name: string, data: any }>) {
+  static setInterfaceTypeSubject(interfaceTypeSubject: Subject<{ name: string, data: any }>) {
     DiagramComponentHelper.interfaceTypeSubject = interfaceTypeSubject;
+  }
+
+  static setProcessorSubject(processorSubject: Subject<{ name: string, data: any }>) {
+    DiagramComponentHelper.processorSubject = processorSubject;
   }
 
   static loadDiagram(diagramId: number, graph: mxGraph) {
@@ -161,47 +166,51 @@ export class DiagramComponentHelper {
         partOfDoc.setAttribute("name", "name");
         partOfDoc.setAttribute("idRelationship", id);
         diagramGraph.insertEdge(diagramGraph.getDefaultParent(), null, partOfDoc,
-        cellSourceInDiagram, cellTargetInDiagram, DiagramComponentHelper.STYLE_PART_OF);
+          cellSourceInDiagram, cellTargetInDiagram, DiagramComponentHelper.STYLE_PART_OF);
         diagramGraph.getModel().endUpdate();
         let encoder = new mxCodec(null);
         let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
         DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
-        DiagramComponentHelper.interfaceTypeSubject.next({
-          name: "refreshDiagram",
-          data: null,
-        });
       }
-    })
+    });
+    DiagramComponentHelper.interfaceTypeSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
   }
 
-  static printPartOfRelationship(graph : mxGraph, newCell : mxCell, relationship : EntityRelationshipPartOf) {
+  static printPartOfRelationship(graph: mxGraph, newCell: mxCell, relationship: EntityRelationshipPartOf) {
     console.log(graph.getChildEdges());
-    for(let edge of graph.getChildEdges()) {
-      if(edge.getAttribute("idRelationship") == relationship.id) {
+    for (let edge of graph.getChildEdges()) {
+      if (edge.getAttribute("idRelationship") == relationship.id) {
         return;
       }
     }
-    if(newCell.getAttribute("entityId", "") == relationship.destinationId) {
-      for(let cell of graph.getChildCells()) {
-        if(cell.getAttribute("entityId") == relationship.originId) {
-        let doc = mxUtils.createXmlDocument();
-        let partOfDoc = doc.createElement('partof');
-        partOfDoc.setAttribute("name", "name");
-        partOfDoc.setAttribute("idRelationship", relationship.id);
-        graph.insertEdge(graph.getDefaultParent(), null, partOfDoc,
-        cell, newCell, DiagramComponentHelper.STYLE_PART_OF);
+    if (newCell.getAttribute("entityId", "") == relationship.destinationId) {
+      for (let cell of graph.getChildCells()) {
+        if (cell.getAttribute("entityId") == relationship.originId) {
+          let doc = mxUtils.createXmlDocument();
+          let partOfDoc = doc.createElement('partof');
+          partOfDoc.setAttribute("name", "name");
+          partOfDoc.setAttribute("idRelationship", relationship.id);
+          graph.insertEdge(graph.getDefaultParent(), null, partOfDoc,
+            cell, newCell, DiagramComponentHelper.STYLE_PART_OF);
         }
       }
     }
-    if(newCell.getAttribute("entityId", "") == relationship.originId) {
-      for(let cell of graph.getChildCells()) {
-        if(cell.getAttribute("entityId") == relationship.destinationId) {
-        let doc = mxUtils.createXmlDocument();
-        let partOfDoc = doc.createElement('partof');
-        partOfDoc.setAttribute("name", "name");
-        partOfDoc.setAttribute("idRelationship", relationship.id);
-        graph.insertEdge(graph.getDefaultParent(), null, partOfDoc,
-        newCell, cell, DiagramComponentHelper.STYLE_PART_OF);
+    if (newCell.getAttribute("entityId", "") == relationship.originId) {
+      for (let cell of graph.getChildCells()) {
+        if (cell.getAttribute("entityId") == relationship.destinationId) {
+          let doc = mxUtils.createXmlDocument();
+          let partOfDoc = doc.createElement('partof');
+          partOfDoc.setAttribute("name", "name");
+          partOfDoc.setAttribute("idRelationship", relationship.id);
+          graph.insertEdge(graph.getDefaultParent(), null, partOfDoc,
+            newCell, cell, DiagramComponentHelper.STYLE_PART_OF);
         }
       }
     }
