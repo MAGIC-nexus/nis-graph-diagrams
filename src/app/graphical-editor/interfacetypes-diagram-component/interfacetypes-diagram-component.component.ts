@@ -190,7 +190,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       if (cell != null && this.checkRelationshipCellSource(cell)) {
         let svg = sender.container.getElementsByTagName("svg")[0];
         DiagramComponentHelper.printLineCreateRelationship(svg, cell, mouseEvent);
-        this.statusCreateRelationship = StatusCreatingRelationship.creating;
         this.sourceCellRelationship = cell;
       } else {
         DiagramComponentHelper.cancelCreateRelationship(this);

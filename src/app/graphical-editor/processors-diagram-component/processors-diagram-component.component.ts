@@ -135,9 +135,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
           this.portDraggable(event.data);
           break;
         case 'refreshDiagram':
+          DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
           if (this.statusCreateRelationship == StatusCreatingRelationship.creating)
             DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
-          DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
           break;
         case 'processorDraggableTree':
           this.proccesorDraggableTree(event.data);
