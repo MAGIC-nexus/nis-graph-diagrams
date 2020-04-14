@@ -7,6 +7,7 @@ export class DiagramComponentHelper {
 
   static modelService: ModelService;
   static interfaceTypeSubject: Subject<{ name: string, data: any }>;
+  static processorSubject: Subject<{ name: string, data: any }>;
 
   static readonly NOT_RELATIONSHIP = -1;
   static readonly STYLE_PART_OF = 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
@@ -17,6 +18,10 @@ export class DiagramComponentHelper {
 
   static setInterfaceTypeSubject(interfaceTypeSubject : Subject<{ name: string, data: any }>) {
     DiagramComponentHelper.interfaceTypeSubject = interfaceTypeSubject;
+  }
+
+  static setProcessorSubject(processorSubject : Subject<{ name: string, data: any }>) {
+    DiagramComponentHelper.processorSubject = processorSubject;
   }
 
   static loadDiagram(diagramId: number, graph: mxGraph) {
@@ -167,6 +172,10 @@ export class DiagramComponentHelper {
         let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
         DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
         DiagramComponentHelper.interfaceTypeSubject.next({
+          name: "refreshDiagram",
+          data: null,
+        });
+        DiagramComponentHelper.processorSubject.next({
           name: "refreshDiagram",
           data: null,
         });
