@@ -107,7 +107,7 @@
               [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
               (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
               (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
-              (interfaceForm)="showFormInterface($event)" (exchangeForm)="showFormExchange($event)"
+              (interfaceForm)="showFormInterface($event, false)" (exchangeForm)="showFormExchange($event)"
               (partOfForm)="showFormPartOf($event)" (scaleForm)="showFormScale($event)">
             </app-processors-diagram-component>
             <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
@@ -262,7 +262,7 @@
             <nz-list-item>
               <nz-list-item-meta [nzTitle]="nzTitle">
                 <ng-template #nzTitle>
-                  <a (click)="showFormInterface( {cellId : item.id} )">{{ item.name }}</a>
+                  <a (click)="showFormInterface( {cellId : item.id}, true )">{{ item.name }}</a>
                 </ng-template>
               </nz-list-item-meta>
             </nz-list-item>
@@ -423,7 +423,7 @@
     </mat-tab-group>
   </ng-template>
   <ng-template #formInterfaceFooter>
-    <button nz-button nzType="danger" (click)="closeModal()">
+    <button nz-button nzType="danger" (click)="closeModalInterface()">
       Cancel
     </button>
     <button nz-button nzType="primary" (click)="updateInterface()">
