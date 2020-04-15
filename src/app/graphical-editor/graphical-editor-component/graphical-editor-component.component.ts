@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2, AfterViewInit } from '@angular/core';
 import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
-import { NzModalRef, NzModalService } from 'ng-zorro-antd';
+import { NzModalRef, NzModalService, ModalOptionsForService } from 'ng-zorro-antd';
 import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
@@ -45,7 +45,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   proccesorSubject: Subject<{ name: string, data: any }> = new Subject();
   interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
 
-  private modalRef: NzModalRef
+  private modalRef: NzModalRef;
+  private subModalRef : NzModalRef;
 
   //Form Processor
   private proccesorIdForm;
@@ -78,6 +79,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formInterfaceTypeFooter', { static: false }) formInterfaceTypeFooter: TemplateRef<any>;
 
   //Form Interface
+  private subModalRefInterfaceActive = false;
   private interfaceIdForm;
   private oldNameFormInterface: string;
   nameFormInterface: string;
@@ -670,7 +672,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  showFormInterface(event: CellDto) {
+  showFormInterface(event: CellDto, isSubModal : boolean) {
     let interfaceEntity = <Interface>this.modelService.readInterface(Number(event.cellId));
     if (interfaceEntity instanceof Interface) {
 
@@ -697,22 +699,41 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         });
         this.nextIdInterfaceValues++;
       }
-
-      this.modalRef = this.nzModalService.create({
+      let modalOptionsForService : ModalOptionsForService = {
         nzTitle: this.formInterafaceTitle,
         nzContent: this.formInterfaceContent,
         nzFooter: this.formInterfaceFooter,
         nzWrapClassName: 'vertical-center-modal',
         nzBodyStyle: { height: '350px', overflowY: 'scroll', paddingTop: '0px' },
-      });
-      this.modalRef.afterOpen.subscribe(() => {
+      }
+      const funDraggable = () => {
         this.draggableModal();
         let titles = document.getElementsByClassName("title-modal");
 
         for (let i = 0; i < titles.length; i++) {
           titles[0].parentElement.parentElement.style.cursor = "move";
         }
-      });
+      }
+      if (isSubModal) {
+        this.subModalRefInterfaceActive = true;
+        modalOptionsForService.nzOnCancel = () => {
+          this.subModalRefInterfaceActive = false;
+        };
+        this.subModalRef = this.nzModalService.create(modalOptionsForService);
+        this.subModalRef.afterOpen.subscribe(funDraggable);
+      } else {
+        this.modalRef = this.nzModalService.create(modalOptionsForService);
+        this.modalRef.afterOpen.subscribe(funDraggable);
+      }
+    }
+  }
+
+  closeModalInterface() {
+    console.log(this.subModalRefInterfaceActive);
+    if(!this.subModalRefInterfaceActive) this.modalRef.destroy();
+    else {
+      this.subModalRef.destroy();
+      this.subModalRefInterfaceActive = false;
     }
   }
 
@@ -722,7 +743,11 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   updateInterface() {
-    this.modalRef.destroy();
+    if(!this.subModalRefInterfaceActive) this.modalRef.destroy();
+    else {
+      this.subModalRef.destroy();
+      this.subModalRefInterfaceActive = false;
+    }
     let interfaceEntity = new Interface();
     interfaceEntity.name = this.nameFormInterface;
     interfaceEntity.orientation = this.orientationFormInterface;
