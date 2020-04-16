@@ -13,7 +13,7 @@ import { DiagramComponentHelper,
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
 
-const STYLE_INTERFACESCALE = 'strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
+const STYLE_INTERFACETYPESCALE = 'strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
 
 @Component({
   selector: 'app-interfacetypes-diagram-component',
@@ -122,7 +122,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         interfaceTypeScale.setAttribute("name", "name");
         interfaceTypeScale.setAttribute("idRelationship", id);
         diagramGraph.insertEdge(diagramGraph.getDefaultParent(), null, interfaceTypeScale,
-          cellSourceInDiagram, cellTargetInDiagram, STYLE_INTERFACESCALE);
+          cellSourceInDiagram, cellTargetInDiagram, STYLE_INTERFACETYPESCALE);
         diagramGraph.getModel().endUpdate();
         const encoder = new mxCodec(null);
         const xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
@@ -150,7 +150,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           interfaceTypeScale.setAttribute("name", "name");
           interfaceTypeScale.setAttribute("idRelationship", relationship.id);
           graph.insertEdge(graph.getDefaultParent(), null, interfaceTypeScale,
-            cell, newCell, STYLE_INTERFACESCALE);
+            cell, newCell, STYLE_INTERFACETYPESCALE);
         }
       }
     }
@@ -162,7 +162,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           interfaceTypeScale.setAttribute("name", "name");
           interfaceTypeScale.setAttribute("idRelationship", relationship.id);
           graph.insertEdge(graph.getDefaultParent(), null, interfaceTypeScale,
-            newCell, cell, STYLE_INTERFACESCALE);
+            newCell, cell, STYLE_INTERFACETYPESCALE);
         }
       }
     }
