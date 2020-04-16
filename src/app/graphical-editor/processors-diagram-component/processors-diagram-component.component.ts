@@ -8,17 +8,19 @@ import {
 } from '../diagram-component-helper';
 import {
   ModelService,
-  EntityTypes,
   RelationshipType,
   InterfaceOrientation,
   Relationship,
   EntityRelationshipPartOf,
   Processor,
-  Interface
+  Interface,
+  ExchangeRelationship,
 } from '../../model-manager';
 import { CreateProcessorDto, ChangeInterfaceInGraphDto } from './processors-diagram-component-dto';
 import { CellDto } from '../diagram-component-helper';
 import { MatMenuTrigger } from '@angular/material';
+
+const STYLE_EXCHANGE = 'strokeColor=red;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -99,10 +101,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(this.processorToolbar.nativeElement, this.graph, functionProcessor, dragElement);
   }
 
-  static createProcessor(name: string) {
-    return DiagramComponentHelper.modelService.createEntity(EntityTypes.Processor, name);
-  }
-
   static printProcessor(diagramId, graph, pt: mxPoint, entityId) {
     try {
       let entityModel = <Processor>DiagramComponentHelper.modelService.readEntity(Number(entityId));
@@ -116,13 +114,17 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       DiagramComponentHelper.modelService.addEntityToDiagram(diagramId, entityId);
       DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(diagramId,
         entityId, 100, 80, pt.x, pt.y);
-      for (let interfaceModel of entityModel.interfaces) {
-        ProcessorsDiagramComponentComponent.printCellInterface(interfaceModel.id, newCellProcessor, graph);
-      }
       let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(entityId));
       let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(entityId));
-      ProcessorsDiagramComponentComponent.addPartOfRelationships(graph, newCellProcessor, childrensRelationship,
+      ProcessorsDiagramComponentComponent.addRelationshipsProcessor(graph, newCellProcessor, childrensRelationship,
         parentsRelationship);
+      for (let interfaceModel of entityModel.interfaces) {
+        let cellinterface = ProcessorsDiagramComponentComponent.printCellInterface(interfaceModel.id, newCellProcessor, graph);
+        let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(interfaceModel.id));
+        let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(interfaceModel.id));
+        ProcessorsDiagramComponentComponent.addRelationshipsInterface(graph, cellinterface,
+          childrensRelationship, parentsRelationship);
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -132,7 +134,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     }
   }
 
-  static addPartOfRelationships(graph: mxGraph, newCell, childrensRelationship: Relationship[],
+  static addRelationshipsProcessor(graph: mxGraph, newCell, childrensRelationship: Relationship[],
     parentsRelationship: Relationship[]) {
     for (let childrenRelationship of childrensRelationship) {
       if (childrenRelationship instanceof EntityRelationshipPartOf) {
@@ -142,6 +144,60 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     for (let parentRelationship of parentsRelationship) {
       if (parentRelationship instanceof EntityRelationshipPartOf) {
         DiagramComponentHelper.printPartOfRelationship(graph, newCell, parentRelationship);
+      }
+    }
+  }
+
+  static addRelationshipsInterface(graph: mxGraph, newCell, childrensRelationship: Relationship[],
+    parentsRelationship: Relationship[]) {
+    for (let childrenRelationship of childrensRelationship) {
+      if (childrenRelationship instanceof ExchangeRelationship) {
+        ProcessorsDiagramComponentComponent.printExchangeRelationship(graph, newCell, childrenRelationship);
+      }
+    }
+    for (let parentRelationship of parentsRelationship) {
+      if (parentRelationship instanceof ExchangeRelationship) {
+        ProcessorsDiagramComponentComponent.printExchangeRelationship(graph, newCell, parentRelationship);
+      }
+    }
+  }
+
+  static printExchangeRelationship(graph: mxGraph, interfaceCell: mxCell, relationship: ExchangeRelationship) {
+    for (let edge of graph.getChildEdges()) {
+      if (edge.getAttribute("idRelationship") == relationship.id) {
+        return;
+      }
+    }
+    if (interfaceCell.getAttribute("entityId", "") == relationship.destinationId) {
+      for (let cell of graph.getChildCells()) {
+        for (let childrenCell of graph.getChildCells(cell)) {
+          console.log(interfaceCell);
+          console.log(childrenCell);
+          if (childrenCell.getAttribute("entityId") == relationship.originId) {
+            let doc = mxUtils.createXmlDocument();
+            let exchangeDoc = doc.createElement('exchange');
+            exchangeDoc.setAttribute("name", "name");
+            exchangeDoc.setAttribute("idRelationship", relationship.id);
+            graph.insertEdge(graph.getDefaultParent(), null, exchangeDoc,
+              childrenCell, interfaceCell, STYLE_EXCHANGE);
+          }
+        }
+      }
+    }
+    if (interfaceCell.getAttribute("entityId", "") == relationship.originId) {
+      for (let cell of graph.getChildCells()) {
+        for (let childrenCell of graph.getChildCells(cell)) {
+          console.log(interfaceCell);
+          console.log(childrenCell);
+          if (childrenCell.getAttribute("entityId") == relationship.destinationId) {
+            let doc = mxUtils.createXmlDocument();
+            let exchangeDoc = doc.createElement('exchange');
+            exchangeDoc.setAttribute("name", "name");
+            exchangeDoc.setAttribute("exchange", relationship.id);
+            graph.insertEdge(graph.getDefaultParent(), null, exchangeDoc,
+              interfaceCell, childrenCell, STYLE_EXCHANGE);
+          }
+        }
       }
     }
   }
@@ -177,10 +233,98 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let port = doc.createElement('interface');
     port.setAttribute('name', interfaceModel.name);
     port.setAttribute('entityId', interfaceModel.id);
+    let style = "";
+    if (interfaceModel.orientation == InterfaceOrientation.Input) {
+      style = 'fontSize=9;shape=ellipse;resizable=0;fillColor=#FF8E8E;strokeColor=#FF0000';
+    }
+    if (interfaceModel.orientation == InterfaceOrientation.Output) {
+      style = 'fontSize=9;shape=ellipse;resizable=0;fillColor=#82FF89;strokeColor=#00FF0E';
+    }
     let portVertex = graph.insertVertex(cellTarget, null, port, 1, 0.5, 30, 30,
-      'fontSize=9;shape=ellipse;resizable=0;fillColor=#FF8E8E;strokeColor=#FF0000', true);
+      style, true);
     portVertex.geometry.offset = new mxPoint(-15, -15);
     portVertex.geometry.relative = true;
+    return portVertex;
+  }
+
+  static changeInterfaceInGraphEvent(dto: ChangeInterfaceInGraphDto) {
+    let diagramXML = DiagramComponentHelper.modelService.getDiagramGraph(dto.diagramId);
+    if (diagramXML != "") {
+      let updateGraphXML = false;
+      let model = <any>new mxGraphModel();
+      let xmlDocument = mxUtils.parseXml(diagramXML);
+      let decodec = new mxCodec(xmlDocument);
+      decodec.decode(xmlDocument.documentElement, model);
+      let cells = model.cells;
+      for (let key in cells) {
+        if (cells[key].value != undefined && cells[key].value.nodeName.toLowerCase() == 'processor') {
+          if (ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model)) updateGraphXML = true;
+        }
+      }
+      if (updateGraphXML) {
+        let encoder = new mxCodec(null);
+        let xml = mxUtils.getXml(encoder.encode(model));
+        DiagramComponentHelper.modelService.setDiagramGraph(Number(dto.diagramId), xml);
+      }
+    }
+  }
+
+  static changeInterfaceInGraph(dto: ChangeInterfaceInGraphDto, cell, model): boolean {
+    let updateGraphInXML = false;
+    if (cell.children) {
+      for (let childProcessor of cell.children) {
+        if (childProcessor.value.nodeName.toLowerCase() == 'interface'
+          && childProcessor.getAttribute('entityId') == dto.cellId) {
+          childProcessor.setAttribute('name', dto.name);
+          updateGraphInXML = true;
+          model.beginUpdate();
+          let graph = new mxGraph();
+          if (dto.orientation == InterfaceOrientation.Input) {
+            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
+            graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
+          }
+          if (dto.orientation == InterfaceOrientation.Output) {
+            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
+            graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
+          }
+          model.endUpdate();
+        }
+      }
+    }
+    return updateGraphInXML;
+  }
+
+  static createExchangeRelationship(sourceId, targetId) {
+    const idRelationship = DiagramComponentHelper.modelService.createRelationship(RelationshipType.Exchange,
+      Number(sourceId), Number(targetId));
+    DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
+      let cellSourceInDiagram = null;
+      let cellTargetInDiagram = null;
+      let diagramGraph = DiagramComponentHelper.getDiagram(key);
+      for (let cell of diagramGraph.getChildCells()) {
+        for (let childrenCell of diagramGraph.getChildCells(cell)) {
+          if (childrenCell.getAttribute("entityId") == sourceId) cellSourceInDiagram = childrenCell;
+          if (childrenCell.getAttribute("entityId") == targetId) cellTargetInDiagram = childrenCell;
+        }
+      }
+      if (cellSourceInDiagram != null && cellTargetInDiagram != null) {
+        diagramGraph.getModel().beginUpdate();
+        const doc = mxUtils.createXmlDocument();
+        const interfaceTypeScale = doc.createElement('exchange');
+        interfaceTypeScale.setAttribute("name", "name");
+        interfaceTypeScale.setAttribute("idRelationship", idRelationship);
+        diagramGraph.insertEdge(diagramGraph.getDefaultParent(), null, interfaceTypeScale,
+          cellSourceInDiagram, cellTargetInDiagram, STYLE_EXCHANGE);
+        diagramGraph.getModel().endUpdate();
+        const encoder = new mxCodec(null);
+        const xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
+        DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
+      }
+    });
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
   }
 
 
@@ -234,58 +378,10 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(element, this.graph, funct);
   }
 
-  static changeInterfaceInGraphEvent(dto: ChangeInterfaceInGraphDto) {
-    let diagramXML = DiagramComponentHelper.modelService.getDiagramGraph(dto.diagramId);
-    console.log('entre');
-    if (diagramXML != "") {
-      let updateGraphXML = false;
-      let model = <any>new mxGraphModel();
-      let xmlDocument = mxUtils.parseXml(diagramXML);
-      let decodec = new mxCodec(xmlDocument);
-      decodec.decode(xmlDocument.documentElement, model);
-      let cells = model.cells;
-      for (let key in cells) {
-        if (cells[key].value != undefined && cells[key].value.nodeName.toLowerCase() == 'processor') {
-          if (ProcessorsDiagramComponentComponent.changeInterfaceInGraph(dto, cells[key], model)) updateGraphXML = true;
-        }
-      }
-      if (updateGraphXML) {
-        let encoder = new mxCodec(null);
-        let xml = mxUtils.getXml(encoder.encode(model));
-        DiagramComponentHelper.modelService.setDiagramGraph(Number(dto.diagramId), xml);
-      }
-    }
-  }
-
-  static changeInterfaceInGraph(dto: ChangeInterfaceInGraphDto, cell, model): boolean {
-    let updateGraphInXML = false;
-    if (cell.children) {
-      for (let childProcessor of cell.children) {
-        if (childProcessor.value.nodeName.toLowerCase() == 'interface'
-          && childProcessor.getAttribute('entityId') == dto.cellId) {
-          childProcessor.setAttribute('name', dto.name);
-          updateGraphInXML = true;
-          model.beginUpdate();
-          let graph = new mxGraph();
-          if (dto.orientation == InterfaceOrientation.Input) {
-            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [childProcessor]);
-            graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [childProcessor]);
-          }
-          if (dto.orientation == InterfaceOrientation.Output) {
-            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [childProcessor]);
-            graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [childProcessor]);
-          }
-          model.endUpdate();
-        }
-      }
-    }
-    return updateGraphInXML;
-  }
-
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
     if (this.imageToolbarRelationship) this.imageToolbarRelationship.style.backgroundColor = "transparent";
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
-    if(this.relationshipSelect == relationshipType) DiagramComponentHelper.cancelCreateRelationship(this);
+    if (this.relationshipSelect == relationshipType) DiagramComponentHelper.cancelCreateRelationship(this);
     else {
       this.relationshipSelect = relationshipType;
       this.imageToolbarRelationship = <HTMLImageElement>event.target;
@@ -455,28 +551,12 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         this.updateTreeEmitter.emit(null);
         break;
       case RelationshipType.Exchange:
-        this.createExchangeRelationship(cell);
+        ProcessorsDiagramComponentComponent.createExchangeRelationship(this.sourceCellRelationship.getAttribute("entityId", ""),
+          cell.getAttribute("entityId", ""));
         break;
       case RelationshipType.InterfaceScale:
         this.createInterfaceScaleRelationship(cell);
     }
-  }
-
-  private createExchangeRelationship(cell: mxCell) {
-    this.graph.getModel().beginUpdate();
-    let doc = mxUtils.createXmlDocument();
-    let id = this.modelService.createRelationship(RelationshipType.Exchange,
-      Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
-    let exchangeOfDoc = doc.createElement('exchange');
-    exchangeOfDoc.setAttribute("name", "name");
-    exchangeOfDoc.setAttribute("idRelationship", id);
-    this.graph.insertEdge(this.graph.getDefaultParent(), null, exchangeOfDoc,
-      this.sourceCellRelationship, cell, 'strokeColor=red;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1');
-    this.graph.getModel().endUpdate();
-    let childCells = this.graph.getChildCells();
-    DiagramComponentHelper.changeStateMovableCells(this, childCells, "1");
-    DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
-    DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
   }
 
   private createInterfaceScaleRelationship(cell) {

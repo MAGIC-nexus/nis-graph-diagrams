@@ -104,20 +104,19 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     }
   }
 
-  static createInterfaceTypeScaleRelationship(cellSourceId, cellTargetId) {
+  static createInterfaceTypeScaleRelationship(sourceId, targetId) {
     let id = DiagramComponentHelper.modelService.createRelationship(RelationshipType.InterfaceTypeScale,
-      Number(cellSourceId), Number(cellTargetId));
+      Number(sourceId), Number(targetId));
     DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
       let cellSourceInDiagram = null;
       let cellTargetInDiagram = null;
       let diagramGraph = DiagramComponentHelper.getDiagram(key);
       for (let cell of diagramGraph.getChildCells()) {
-        if (cell.getAttribute("entityId") == cellSourceId) cellSourceInDiagram = cell;
-        if (cell.getAttribute("entityId") == cellTargetId) cellTargetInDiagram = cell;
+        if (cell.getAttribute("entityId") == sourceId) cellSourceInDiagram = cell;
+        if (cell.getAttribute("entityId") == targetId) cellTargetInDiagram = cell;
       }
       if (cellSourceInDiagram != null && cellTargetInDiagram != null) {
         diagramGraph.getModel().beginUpdate();
-
         const doc = mxUtils.createXmlDocument();
         const interfaceTypeScale = doc.createElement('interfacetypescale');
         interfaceTypeScale.setAttribute("name", "name");
