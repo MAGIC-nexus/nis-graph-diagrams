@@ -283,15 +283,15 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
-    this.relationshipSelect = relationshipType;
-    if (this.imageToolbarRelationship != null) {
-      this.imageToolbarRelationship.style.backgroundColor = "transparent";
-    }
+    if (this.imageToolbarRelationship) this.imageToolbarRelationship.style.backgroundColor = "transparent";
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
-    this.imageToolbarRelationship = <HTMLImageElement>event.target;
-    let childCells = this.graph.getChildCells();
-    DiagramComponentHelper.changeStateMovableCells(this, childCells, "0");
-    this.statusCreateRelationship = StatusCreatingRelationship.creating;
+    if(this.relationshipSelect == relationshipType) DiagramComponentHelper.cancelCreateRelationship(this);
+    else {
+      this.relationshipSelect = relationshipType;
+      this.imageToolbarRelationship = <HTMLImageElement>event.target;
+      this.statusCreateRelationship = StatusCreatingRelationship.creating;
+      DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
+    }
   }
 
   private graphMouseEvent() {

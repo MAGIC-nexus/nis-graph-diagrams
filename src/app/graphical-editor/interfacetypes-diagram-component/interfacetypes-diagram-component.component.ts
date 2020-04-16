@@ -189,11 +189,15 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
+    if (this.imageToolbarRelationship) this.imageToolbarRelationship.style.backgroundColor = "transparent";
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
-    this.relationshipSelect = relationshipType;
-    this.imageToolbarRelationship = <HTMLImageElement>event.target;
-    this.statusCreateRelationship = StatusCreatingRelationship.creating;
-    DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
+    if(this.relationshipSelect == relationshipType) DiagramComponentHelper.cancelCreateRelationship(this);
+    else {
+      this.relationshipSelect = relationshipType;
+      this.imageToolbarRelationship = <HTMLImageElement>event.target;
+      this.statusCreateRelationship = StatusCreatingRelationship.creating;
+      DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
+    }
   }
 
   private eventsInterfaceTypeSubject() {
