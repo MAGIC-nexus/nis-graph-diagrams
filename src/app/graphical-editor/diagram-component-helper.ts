@@ -148,16 +148,16 @@ export class DiagramComponentHelper {
     return true;
   }
 
-  static createPartOfRelationship(cellSourceId, cellTargetId) {
+  static createPartOfRelationship(sourceId, targetId) {
     let id = DiagramComponentHelper.modelService.createRelationship(RelationshipType.PartOf,
-      Number(cellSourceId), Number(cellTargetId));
+      Number(sourceId), Number(targetId));
     DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
       let cellSourceInDiagram = null;
       let cellTargetInDiagram = null;
       let diagramGraph = DiagramComponentHelper.getDiagram(key);
       for (let cell of diagramGraph.getChildCells()) {
-        if (cell.getAttribute("entityId") == cellSourceId) cellSourceInDiagram = cell;
-        if (cell.getAttribute("entityId") == cellTargetId) cellTargetInDiagram = cell;
+        if (cell.getAttribute("entityId") == sourceId) cellSourceInDiagram = cell;
+        if (cell.getAttribute("entityId") == targetId) cellTargetInDiagram = cell;
       }
       if (cellSourceInDiagram != null && cellTargetInDiagram != null) {
         diagramGraph.getModel().beginUpdate();
@@ -184,7 +184,6 @@ export class DiagramComponentHelper {
   }
 
   static printPartOfRelationship(graph: mxGraph, newCell: mxCell, relationship: EntityRelationshipPartOf) {
-    console.log(graph.getChildEdges());
     for (let edge of graph.getChildEdges()) {
       if (edge.getAttribute("idRelationship") == relationship.id) {
         return;

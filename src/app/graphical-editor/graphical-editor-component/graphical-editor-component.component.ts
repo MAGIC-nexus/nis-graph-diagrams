@@ -7,7 +7,7 @@ import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
   Sphere, RoegenType, Interface, InterfaceValue, ExchangeRelationship, 
-  EntityRelationshipPartOf, ScaleRelationship, InterfaceTypeScaleChange, InterfaceType,
+  EntityRelationshipPartOf, ScaleRelationship, InterfaceTypeScaleChange, InterfaceType, EntityTypes,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto, CellDto } from '../diagram-component-helper';
@@ -483,7 +483,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       return false;
     }
     this.modalRef.destroy();
-    let entityId = InterfacetypesDiagramComponentComponent.createInterfaceType(this.nameFormCreateInterfaceType.trim());
+    let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.InterfaceType, this.nameFormCreateInterfaceType.trim());
     this.createInterfaceTypeDto.component.graph.getModel().beginUpdate();
     InterfacetypesDiagramComponentComponent.printInterfaceType(this.createInterfaceTypeDto.component.diagramId,
       this.createInterfaceTypeDto.component.graph,this.nameFormCreateInterfaceType.trim(),this.createInterfaceTypeDto.pt, 
@@ -661,7 +661,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     if (validate) {
       this.modalRef.destroy();
       this.createProcessorDto.component.graph.getModel().beginUpdate();
-      let entityId = ProcessorsDiagramComponentComponent.createProcessor(this.nameFormCreateProcessor.trim());
+      let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.Processor, this.nameFormCreateProcessor.trim());
       ProcessorsDiagramComponentComponent.printProcessor(this.createProcessorDto.component.diagramId,
         this.createProcessorDto.component.graph, this.createProcessorDto.pt,
         entityId);
