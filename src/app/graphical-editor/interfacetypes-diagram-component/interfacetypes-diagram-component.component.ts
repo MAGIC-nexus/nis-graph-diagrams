@@ -62,6 +62,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   static printInterfaceType(diagramId, graph, name: string, pt: mxPoint, entityId) {
     try {
+      if  (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
+      Number(entityId))) return;
       let doc = mxUtils.createXmlDocument();
       let interfaceTypeDoc = doc.createElement('interfacetype');
       interfaceTypeDoc.setAttribute('name', name);

@@ -105,6 +105,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   static printProcessor(diagramId, graph, pt: mxPoint, entityId) {
     try {
+      if  (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
+      Number(entityId))) return;
       let entityModel = <Processor>DiagramComponentHelper.modelService.readEntity(Number(entityId));
       console.log(entityModel);
       let doc = mxUtils.createXmlDocument();
