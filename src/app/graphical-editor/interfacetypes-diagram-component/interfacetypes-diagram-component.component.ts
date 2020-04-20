@@ -13,7 +13,7 @@ import { DiagramComponentHelper,
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
 
-const STYLE_INTERFACETYPESCALE = 'strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
+const STYLE_INTERFACETYPESCALE = 'dashed=1;strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
 
 @Component({
   selector: 'app-interfacetypes-diagram-component',
@@ -62,6 +62,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   static printInterfaceType(diagramId, graph, name: string, pt: mxPoint, entityId) {
     try {
+      if  (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
+      Number(entityId))) return;
       let doc = mxUtils.createXmlDocument();
       let interfaceTypeDoc = doc.createElement('interfacetype');
       interfaceTypeDoc.setAttribute('name', name);
@@ -333,6 +335,9 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       let relationshipErrorDto = new SnackErrorDto();
       relationshipErrorDto.message = 'A relationship of type "interfaceTypeScale" should be the union between two entity of type "interfaceType"';
       this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    if(Number(cell.getAttribute("entityId", "")) == Number(this.sourceCellRelationship.getAttribute("entityId", ""))) {
       return false;
     }
     let messageError = DiagramComponentHelper.modelService.checkCanCreateRelationship(RelationshipType.InterfaceTypeScale,

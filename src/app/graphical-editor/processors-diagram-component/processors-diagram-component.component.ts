@@ -21,8 +21,8 @@ import { CreateProcessorDto, ChangeInterfaceInGraphDto } from './processors-diag
 import { CellDto } from '../diagram-component-helper';
 import { MatMenuTrigger } from '@angular/material';
 
-const STYLE_EXCHANGE = 'strokeColor=red;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
-const STYLE_INTERFACESCALE = 'strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1'
+const STYLE_EXCHANGE = 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
+const STYLE_INTERFACESCALE = 'dashed=1;strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1'
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -105,6 +105,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   static printProcessor(diagramId, graph, pt: mxPoint, entityId) {
     try {
+      if  (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
+      Number(entityId))) return;
       let entityModel = <Processor>DiagramComponentHelper.modelService.readEntity(Number(entityId));
       console.log(entityModel);
       let doc = mxUtils.createXmlDocument();
@@ -414,6 +416,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       switch (event.name) {
         case "portDraggable":
           this.portDraggable(event.data);
+          if (this.statusCreateRelationship == StatusCreatingRelationship.creating)
+            DiagramComponentHelper.changeStateMovableCells(this, this.graph.getChildCells(), "0");
           break;
         case 'refreshDiagram':
           DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
@@ -595,6 +599,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       this.snackBarErrorEmitter.emit(relationshipErrorDto);
       return false;
     }
+    if(Number(cell.getAttribute("entityId", "")) == Number(this.sourceCellRelationship.getAttribute("entityId", ""))) {
+      return false;
+    }
     let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.Exchange,
       Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")));
     if (messageError != "") {
@@ -611,6 +618,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let relationshipErrorDto = new SnackErrorDto();
       relationshipErrorDto.message = 'A relationship of type "interfaceScale" should be the union between two entity of type "interface"';
       this.snackBarErrorEmitter.emit(relationshipErrorDto);
+      return false;
+    }
+    if(Number(cell.getAttribute("entityId", "")) == Number(this.sourceCellRelationship.getAttribute("entityId", ""))) {
       return false;
     }
     let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.InterfaceScale,

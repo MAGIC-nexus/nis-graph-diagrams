@@ -10,7 +10,8 @@ export class DiagramComponentHelper {
   static processorSubject: Subject<{ name: string, data: any }>;
 
   static readonly NOT_RELATIONSHIP = -1;
-  static readonly STYLE_PART_OF = 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
+  static readonly STYLE_PART_OF = 'endArrow=block;endFill=0;strokeColor=black;perimeterSpacing=4;' +
+  'labelBackgroundColor=white;fontStyle=1';
 
   static setModelService(modelService: ModelService) {
     DiagramComponentHelper.modelService = modelService;
@@ -137,6 +138,9 @@ export class DiagramComponentHelper {
       }
       return false;
     };
+    if(Number(cell.getAttribute("entityId", "")) == Number(component.sourceCellRelationship.getAttribute("entityId", ""))) {
+      return false;
+    }
     let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.getAttribute("entityId", "")),
       Number(component.sourceCellRelationship.getAttribute("entityId", "")));
     if (messageError != "") {

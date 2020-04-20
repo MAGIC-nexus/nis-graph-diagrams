@@ -91,10 +91,10 @@
           <!--          </button>-->
         </mat-toolbar-row>
       </mat-toolbar>
-      <div fxFlex style="border: 2px solid red;">
+      <div fxFlex style="border: 2px solid red; height: calc(100% - 64px);">
 
         <!-- Tabs diagrams -->
-        <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange">
+        <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange; height: 100%;">
           <mat-tab *ngFor="let item of tabsDiagram | keyvalue">
             <ng-template mat-tab-label>
               {{item.value.name}}
