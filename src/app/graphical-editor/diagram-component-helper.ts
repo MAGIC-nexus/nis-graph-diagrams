@@ -11,7 +11,7 @@ export class DiagramComponentHelper {
 
   static readonly NOT_RELATIONSHIP = -1;
   static readonly STYLE_PART_OF = 'endArrow=block;endFill=0;strokeColor=black;perimeterSpacing=4;' +
-  'labelBackgroundColor=white;fontStyle=1';
+    'labelBackgroundColor=white;fontStyle=1';
 
   static setModelService(modelService: ModelService) {
     DiagramComponentHelper.modelService = modelService;
@@ -138,7 +138,7 @@ export class DiagramComponentHelper {
       }
       return false;
     };
-    if(Number(cell.getAttribute("entityId", "")) == Number(component.sourceCellRelationship.getAttribute("entityId", ""))) {
+    if (Number(cell.getAttribute("entityId", "")) == Number(component.sourceCellRelationship.getAttribute("entityId", ""))) {
       return false;
     }
     let messageError = this.modelService.checkCanCreateRelationship(RelationshipType.PartOf, Number(cell.getAttribute("entityId", "")),
@@ -277,6 +277,35 @@ export class DiagramComponentHelper {
         DiagramComponentHelper.changeStateMovableCells(component, cell.children, typeMove)
       }
     }
+  }
+
+  static removeRelationship(relationshipId) {
+    if (DiagramComponentHelper.modelService.deleteRelationship(Number(relationshipId)) == 0) {
+      DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
+        let diagramGraph = DiagramComponentHelper.getDiagram(key);
+        let edgeRemove = null;
+        for (let edge of diagramGraph.getChildEdges(diagramGraph.getDefaultParent())) {
+          if (edge.getAttribute('idRelationship', '') == relationshipId)
+            edgeRemove = edge;
+        }
+        if (edgeRemove != null) {
+          diagramGraph.getModel().beginUpdate();
+          diagramGraph.getModel().remove(edgeRemove);
+          diagramGraph.getModel().endUpdate();
+          let encoder = new mxCodec(null);
+          let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
+          DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
+        }
+      })
+    }
+    DiagramComponentHelper.interfaceTypeSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
   }
 
 }

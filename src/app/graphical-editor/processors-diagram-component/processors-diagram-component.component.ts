@@ -52,8 +52,29 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("scaleForm") scaleFormEmitter = new EventEmitter<CellDto>();
 
   //ContextMenuProcessor
-  @ViewChild(MatMenuTrigger, { static: false }) contextMenuProcessor: MatMenuTrigger;
+  @ViewChild('contextMenuProcessorTrigger', { static: false }) contextMenuProcessor: MatMenuTrigger;
   contextMenuProcessorPosition = {
+    x: '0px',
+    y: '0px',
+  }
+  
+  //ContextMenu PartOf
+  @ViewChild('contextMenuPartOfTrigger', { static: false }) contextMenuPartOf: MatMenuTrigger;
+  contextMenuPartOfPosition = {
+    x: '0px',
+    y: '0px',
+  }
+  
+  //ContextMenu InterfaceScale
+  @ViewChild('contextMenuInterfaceScaleTrigger', { static: false }) contextMenuInterfaceScale: MatMenuTrigger;
+  contextMenuInterfaceScalePosition = {
+    x: '0px',
+    y: '0px',
+  }
+
+  //ContextMenu Exchange
+  @ViewChild('contextMenuExchangeTrigger', { static: false }) contextMenuExchange: MatMenuTrigger;
+  contextMenuExchangePosition = {
     x: '0px',
     y: '0px',
   }
@@ -853,7 +874,25 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         processorInstance.contextMenuProcessor.menuData = { 'cell': cell };
         processorInstance.contextMenuProcessor.menu.focusFirstItem('mouse');
         processorInstance.contextMenuProcessor.openMenu();
-      }
+      } else if (cell.value.nodeName.toLowerCase() == "partof") {
+        processorInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
+        processorInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
+        processorInstance.contextMenuPartOf.menuData = { 'cell': cell };
+        processorInstance.contextMenuPartOf.menu.focusFirstItem('mouse');
+        processorInstance.contextMenuPartOf.openMenu();
+      } else if (cell.value.nodeName.toLowerCase() == "exchange") {
+        processorInstance.contextMenuExchangePosition.x = event.clientX + 'px';
+        processorInstance.contextMenuExchangePosition.y = event.clientY + 'px';
+        processorInstance.contextMenuExchange.menuData = { 'cell': cell };
+        processorInstance.contextMenuExchange.menu.focusFirstItem('mouse');
+        processorInstance.contextMenuExchange.openMenu();
+      } else if (cell.value.nodeName.toLowerCase() == "interfacescale") {
+        processorInstance.contextMenuInterfaceScalePosition.x = event.clientX + 'px';
+        processorInstance.contextMenuInterfaceScalePosition.y = event.clientY + 'px';
+        processorInstance.contextMenuInterfaceScale.menuData = { 'cell': cell };
+        processorInstance.contextMenuInterfaceScale.menu.focusFirstItem('mouse');
+        processorInstance.contextMenuInterfaceScale.openMenu();
+      } 
     }
 
     this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt: PointerEvent) {
@@ -871,6 +910,34 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (cell != undefined && cell.value.nodeName == "processor") {
       this.showFormProcessor(cell.getAttribute("entityId", ""));
     }
+  }
+
+  onContextMenuPartOfForm(cell : mxCell) {
+    let partOfDto: PartOfFormDto = { cellId: cell.getAttribute('idRelationship', '') };
+    this.partOfFormEmitter.emit(partOfDto);
+  }
+
+  onContextMenuPartOfRemove(cell : mxCell) {
+    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
+    this.updateTreeEmitter.emit(null);
+  }
+
+  onContextMenuInterfaceScaleForm(cell : mxCell) {
+    let scaleDto: CellDto = { cellId: cell.getAttribute('idRelationship', '') };
+    this.scaleFormEmitter.emit(scaleDto);
+  }
+
+  onContextMenuInterfaceScaleRemove(cell : mxCell) {
+    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
+  }
+
+  onContextMenuExchangeForm(cell : mxCell) {
+    let exchangeDto: CellDto = { cellId: cell.getAttribute('idRelationship', '') }
+    this.exchangeFormEmitter.emit(exchangeDto);
+  }
+
+  onContextMenuExchangeRemove(cell : mxCell) {
+    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
   }
 
   private overrideCellSelectable() {

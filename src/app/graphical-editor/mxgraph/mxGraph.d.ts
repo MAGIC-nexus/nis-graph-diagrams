@@ -435,6 +435,7 @@ declare class mxGraph {
   getIncomingEdges(cell, parent);
   getOutgoingEdges(cell, parent);
   getEdges(cell, parent, incoming, outgoing, includeLoops, recurse);
+  getEdges(cell);
   isValidAncestor(cell, parent, recurse);
   getOpposites(edges, terminal, sources, targets);
   getEdgesBetween(source, target, directed);
