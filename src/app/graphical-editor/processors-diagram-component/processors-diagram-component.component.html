@@ -23,11 +23,44 @@ position: absolute; top: 10px; left: 10px; border-radius: 5px; padding: 10px 5px
 
 
 <!-- Context Menu Processor-->
-<div style="visibility: hidden; position: fixed" [style.left]="contextMenuProcessorPosition.x"
+<div #contextMenuProcessorTrigger="matMenuTrigger" style="visibility: hidden; position: fixed" [style.left]="contextMenuProcessorPosition.x"
   [style.top]="contextMenuProcessorPosition.y" [matMenuTriggerFor]="contextMenuProcessor">
 </div>
 <mat-menu #contextMenuProcessor="matMenu">
   <ng-template matMenuContent let-cell="cell">
     <button mat-menu-item (click)="onContextMenuProcessorForm(cell)">Edit</button>
+  </ng-template>
+</mat-menu>
+
+<!-- Context Menu PartOf-->
+<div #contextMenuPartOfTrigger="matMenuTrigger" style="visibility: hidden; position: fixed" [style.left]="contextMenuPartOfPosition.x"
+  [style.top]="contextMenuPartOfPosition.y" [matMenuTriggerFor]="contextMenuPartOf">
+</div>
+<mat-menu #contextMenuPartOf="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuPartOfForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuPartOfRemove(cell)">Remove</button>
+  </ng-template>
+</mat-menu>
+
+<!-- Context Menu Interface Scale-->
+<div #contextMenuInterfaceScaleTrigger="matMenuTrigger" style="visibility: hidden; position: fixed" [style.left]="contextMenuInterfaceScalePosition.x"
+  [style.top]="contextMenuInterfaceScalePosition.y" [matMenuTriggerFor]="contextMenuScale">
+</div>
+<mat-menu #contextMenuScale="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuInterfaceScaleForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuInterfaceScaleRemove(cell)">Remove</button>
+  </ng-template>
+</mat-menu>
+
+<!-- Context Menu Exchange-->
+<div #contextMenuExchangeTrigger="matMenuTrigger" style="visibility: hidden; position: fixed" [style.left]="contextMenuExchangePosition.x"
+  [style.top]="contextMenuExchangePosition.y" [matMenuTriggerFor]="contextMenuExchange">
+</div>
+<mat-menu #contextMenuExchange="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuExchangeForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuExchangeRemove(cell)">Remove</button>
   </ng-template>
 </mat-menu>

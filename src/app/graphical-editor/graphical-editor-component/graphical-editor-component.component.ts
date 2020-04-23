@@ -257,6 +257,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   private addTabDiagram(diagramId: number) {
     let diagram: Diagram = this.modelService.readDiagram(diagramId);
     this.tabsDiagram.set(diagram.id, { id: diagram.id, name: diagram.name, type: diagram.diagramType });
+    console.log(this.tabsDiagram);
   }
 
   private draggableModal() {

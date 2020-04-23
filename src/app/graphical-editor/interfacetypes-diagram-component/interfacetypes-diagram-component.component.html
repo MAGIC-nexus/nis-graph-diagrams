@@ -11,3 +11,26 @@ position: absolute; top: 10px; left: 10px; border-radius: 5px; padding: 10px 5px
     <img class="toolbar-relationship" (click)="imageToolbarRelationshipClick($event, RelationshipType.InterfaceTypeScale)" 
     src="assets/toolbar/arrow.png" alt="rectangle" style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;"/>
 </div>
+
+<!-- Context Menu PartOf-->
+<div #contextMenuPartOfTrigger="matMenuTrigger" style="visibility: hidden; position: fixed" [style.left]="contextMenuPartOfPosition.x"
+  [style.top]="contextMenuPartOfPosition.y" [matMenuTriggerFor]="contextMenuPartOf">
+</div>
+<mat-menu #contextMenuPartOf="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuPartOfForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuPartOfRemove(cell)">Remove</button>
+  </ng-template>
+</mat-menu>
+
+<!-- Context Menu InterfaceTypeScale-->
+<div #contextMenuInterfaceTypeScaleTrigger="matMenuTrigger" style="visibility: hidden; position: fixed" 
+[style.left]="contextMenuInterfaceTypeScalePosition.x"
+[style.top]="contextMenuInterfaceTypeScalePosition.y" [matMenuTriggerFor]="contextMenuInterfaceTypeScale">
+</div>
+<mat-menu #contextMenuInterfaceTypeScale="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuInterfaceScaleForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuInterfaceScalRemove(cell)">Remove</button>
+  </ng-template>
+</mat-menu>

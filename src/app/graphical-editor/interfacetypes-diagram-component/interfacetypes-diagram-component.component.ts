@@ -12,6 +12,7 @@ import { DiagramComponentHelper,
 } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
+import { MatMenuTrigger } from '@angular/material';
 
 const STYLE_INTERFACETYPESCALE = 'dashed=1;strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
 
@@ -43,6 +44,21 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
   sourceCellRelationship: mxCell;
 
+  //ContextMenu PartOf
+  @ViewChild('contextMenuPartOfTrigger', { static: false }) contextMenuPartOf: MatMenuTrigger;
+  contextMenuPartOfPosition = {
+    x: '0px',
+    y: '0px',
+  }
+
+  //ContextMenu InterfaceTypeScale
+  @ViewChild('contextMenuInterfaceTypeScaleTrigger', { static: false }) contextMenuInterfaceTypeScale: MatMenuTrigger;
+  contextMenuInterfaceTypeScalePosition = {
+    x: '0px',
+    y: '0px',
+  }
+  
+
   constructor() { }
 
   ngOnInit() {
@@ -57,6 +73,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.graphEvents();
     this.customLabel();
     this.overrideCellSelectable();
+    this.contextMenu();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -445,5 +462,58 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
       return this.isCellsSelectable() && !this.isCellLocked(cell) && style['selectable'] != 0;
     }
+  }
+
+  private contextMenu() {
+    mxEvent.disableContextMenu(this.graphContainer.nativeElement);
+
+    let interfaceTypeInstance = this;
+
+    function createPopupMenu(cell: mxCell, event: PointerEvent) {
+      console.log(cell);
+      if (cell.value.nodeName.toLowerCase() == "partof") {
+        console.log(interfaceTypeInstance.contextMenuPartOf);
+        interfaceTypeInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
+        interfaceTypeInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
+        interfaceTypeInstance.contextMenuPartOf.menuData = { 'cell': cell };
+        interfaceTypeInstance.contextMenuPartOf.menu.focusFirstItem('mouse');
+        interfaceTypeInstance.contextMenuPartOf.openMenu();
+      } else if (cell.value.nodeName.toLowerCase() == "interfacetypescale") {
+        interfaceTypeInstance.contextMenuInterfaceTypeScalePosition.x = event.clientX + 'px';
+        interfaceTypeInstance.contextMenuInterfaceTypeScalePosition.y = event.clientY + 'px';
+        interfaceTypeInstance.contextMenuInterfaceTypeScale.menuData = { 'cell': cell };
+        interfaceTypeInstance.contextMenuInterfaceTypeScale.menu.focusFirstItem('mouse');
+        interfaceTypeInstance.contextMenuInterfaceTypeScale.openMenu();
+      }
+    }
+
+    this.graph.popupMenuHandler.factoryMethod = function (menu, cell, evt: PointerEvent) {
+      (<HTMLDivElement>document.getElementsByClassName("cdk-overlay-container")[0]).oncontextmenu = (evt) => {
+        evt.preventDefault();
+        return false;
+      };
+      if (cell != null) {
+        return createPopupMenu(cell, evt);
+      }
+    };
+  }
+
+  onContextMenuPartOfForm(cell) {
+    let partOfDto: PartOfFormDto = { cellId: cell.getAttribute('idRelationship', '') };
+    this.partOfFormEmitter.emit(partOfDto);
+  }
+
+  onContextMenuPartOfRemove(cell) {
+    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
+    this.updateTreeEmitter.emit(null);
+  }
+
+  onContextMenuInterfaceScaleForm(cell) {
+    let interfacetypescaleDto: InterfaceTypeScaleFormDto = { cellId: cell.getAttribute('idRelationship', '') };
+    this.interfaceTypeScaleFormEmitter.emit(interfacetypescaleDto);
+  }
+
+  onContextMenuInterfaceScalRemove(cell) {
+    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
   }
 }
