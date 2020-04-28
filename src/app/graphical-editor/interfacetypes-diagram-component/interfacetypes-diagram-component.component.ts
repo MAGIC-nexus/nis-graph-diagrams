@@ -87,9 +87,9 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       interfaceTypeDoc.setAttribute('entityId', entityId);
       let newCellInterfaceType = graph.insertVertex(graph.getDefaultParent(), null, interfaceTypeDoc, pt.x, pt.y,
         100, 80);
-      DiagramComponentHelper.modelService.addEntityToDiagram(diagramId, entityId);
-      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(diagramId,
-        entityId, 100, 80, pt.x, pt.y);
+      DiagramComponentHelper.modelService.addEntityToDiagram(Number(diagramId), Number(entityId));
+      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId),
+        Number(entityId), 100, 80, pt.x, pt.y);
       let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(entityId));
       let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(entityId));
       InterfacetypesDiagramComponentComponent.addPartOfRelationships(graph, newCellInterfaceType, childrensRelationship,
