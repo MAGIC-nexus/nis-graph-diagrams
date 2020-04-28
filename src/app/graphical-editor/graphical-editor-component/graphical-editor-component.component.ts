@@ -211,6 +211,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   tabsDiagram: Array<{ id: Number, name: String, type: DiagramType }> = new Array();
   indexTab : number;
+  closeCount = 0;
 
   constructor(
     public modelService: ModelService,
@@ -269,12 +270,19 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       }
     }
     if (!diagramTabExist) {
+      this.indexTab = this.tabsDiagram.length+this.closeCount;
       let diagram: Diagram = this.modelService.readDiagram(diagramId);
       this.tabsDiagram.push({ id: diagram.id, name: diagram.name, type: diagram.diagramType });
-      this.indexTab = this.tabsDiagram.length - 1;
+      // this.indexTab = this.tabsDiagram.length - 1;
       return -1;
     }
     return diagramTabExistIndex;
+  }
+
+  closeTabDiagram(tab) {
+    let index = this.tabsDiagram.indexOf(tab);
+    this.tabsDiagram.splice(index, 1);
+    this.closeCount += 1;
   }
 
   private draggableModal() {
@@ -313,11 +321,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         document.onmousemove = null;
       }
     }
-  }
-
-  closeTabDiagram(tab) {
-    let index = this.tabsDiagram.indexOf(tab);
-    this.tabsDiagram.splice(index, 1);
   }
 
   onContextMenuDiagram(event: MouseEvent, node) {
