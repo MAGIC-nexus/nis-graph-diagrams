@@ -170,7 +170,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
           }
           switch (parentNode.data.id) {
             case this.ID_DIAGRAMS:
-              this.addTabDiagram(node.data.id);
+              let indexTabAux = this.addTabDiagram(node.data.id);
+              if (indexTabAux != -1) {
+                this.indexTab = indexTabAux;
+              }
               break;
           }
         }
@@ -255,19 +258,23 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     return this.modelService.getTreeModelViewDiagrams();
   }
 
+  // create new tab diagram with diagramId, if diagram tab exists return -1 if not return diagram tab index 
   private addTabDiagram(diagramId: number) {
     let diagramTabExist = false;
-    for (let tab of this.tabsDiagram) {
-      if (tab.id == diagramId) {
+    let diagramTabExistIndex;
+    for (let i = 0; i < this.tabsDiagram.length; i++) {
+      if (this.tabsDiagram[i].id == diagramId) {
         diagramTabExist = true;
+        diagramTabExistIndex = i;
       }
     }
     if (!diagramTabExist) {
       let diagram: Diagram = this.modelService.readDiagram(diagramId);
       this.tabsDiagram.push({ id: diagram.id, name: diagram.name, type: diagram.diagramType });
       this.indexTab = this.tabsDiagram.length - 1;
-      console.log(this.tabsDiagram);
+      return -1;
     }
+    return diagramTabExistIndex;
   }
 
   private draggableModal() {
@@ -309,7 +316,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   closeTabDiagram(tab) {
-    this.tabsDiagram.splice(this.tabsDiagram.indexOf(tab), 1);
+    let index = this.tabsDiagram.indexOf(tab);
+    this.tabsDiagram.splice(index, 1);
   }
 
   onContextMenuDiagram(event: MouseEvent, node) {

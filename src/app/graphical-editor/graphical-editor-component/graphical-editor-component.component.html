@@ -99,7 +99,7 @@
             <nz-tab *ngFor="let item of tabsDiagram" [nzTitle]="titleTabTemplate">
 
               <ng-template #titleTabTemplate>
-                <div>{{item.name}}<i nz-icon nzType="close" class="ant-tabs-close-x" (click)="closeTabDiagram(item.value.id)"></i>
+                <div>{{item.name}}<i nz-icon nzType="close" class="ant-tabs-close-x" (click)="closeTabDiagram(item)"></i>
                 </div>
               </ng-template>
               
