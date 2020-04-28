@@ -136,9 +136,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       processorDoc.setAttribute('entityId', entityId);
       let newCellProcessor = graph.insertVertex(graph.getDefaultParent(), null, processorDoc, pt.x, pt.y,
         100, 80);
-      DiagramComponentHelper.modelService.addEntityToDiagram(diagramId, entityId);
-      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(diagramId,
-        entityId, 100, 80, pt.x, pt.y);
+      DiagramComponentHelper.modelService.addEntityToDiagram(Number(diagramId), Number(entityId));
+      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId),
+        Number(entityId), 100, 80, pt.x, pt.y);
       let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(entityId));
       let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(entityId));
       ProcessorsDiagramComponentComponent.addRelationshipsProcessor(graph, newCellProcessor, childrensRelationship,
