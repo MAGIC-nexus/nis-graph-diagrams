@@ -308,6 +308,26 @@ export class DiagramComponentHelper {
     });
   }
 
+  static removeEntityInDiagram(diagramId, graph : mxGraph, entityId) {
+    try {
+      if (!DiagramComponentHelper.modelService.removeEntityFromDiagram(Number(diagramId), Number(entityId))) {
+        return;
+      }
+      for (let cell of graph.getChildCells()) {
+        if (cell.getAttribute("entityId") == entityId) {
+          graph.removeCells([cell], true);
+        };
+      }
+    } catch (err) {
+      console.log(err)
+    } finally {
+      let encoder = new mxCodec(null);
+      let xml = mxUtils.getXml(encoder.encode(graph.getModel()));
+      console.log(xml);
+      DiagramComponentHelper.modelService.setDiagramGraph(Number(diagramId), xml);
+    }
+  }
+
 }
 
 export enum StatusCreatingRelationship {

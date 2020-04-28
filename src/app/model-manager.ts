@@ -571,8 +571,9 @@ export class ModelService {
     removeEntityFromDiagram(diagramId: number, entityId: number) {
         let diagram = this.diagrams.get(diagramId);
         if(diagram) {
-            diagram.entities.delete(entityId);
+            return diagram.entities.delete(entityId);
         }
+        return false;
     }
 
     // Set the size and position of the box representing an entity in a diagram

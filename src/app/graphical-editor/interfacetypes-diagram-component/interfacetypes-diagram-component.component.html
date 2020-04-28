@@ -16,6 +16,18 @@
   </div>
 </div>
 
+<!-- Context Menu InterfaceType-->
+<div #contextMenuInterfaceTypeTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+  [style.left]="contextMenuInterfaceTypePosition.x" [style.top]="contextMenuInterfaceTypePosition.y"
+  [matMenuTriggerFor]="contextMenuInterfaceType">
+</div>
+<mat-menu #contextMenuInterfaceType="matMenu">
+  <ng-template matMenuContent let-cell="cell">
+    <button mat-menu-item (click)="onContextMenuInterfaceTypeForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuInterfaceTypeRemove(cell)">Remove</button>
+  </ng-template>
+</mat-menu>
+
 
 <!-- Context Menu PartOf-->
 <div #contextMenuPartOfTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"

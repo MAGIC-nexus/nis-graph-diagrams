@@ -202,8 +202,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (interfaceCell.getAttribute("entityId", "") == relationship.destinationId) {
       for (let cell of graph.getChildCells()) {
         for (let childrenCell of graph.getChildCells(cell)) {
-          console.log(interfaceCell);
-          console.log(childrenCell);
           if (childrenCell.getAttribute("entityId") == relationship.originId) {
             let doc = mxUtils.createXmlDocument();
             let exchangeDoc = doc.createElement('exchange');
@@ -218,8 +216,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (interfaceCell.getAttribute("entityId", "") == relationship.originId) {
       for (let cell of graph.getChildCells()) {
         for (let childrenCell of graph.getChildCells(cell)) {
-          console.log(interfaceCell);
-          console.log(childrenCell);
           if (childrenCell.getAttribute("entityId") == relationship.destinationId) {
             let doc = mxUtils.createXmlDocument();
             let exchangeDoc = doc.createElement('exchange');
@@ -242,8 +238,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (interfaceCell.getAttribute("entityId", "") == relationship.destinationId) {
       for (let cell of graph.getChildCells()) {
         for (let childrenCell of graph.getChildCells(cell)) {
-          console.log(interfaceCell);
-          console.log(childrenCell);
           if (childrenCell.getAttribute("entityId") == relationship.originId) {
             let doc = mxUtils.createXmlDocument();
             let interfaceScaleDoc = doc.createElement('interfacescale');
@@ -258,8 +252,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (interfaceCell.getAttribute("entityId", "") == relationship.originId) {
       for (let cell of graph.getChildCells()) {
         for (let childrenCell of graph.getChildCells(cell)) {
-          console.log(interfaceCell);
-          console.log(childrenCell);
           if (childrenCell.getAttribute("entityId") == relationship.destinationId) {
             let doc = mxUtils.createXmlDocument();
             let interfaceScaleDoc = doc.createElement('interfacescale');
@@ -591,7 +583,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
       let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
       let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
-      lineRelationship.remove();
+      if (lineRelationship){
+        lineRelationship.remove();
+      }
       if (cell != null && this.checkRelationshipCellTarget(cell)) {
         this.createRelationship(cell);
       } else {
@@ -910,6 +904,13 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     if (cell != undefined && cell.value.nodeName == "processor") {
       this.showFormProcessor(cell.getAttribute("entityId", ""));
     }
+  }
+
+  onContextMenuProcessorRemove( cell:mxCell ) {
+    this.graph.getModel().beginUpdate();
+    DiagramComponentHelper.removeEntityInDiagram(this.diagramId, this.graph, cell.getAttribute('entityId', ''));
+    this.graph.getModel().endUpdate();
+    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
   onContextMenuPartOfForm(cell : mxCell) {
