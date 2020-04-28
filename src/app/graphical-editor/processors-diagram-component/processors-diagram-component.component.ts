@@ -22,7 +22,7 @@ import { CellDto } from '../diagram-component-helper';
 import { MatMenuTrigger } from '@angular/material';
 
 const STYLE_EXCHANGE = 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
-const STYLE_INTERFACESCALE = 'dashed=1;strokeColor=green;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1'
+const STYLE_INTERFACESCALE = 'dashed=1;strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1'
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -210,7 +210,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             exchangeDoc.setAttribute("name", "name");
             exchangeDoc.setAttribute("idRelationship", relationship.id);
             graph.insertEdge(graph.getDefaultParent(), null, exchangeDoc,
-              childrenCell, interfaceCell, STYLE_INTERFACESCALE);
+              childrenCell, interfaceCell, STYLE_EXCHANGE);
           }
         }
       }
@@ -226,7 +226,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             exchangeDoc.setAttribute("name", "name");
             exchangeDoc.setAttribute("exchange", relationship.id);
             graph.insertEdge(graph.getDefaultParent(), null, exchangeDoc,
-              interfaceCell, childrenCell, STYLE_INTERFACESCALE);
+              interfaceCell, childrenCell, STYLE_EXCHANGE);
           }
         }
       }
@@ -250,7 +250,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             interfaceScaleDoc.setAttribute("name", "name");
             interfaceScaleDoc.setAttribute("idRelationship", relationship.id);
             graph.insertEdge(graph.getDefaultParent(), null, interfaceScaleDoc,
-              childrenCell, interfaceCell, STYLE_EXCHANGE);
+              childrenCell, interfaceCell, STYLE_INTERFACESCALE);
           }
         }
       }
@@ -266,7 +266,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             interfaceScaleDoc.setAttribute("name", "name");
             interfaceScaleDoc.setAttribute("interfacescale", relationship.id);
             graph.insertEdge(graph.getDefaultParent(), null, interfaceScaleDoc,
-              interfaceCell, childrenCell, STYLE_EXCHANGE);
+              interfaceCell, childrenCell, STYLE_INTERFACESCALE);
           }
         }
       }
