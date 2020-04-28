@@ -31,6 +31,7 @@
 <mat-menu #contextMenuProcessor="matMenu">
   <ng-template matMenuContent let-cell="cell">
     <button mat-menu-item (click)="onContextMenuProcessorForm(cell)">Edit</button>
+    <button mat-menu-item (click)="onContextMenuProcessorRemove(cell)">Remove</button>
   </ng-template>
 </mat-menu>
 

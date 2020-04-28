@@ -1,14 +1,16 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
-import { RelationshipType, 
-  EntityRelationshipPartOf, 
-  Relationship, 
+import {
+  RelationshipType,
+  EntityRelationshipPartOf,
+  Relationship,
   InterfaceTypeScaleChange,
 } from '../../model-manager';
-import { DiagramComponentHelper, 
-  StatusCreatingRelationship, 
-  SnackErrorDto, 
-  PartOfFormDto, 
-  CellDto 
+import {
+  DiagramComponentHelper,
+  StatusCreatingRelationship,
+  SnackErrorDto,
+  PartOfFormDto,
+  CellDto
 } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
@@ -57,7 +59,14 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     x: '0px',
     y: '0px',
   }
-  
+
+  //ContextMenu InterfaceTypeScale
+  @ViewChild('contextMenuInterfaceTypeTrigger', { static: false }) contextMenuInterfaceType: MatMenuTrigger;
+  contextMenuInterfaceTypePosition = {
+    x: '0px',
+    y: '0px',
+  }
+
 
   constructor() { }
 
@@ -79,8 +88,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   static printInterfaceType(diagramId, graph, name: string, pt: mxPoint, entityId) {
     try {
-      if  (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
-      Number(entityId))) return;
+      if (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
+        Number(entityId))) return;
       let doc = mxUtils.createXmlDocument();
       let interfaceTypeDoc = doc.createElement('interfacetype');
       interfaceTypeDoc.setAttribute('name', name);
@@ -209,7 +218,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   imageToolbarRelationshipClick(event: MouseEvent, relationshipType: RelationshipType) {
     if (this.imageToolbarRelationship) this.imageToolbarRelationship.style.backgroundColor = "transparent";
     (<HTMLImageElement>event.target).style.backgroundColor = "#B0B0B0";
-    if(this.relationshipSelect == relationshipType) DiagramComponentHelper.cancelCreateRelationship(this);
+    if (this.relationshipSelect == relationshipType) DiagramComponentHelper.cancelCreateRelationship(this);
     else {
       this.relationshipSelect = relationshipType;
       this.imageToolbarRelationship = <HTMLImageElement>event.target;
@@ -275,10 +284,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
           let interfacetypescaleDto: InterfaceTypeScaleFormDto = { cellId: cellTarget.getAttribute('idRelationship', '') };
           this.interfaceTypeScaleFormEmitter.emit(interfacetypescaleDto);
           break;
-        case 'interfacetype':
-          let interfaceTypeDto: CellDto = { cellId: cellTarget.getAttribute('entityId', '') }
-          this.interfaceTypeFormEmitter.emit(interfaceTypeDto);
-          break;
       }
     }
   }
@@ -327,7 +332,9 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     if (this.statusCreateRelationship == StatusCreatingRelationship.creating) {
       let svg: SVGElement = sender.container.getElementsByTagName("svg")[0];
       let lineRelationship = <SVGLineElement>svg.getElementsByClassName("line-relationship")[0];
-      lineRelationship.remove();
+      if (lineRelationship) {
+        lineRelationship.remove();
+      }
       if (cell != null && this.checkRelationshipCellTarget(cell)) {
         this.createRelationship(cell);
       } else {
@@ -354,7 +361,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       this.snackBarErrorEmitter.emit(relationshipErrorDto);
       return false;
     }
-    if(Number(cell.getAttribute("entityId", "")) == Number(this.sourceCellRelationship.getAttribute("entityId", ""))) {
+    if (Number(cell.getAttribute("entityId", "")) == Number(this.sourceCellRelationship.getAttribute("entityId", ""))) {
       return false;
     }
     let messageError = DiagramComponentHelper.modelService.checkCanCreateRelationship(RelationshipType.InterfaceTypeScale,
@@ -471,8 +478,14 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
     function createPopupMenu(cell: mxCell, event: PointerEvent) {
       console.log(cell);
-      if (cell.value.nodeName.toLowerCase() == "partof") {
-        console.log(interfaceTypeInstance.contextMenuPartOf);
+      if (cell.value.nodeName.toLowerCase() == "interfacetype") {
+        interfaceTypeInstance.contextMenuInterfaceTypePosition.x = event.clientX + 'px';
+        interfaceTypeInstance.contextMenuInterfaceTypePosition.y = event.clientY + 'px';
+        interfaceTypeInstance.contextMenuInterfaceType.menuData = { 'cell': cell };
+        interfaceTypeInstance.contextMenuInterfaceType.menu.focusFirstItem('mouse');
+        interfaceTypeInstance.contextMenuInterfaceType.openMenu();
+      }
+      else if (cell.value.nodeName.toLowerCase() == "partof") {
         interfaceTypeInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
         interfaceTypeInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
         interfaceTypeInstance.contextMenuPartOf.menuData = { 'cell': cell };
@@ -498,13 +511,27 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     };
   }
 
+  onContextMenuInterfaceTypeForm(cell: mxCell) {
+    if (cell != undefined && cell.value.nodeName == "interfacetype") {
+      let interfaceTypeDto: CellDto = { cellId: cell.getAttribute('entityId', '') }
+      this.interfaceTypeFormEmitter.emit(interfaceTypeDto);
+    }
+  }
+
+  onContextMenuInterfaceTypeRemove(cell: mxCell) {
+    this.graph.getModel().beginUpdate();
+    DiagramComponentHelper.removeEntityInDiagram(this.diagramId, this.graph, cell.getAttribute('entityId', ''));
+    this.graph.getModel().endUpdate();
+    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+  }
+
   onContextMenuPartOfForm(cell) {
     let partOfDto: PartOfFormDto = { cellId: cell.getAttribute('idRelationship', '') };
     this.partOfFormEmitter.emit(partOfDto);
   }
 
   onContextMenuPartOfRemove(cell) {
-    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
+    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
     this.updateTreeEmitter.emit(null);
   }
 
@@ -514,6 +541,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   onContextMenuInterfaceScalRemove(cell) {
-    DiagramComponentHelper.removeRelationship( cell.getAttribute('idRelationship', '') );
+    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 }
