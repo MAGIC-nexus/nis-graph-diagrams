@@ -91,35 +91,39 @@
           <!--          </button>-->
         </mat-toolbar-row>
       </mat-toolbar>
+
       <div fxFlex style="border: 2px solid red; height: calc(100% - 64px);">
 
-        <!-- Tabs diagrams -->
-        <mat-tab-group id="diagramEditorTab" animationDuration="0ms" fxFlex="auto" style="border: 1px solid orange; height: 100%;">
-          <mat-tab *ngFor="let item of tabsDiagram | keyvalue">
-            <ng-template mat-tab-label>
-              {{item.value.name}}
-              <button mat-icon-button (click)="closeTabDiagram(item.key)">
-                <mat-icon matListIcon>close</mat-icon>
-              </button>
-            </ng-template>
+        <div class="card-container" style="height: 100%;">
+          <nz-tabset [nzType]="'card'" [nzSelectedIndex]="indexTab" style="height: 100%;">
+            <nz-tab *ngFor="let item of tabsDiagram" [nzTitle]="titleTabTemplate">
 
-            <app-processors-diagram-component *ngIf="item.value.type == 0" [diagramId]="item.value.id"
-              [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
-              (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
-              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
-              (interfaceForm)="showFormInterface($event, false)" (exchangeForm)="showFormExchange($event)"
-              (partOfForm)="showFormPartOf($event)" (scaleForm)="showFormScale($event)">
-            </app-processors-diagram-component>
-            <app-interfacetypes-diagram-component *ngIf="item.value.type == 1" [diagramId]="item.value.id"
-              (createInterfaceType)="showFormCreateInterfaceType($event)"
-              (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
-              [interfaceTypeSubject]="interfaceTypeSubject" (partOfForm)="showFormPartOf($event)"
-              (interfaceTypeScaleForm)="showFormInterfaceTypeScale($event)" (interfaceTypeForm)="showFormInterfaceType($event)">
-            </app-interfacetypes-diagram-component>
-          </mat-tab>
-        </mat-tab-group>
+              <ng-template #titleTabTemplate>
+                <div>{{item.name}}<i nz-icon nzType="close" class="ant-tabs-close-x" (click)="closeTabDiagram(item.value.id)"></i>
+                </div>
+              </ng-template>
+              
+              <app-processors-diagram-component *ngIf="item.type == 0" [diagramId]="item.id"
+                [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
+                (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
+                (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
+                (interfaceForm)="showFormInterface($event, false)" (exchangeForm)="showFormExchange($event)"
+                (partOfForm)="showFormPartOf($event)" (scaleForm)="showFormScale($event)">
+              </app-processors-diagram-component>
+
+              <app-interfacetypes-diagram-component *ngIf="item.type == 1" [diagramId]="item.id"
+                (createInterfaceType)="showFormCreateInterfaceType($event)" (snackBarError)="showSnackBarError($event)"
+                (updateTree)="updateTree()" [interfaceTypeSubject]="interfaceTypeSubject"
+                (partOfForm)="showFormPartOf($event)" (interfaceTypeScaleForm)="showFormInterfaceTypeScale($event)"
+                (interfaceTypeForm)="showFormInterfaceType($event)">
+              </app-interfacetypes-diagram-component>
+
+            </nz-tab>
+          </nz-tabset>
+        </div>
 
       </div>
+
     </as-split-area>
   </as-split>
 

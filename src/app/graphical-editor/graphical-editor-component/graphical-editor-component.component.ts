@@ -6,19 +6,19 @@ import '../../model-manager';
 import {
   ModelService, DiagramType, Diagram, ProcessorFunctionalOrStructural,
   ProcessorAccounted, ProcessorSubsystemType, Processor, InterfaceOrientation,
-  Sphere, RoegenType, Interface, InterfaceValue, ExchangeRelationship, 
+  Sphere, RoegenType, Interface, InterfaceValue, ExchangeRelationship,
   EntityRelationshipPartOf, ScaleRelationship, InterfaceTypeScaleChange, InterfaceType, EntityTypes,
 } from '../../model-manager';
 import { MatMenuTrigger, MatSnackBar } from '@angular/material';
 import { DiagramComponentHelper, SnackErrorDto, PartOfFormDto, CellDto } from '../diagram-component-helper';
-import { 
-  CreateInterfaceTypeDto, InterfaceTypeScaleFormDto 
+import {
+  CreateInterfaceTypeDto, InterfaceTypeScaleFormDto
 } from '../interfacetypes-diagram-component/interfacetypes-diagram-component-dto';
 import {
-  CreateProcessorDto,  ChangeInterfaceInGraphDto
+  CreateProcessorDto, ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
-import { 
-  ProcessorsDiagramComponentComponent 
+import {
+  ProcessorsDiagramComponentComponent
 } from '../processors-diagram-component/processors-diagram-component.component';
 import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 
@@ -46,7 +46,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   interfaceTypeSubject: Subject<{ name: string, data: any }> = new Subject();
 
   private modalRef: NzModalRef;
-  private subModalRef : NzModalRef;
+  private subModalRef: NzModalRef;
 
   //Form Processor
   private proccesorIdForm;
@@ -59,21 +59,21 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   functionalOrStructuralFormProcessor: ProcessorFunctionalOrStructural;
   accountedFormProcessor: ProcessorAccounted;
   subsystemTypeFormProcessor: ProcessorSubsystemType;
-  interfacesFormProcessor : Interface[];
+  interfacesFormProcessor: Interface[];
   @ViewChild('formProcessorTitle', { static: false }) formProcessorTitle: TemplateRef<any>;
   @ViewChild('formProcessorContent', { static: false }) formProcessorContent: TemplateRef<any>;
   @ViewChild('formProcessorFooter', { static: false }) formProcessorFooter: TemplateRef<any>;
 
   //Form InterfaceType
   private interfaceTypeIdForm;
-  private oldNameFormInterfaceType : string;
-  nameFormInterfaceType : string;
-  sphereFormInterfaceType : Sphere;
-  roegenTypeFormInterfaceType : RoegenType;
-  oppositeSubsystemTypeFormInterfaceType : ProcessorSubsystemType;
+  private oldNameFormInterfaceType: string;
+  nameFormInterfaceType: string;
+  sphereFormInterfaceType: Sphere;
+  roegenTypeFormInterfaceType: RoegenType;
+  oppositeSubsystemTypeFormInterfaceType: ProcessorSubsystemType;
   hierarchyFormInterfaceType: string;
-  unitFormInterfaceType : string;
-  descriptionFormInterfaceType : string;
+  unitFormInterfaceType: string;
+  descriptionFormInterfaceType: string;
   @ViewChild('formInterfaceTypeTitle', { static: false }) formInterfaceTypeTitle: TemplateRef<any>;
   @ViewChild('formInterfaceTypeContent', { static: false }) formInterfaceTypeContent: TemplateRef<any>;
   @ViewChild('formInterfaceTypeFooter', { static: false }) formInterfaceTypeFooter: TemplateRef<any>;
@@ -119,7 +119,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   //Form InterfaceScaleForm
   interfaceTypeScaleIdForm;
-  listProcessors : Processor[];
+  listProcessors: Processor[];
   destinationContextProcessorIdFormInterfaceTypeScale;
   originContextProcessorIdFormInterfaceTypeScale;
   destinationUnitFormInterfaceTypeScale;
@@ -206,7 +206,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     actionMapping: this.actionMappingTree,
   };
 
-  tabsDiagram: Map<Number, { id: Number, name: String, type: DiagramType }> = new Map();
+  tabsDiagram: Array<{ id: Number, name: String, type: DiagramType }> = new Array();
+  indexTab : number;
 
   constructor(
     public modelService: ModelService,
@@ -243,11 +244,11 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   updateDataTree(event) {
-    const nodesFirstLevel = [this.treeRoot.treeModel.getNodeById(this.ID_DIAGRAMS), 
-      this.treeRoot.treeModel.getNodeById(this.ID_INTERFACETYPES),  this.treeRoot.treeModel.getNodeById(this.ID_PROCESSOR)];
-      for(let node of nodesFirstLevel) {
-        node.expand();
-      }
+    const nodesFirstLevel = [this.treeRoot.treeModel.getNodeById(this.ID_DIAGRAMS),
+    this.treeRoot.treeModel.getNodeById(this.ID_INTERFACETYPES), this.treeRoot.treeModel.getNodeById(this.ID_PROCESSOR)];
+    for (let node of nodesFirstLevel) {
+      node.expand();
+    }
   }
 
   private getAllDiagramsModel() {
@@ -255,9 +256,18 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   private addTabDiagram(diagramId: number) {
-    let diagram: Diagram = this.modelService.readDiagram(diagramId);
-    this.tabsDiagram.set(diagram.id, { id: diagram.id, name: diagram.name, type: diagram.diagramType });
-    console.log(this.tabsDiagram);
+    let diagramTabExist = false;
+    for (let tab of this.tabsDiagram) {
+      if (tab.id == diagramId) {
+        diagramTabExist = true;
+      }
+    }
+    if (!diagramTabExist) {
+      let diagram: Diagram = this.modelService.readDiagram(diagramId);
+      this.tabsDiagram.push({ id: diagram.id, name: diagram.name, type: diagram.diagramType });
+      this.indexTab = this.tabsDiagram.length - 1;
+      console.log(this.tabsDiagram);
+    }
   }
 
   private draggableModal() {
@@ -298,8 +308,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  closeTabDiagram(diagramId: number) {
-    this.tabsDiagram.delete(diagramId);
+  closeTabDiagram(tab) {
+    this.tabsDiagram.splice(this.tabsDiagram.indexOf(tab), 1);
   }
 
   onContextMenuDiagram(event: MouseEvent, node) {
@@ -487,18 +497,18 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.InterfaceType, this.nameFormCreateInterfaceType.trim());
     this.createInterfaceTypeDto.component.graph.getModel().beginUpdate();
     InterfacetypesDiagramComponentComponent.printInterfaceType(this.createInterfaceTypeDto.component.diagramId,
-      this.createInterfaceTypeDto.component.graph,this.nameFormCreateInterfaceType.trim(),this.createInterfaceTypeDto.pt, 
+      this.createInterfaceTypeDto.component.graph, this.nameFormCreateInterfaceType.trim(), this.createInterfaceTypeDto.pt,
       entityId);
     this.createInterfaceTypeDto.component.graph.getModel().endUpdate();
     DiagramComponentHelper.loadDiagram(this.createInterfaceTypeDto.component.diagramId,
-      this.createInterfaceTypeDto.component.graph); 
+      this.createInterfaceTypeDto.component.graph);
     this.updateTree();
     return true;
   }
 
   doubleClickProcessorTree(node: TreeNode) {
-    let processorFormDto : CellDto = {
-      cellId : node.data.id,
+    let processorFormDto: CellDto = {
+      cellId: node.data.id,
     };
     this.showFormProcessor(processorFormDto);
   }
@@ -566,7 +576,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  showFormInterfaceType(event : CellDto) {
+  showFormInterfaceType(event: CellDto) {
     let interfaceType = this.modelService.readEntity(Number(event.cellId));
 
     if (interfaceType instanceof InterfaceType) {
@@ -590,7 +600,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.modalRef.afterOpen.subscribe(() => {
         this.draggableModal();
         let titles = document.getElementsByClassName("title-modal");
-  
+
         for (let i = 0; i < titles.length; i++) {
           titles[0].parentElement.parentElement.style.cursor = "move";
         }
@@ -598,7 +608,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  submitInterfaceTypeForm(event : Event) {
+  submitInterfaceTypeForm(event: Event) {
     this.updateInterfaceType();
     event.preventDefault();
   }
@@ -673,7 +683,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
   }
 
-  showFormInterface(event: CellDto, isSubModal : boolean) {
+  showFormInterface(event: CellDto, isSubModal: boolean) {
     let interfaceEntity = <Interface>this.modelService.readInterface(Number(event.cellId));
     if (interfaceEntity instanceof Interface) {
 
@@ -700,7 +710,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         });
         this.nextIdInterfaceValues++;
       }
-      let modalOptionsForService : ModalOptionsForService = {
+      let modalOptionsForService: ModalOptionsForService = {
         nzTitle: this.formInterafaceTitle,
         nzContent: this.formInterfaceContent,
         nzFooter: this.formInterfaceFooter,
@@ -731,7 +741,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   closeModalInterface() {
     console.log(this.subModalRefInterfaceActive);
-    if(!this.subModalRefInterfaceActive) this.modalRef.destroy();
+    if (!this.subModalRefInterfaceActive) this.modalRef.destroy();
     else {
       this.subModalRef.destroy();
       this.subModalRefInterfaceActive = false;
@@ -744,7 +754,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   updateInterface() {
-    if(!this.subModalRefInterfaceActive) this.modalRef.destroy();
+    if (!this.subModalRefInterfaceActive) this.modalRef.destroy();
     else {
       this.subModalRef.destroy();
       this.subModalRefInterfaceActive = false;
@@ -790,7 +800,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.listInterfaceValues = event;
   }
 
-  showFormExchange(event : CellDto) {
+  showFormExchange(event: CellDto) {
     this.exchangeIdForm = event.cellId;
     let exchange = this.modelService.readRelationship(Number(event.cellId));
     this.weightFormExchange = exchange.weight;
@@ -811,7 +821,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     });
   }
 
-  submitExchangeForm(event : Event) {
+  submitExchangeForm(event: Event) {
     this.updateExchange();
     event.preventDefault();
   }
@@ -824,7 +834,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateRelationship(Number(this.exchangeIdForm), exchange);
   }
 
-  showFormPartOf(event : PartOfFormDto) {
+  showFormPartOf(event: PartOfFormDto) {
     this.partOfIdForm = event.cellId;
     let partOf = this.modelService.readRelationship(Number(event.cellId));
     this.amountFormPartOf = partOf.amount;
@@ -845,7 +855,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     });
   }
 
-  submitPartOfForm(event : Event) {
+  submitPartOfForm(event: Event) {
     this.updatePartOf();
     event.preventDefault();
   }
@@ -858,9 +868,9 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateRelationship(Number(this.partOfIdForm), partOf);
   }
 
-  showFormScale(event : CellDto) {
+  showFormScale(event: CellDto) {
     this.scaleIdForm = event.cellId;
-    let scale : ScaleRelationship = this.modelService.readRelationship(Number(event.cellId));
+    let scale: ScaleRelationship = this.modelService.readRelationship(Number(event.cellId));
     console.log(scale);
     this.scaleFormScale = scale.scale;
 
@@ -880,7 +890,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     });
   }
 
-  submitScaleForm(event : Event) {
+  submitScaleForm(event: Event) {
     this.updateScale();
     event.preventDefault();
   }
@@ -899,10 +909,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     });
   }
 
-  showFormInterfaceTypeScale(event : InterfaceTypeScaleFormDto) {
+  showFormInterfaceTypeScale(event: InterfaceTypeScaleFormDto) {
     this.interfaceTypeScaleIdForm = event.cellId;
     this.listProcessors = this.modelService.listProcessors();
-    let interfaceTypeScale : InterfaceTypeScaleChange = this.modelService.readRelationship(Number(event.cellId));
+    let interfaceTypeScale: InterfaceTypeScaleChange = this.modelService.readRelationship(Number(event.cellId));
     if (interfaceTypeScale.destinationContextProcessorId == null) {
       this.destinationContextProcessorIdFormInterfaceTypeScale = null;
     } else {
@@ -933,7 +943,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     });
   }
 
-  submitInterfaceTypeScaleForm(event : Event) {
+  submitInterfaceTypeScaleForm(event: Event) {
     this.updateInterfaceTypeScale();
     event.preventDefault();
   }
@@ -941,7 +951,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   updateInterfaceTypeScale() {
     this.modalRef.destroy();
     let scale = new InterfaceTypeScaleChange();
-    
+
     scale.scale = this.scaleFormInterfaceTypeScale;
     scale.destinationUnit = this.destinationUnitFormInterfaceTypeScale;
     scale.originUnit = this.originUnitFormInterfaceTypeScale;
