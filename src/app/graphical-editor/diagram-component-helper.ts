@@ -296,6 +296,32 @@ export class DiagramComponentHelper {
           let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
           DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
         }
+      });
+    }
+    DiagramComponentHelper.interfaceTypeSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+  }
+
+  static removeEntity(entityId) {
+    if (DiagramComponentHelper.modelService.deleteEntity(Number(entityId), true) != -1) {
+      DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
+        let diagramGraph = DiagramComponentHelper.getDiagram(key);
+        diagramGraph.getModel().beginUpdate();
+        for (let cell of diagramGraph.getChildCells(diagramGraph.getDefaultParent())) {
+          if(cell.getAttribute('entityId') == entityId) {
+            diagramGraph.removeCells([cell], true);
+          }
+        }
+        diagramGraph.getModel().endUpdate();
+        let encoder = new mxCodec(null);
+        let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
+        DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
       })
     }
     DiagramComponentHelper.interfaceTypeSubject.next({

@@ -156,9 +156,18 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
   createProcessorDto: CreateProcessorDto;
 
-  //Context Menu
-  @ViewChild(MatMenuTrigger, { static: false }) contextMenuDiagram: MatMenuTrigger;
+  //Context Menu Diagram
+  @ViewChild('contextMenuDiagramTrigger', { static: false }) contextMenuDiagram: MatMenuTrigger;
   contextMenuDiagramPosition = { x: '0px', y: '0px' };
+
+
+  //Context Menu InterfaceType
+  @ViewChild('contextMenuInterfaceTypeTrigger', { static: false }) contextMenuInterfaceType: MatMenuTrigger;
+  contextMenuInterfaceTypePosition = { x: '0px', y: '0px' };
+
+  //Context Menu InterfaceType
+  @ViewChild('contextMenuProcessorTrigger', { static: false }) contextMenuProcessor: MatMenuTrigger;
+  contextMenuProcessorPosition = { x: '0px', y: '0px' };
 
   actionMappingTree: IActionMapping = {
     mouse: {
@@ -210,7 +219,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   };
 
   tabsDiagram: Array<{ id: Number, name: String, type: DiagramType }> = new Array();
-  indexTab : number;
+  indexTab: number;
   closeCount = 0;
 
   constructor(
@@ -245,6 +254,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   updateTree() {
     this.nodes = this.modelService.getTreeModelView();
+    this.treeRoot.treeModel.update();
+    console.log(this.nodes);
   }
 
   updateDataTree(event) {
@@ -270,7 +281,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       }
     }
     if (!diagramTabExist) {
-      this.indexTab = this.tabsDiagram.length+this.closeCount;
+      this.indexTab = this.tabsDiagram.length + this.closeCount;
       let diagram: Diagram = this.modelService.readDiagram(diagramId);
       this.tabsDiagram.push({ id: diagram.id, name: diagram.name, type: diagram.diagramType });
       // this.indexTab = this.tabsDiagram.length - 1;
@@ -333,10 +344,38 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   onContextMenuDiagramDelete(node: TreeNode) {
-    if (this.modelService.deleteDiagram(node.data.id)) {
+    if (this.modelService.deleteDiagram(node.data.modelId)) {
       this.closeTabDiagram(node.data.id);
       this.updateTree();
     }
+  }
+
+  onContextMenuInterfaceType(event: MouseEvent, node) {
+    event.preventDefault();
+    this.contextMenuInterfaceTypePosition.x = event.clientX + 'px';
+    this.contextMenuInterfaceTypePosition.y = event.clientY + 'px';
+    this.contextMenuInterfaceType.menuData = { 'item': node };
+    this.contextMenuInterfaceType.menu.focusFirstItem('mouse');
+    this.contextMenuInterfaceType.openMenu();
+  }
+
+  onContextMenuInterfaceTypeDelete(node: TreeNode) {
+    DiagramComponentHelper.removeEntity(node.data.modelId);
+    this.updateTree();
+  }
+
+  onContextMenuProcessor(event: MouseEvent, node) {
+    event.preventDefault();
+    this.contextMenuProcessorPosition.x = event.clientX + 'px';
+    this.contextMenuProcessorPosition.y = event.clientY + 'px';
+    this.contextMenuProcessor.menuData = { 'item': node };
+    this.contextMenuProcessor.menu.focusFirstItem('mouse');
+    this.contextMenuProcessor.openMenu();
+  }
+
+  onContextMenuProcessorDelete(node: TreeNode) {
+    DiagramComponentHelper.removeEntity(node.data.modelId);
+    this.updateTree();
   }
 
   showFormCreateDiagram(typeDiagram: string) {
@@ -793,7 +832,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.oldOrientationFormInterface != this.orientationFormInterface) {
       for (let diagram of this.getAllDiagramsModel()) {
         let data: ChangeInterfaceInGraphDto = {
-          diagramId: Number(diagram.id),
+          diagramId: Number(diagram.modelId),
           cellId: this.interfaceIdForm,
           name: this.nameFormInterface,
           orientation: this.orientationFormInterface,

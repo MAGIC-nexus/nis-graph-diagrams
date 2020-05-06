@@ -273,7 +273,7 @@ export class ModelService {
     getTreeModelViewDiagrams() {
         let tmp = [];
         this.diagrams.forEach((diagram, id) => {
-            tmp.push({id: id, name: diagram.name });
+            tmp.push({modelId: id, name: diagram.name });
         })
         return tmp;
     }
@@ -289,9 +289,9 @@ export class ModelService {
                 p.hierarchyName = parent.hierarchyName + "." + p.name;
             let children2 = this.getTreeModelViewInterfaceTypes(p.id);
             if (children2.length > 0)
-                n.push({id: p.id, name: p.name, children: this.getTreeModelViewProcessors(p.id)});
+                n.push({modelId: p.id, name: p.name, children: this.getTreeModelViewProcessors(p.id)});
             else
-                n.push({id: p.id, name: p.name});
+                n.push({modelId: p.id, name: p.name});
         }
         return n;
     }
@@ -303,9 +303,9 @@ export class ModelService {
             let it = this.allObjects.get(child);
             let children2 = this.getTreeModelViewInterfaceTypes(it.id);
             if (children2.length > 0)
-                n.push({id: it.id, name: it.name, children: children2});
+                n.push({modelId: it.id, name: it.name, children: children2});
             else
-                n.push({id: it.id, name: it.name});
+                n.push({modelId: it.id, name: it.name});
         }
         return n;
     }
