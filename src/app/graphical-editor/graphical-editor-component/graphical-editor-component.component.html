@@ -9,7 +9,7 @@
       <tree-root (updateData)="updateDataTree($event)" #treeRoot [nodes]="nodes" [options]="options">
 
         <ng-template #treeNodeTemplate let-node let-index="index">
-          <span (mouseover)="mouseOverTree($event)" [attr.data-node-id]="node.data.id"
+          <span (mouseover)="mouseOverTree($event)" [attr.data-node-id]="node.data.modelId"
             [attr.data-node-parent]="getParentTreeNode(node)">{{node.data.name}}</span>
         </ng-template>
         <ng-template #treeNodeWrapperTemplate let-node let-index="index">
@@ -47,7 +47,7 @@
             <tree-node-expander [node]="node"></tree-node-expander>
             <div class="node-content-wrapper" [class.node-content-wrapper-active]="node.isActive"
               [class.node-content-wrapper-focused]="node.isFocused" (click)="node.mouseAction('click', $event)"
-              (dblclick)="node.mouseAction('dblClick', $event)" (contextmenu)="node.mouseAction('contextmenu', $event)"
+              (dblclick)="node.mouseAction('dblClick', $event)" (contextmenu)="onContextMenuInterfaceType($event, node)"
               (treeDrop)="node.onDrop($event)" [treeAllowDrop]="node.allowDrop" [treeDrag]="node"
               [treeDragEnabled]="node.allowDrag()">
 
@@ -61,7 +61,7 @@
             <tree-node-expander [node]="node"></tree-node-expander>
             <div class="node-content-wrapper" [class.node-content-wrapper-active]="node.isActive"
               [class.node-content-wrapper-focused]="node.isFocused" (click)="node.mouseAction('click', $event)"
-              (dblclick)="doubleClickProcessorTree(node)" (contextmenu)="node.mouseAction('contextmenu', $event)"
+              (dblclick)="doubleClickProcessorTree(node)" (contextmenu)="onContextMenuProcessor($event, node)"
               (treeDrop)="node.onDrop($event)" [treeAllowDrop]="node.allowDrop" [treeDrag]="node"
               [treeDragEnabled]="node.allowDrag()">
 
@@ -128,14 +128,35 @@
   </as-split>
 
   <!-- Context Menu Diagram-->
-  <div style="visibility: hidden; position: fixed" [style.left]="contextMenuDiagramPosition.x"
+  <div #contextMenuDiagramTrigger='matMenuTrigger' style="visibility: hidden; position: fixed" [style.left]="contextMenuDiagramPosition.x"
     [style.top]="contextMenuDiagramPosition.y" [matMenuTriggerFor]="contextMenuDiagram">
   </div>
   <mat-menu #contextMenuDiagram="matMenu">
     <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="onContextMenuDiagramDelete(item)">Eliminar</button>
+      <button mat-menu-item (click)="onContextMenuDiagramDelete(item)">Remove</button>
     </ng-template>
   </mat-menu>
+
+  <!-- Context Menu InterfaceType-->
+  <div #contextMenuInterfaceTypeTrigger='matMenuTrigger' style="visibility: hidden; position: fixed" [style.left]="contextMenuInterfaceTypePosition.x"
+    [style.top]="contextMenuInterfaceTypePosition.y" [matMenuTriggerFor]="contextMenuInterfaceType">
+  </div>
+  <mat-menu #contextMenuInterfaceType="matMenu">
+    <ng-template matMenuContent let-item="item">
+      <button mat-menu-item (click)="onContextMenuInterfaceTypeDelete(item)">Remove</button>
+    </ng-template>
+  </mat-menu>
+
+   <!-- Context Menu Processor-->
+   <div #contextMenuProcessorTrigger='matMenuTrigger' style="visibility: hidden; position: fixed" [style.left]="contextMenuProcessorPosition.x"
+   [style.top]="contextMenuProcessorPosition.y" [matMenuTriggerFor]="contextMenuInterfaceType">
+ </div>
+ <mat-menu #contextMenuProcessor="matMenu">
+   <ng-template matMenuContent let-item="item">
+     <button mat-menu-item (click)="onContextMenuProcessorDelete(item)">Remove</button>
+   </ng-template>
+ </mat-menu>
+
 
   <!-- Modal Create Diagram -->
   <ng-template #formCreateDiagramTitle>
