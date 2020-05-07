@@ -6,19 +6,21 @@
   position: absolute; top: 10px; left: 10px; border-radius: 5px; padding: 10px 5px;">
 
     <img #processorToolbar src="assets/toolbar/rectangle.gif" alt="rectangle"
-      style="width: 100%; height: auto; cursor: pointer;" />
+      style="width: 100%; height: auto; cursor: pointer;" matTooltip="New Processor" matTooltipPosition="after" />
 
     <img class="toolbar-relationship" (click)="imageToolbarRelationshipClick($event, RelationshipType.PartOf)"
-      src="assets/toolbar/arrow.png" alt="rectangle"
-      style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;" />
+      src="assets/toolbar/arrow.png" alt="arrow" style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;"
+      matTooltip="New PartOf relationship" matTooltipPosition="after" />
 
-    <img class="toolbar-relationship" src="assets/toolbar/arrow.png" alt="rectangle"
+    <img class="toolbar-relationship" src="assets/toolbar/arrow.png" alt="arrow"
       (click)="imageToolbarRelationshipClick($event, RelationshipType.Exchange)"
-      style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;" />
+      style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;" matTooltip="New Exchange relationship"
+      matTooltipPosition="after" />
 
-    <img class="toolbar-relationship" src="assets/toolbar/arrow.png" alt="rectangle"
+    <img class="toolbar-relationship" src="assets/toolbar/arrow.png" alt="arrow"
       (click)="imageToolbarRelationshipClick($event, RelationshipType.InterfaceScale)"
-      style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;" />
+      style="width: 100%; height: auto; cursor: pointer; border-radius: 5px;"
+      matTooltip="New InterfaceScale relationship" matTooltipPosition="after" />
 
   </div>
 </div>
