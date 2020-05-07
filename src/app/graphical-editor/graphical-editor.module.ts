@@ -7,7 +7,8 @@ import {
   MatIconModule,
   MatMenuModule,
   MatDialogModule,
-  MatSnackBarModule
+  MatSnackBarModule,
+  MatTooltipModule
 } from '@angular/material';  // Material components
 
 
@@ -59,6 +60,7 @@ import { InterfacelistComponent } from './interfacelist/interfacelist.component'
     MatTabsModule,
     MatSnackBarModule,
     HttpClientModule,
+    MatTooltipModule,
 
     // NG-ZORRO
     NzModalModule,
