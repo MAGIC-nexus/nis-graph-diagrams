@@ -147,6 +147,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formCreateInterfaceTypeContent', { static: false }) formCreateInterfaceTypeContent: TemplateRef<any>;
   @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter: TemplateRef<any>;
   createInterfaceTypeDto: CreateInterfaceTypeDto;
+  autoCompleteNewInterfaceType = "it1";
+  autoCompleteNewInterfaceTypeCounter = 1; 
 
   //Form Create Processor
   nameFormCreateProcessor = "";
@@ -155,6 +157,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formCreateProcessorContent', { static: false }) formCreateProcessorContent: TemplateRef<any>;
   @ViewChild('formCreateProcessorFooter', { static: false }) formCreateProcessorFooter: TemplateRef<any>;
   createProcessorDto: CreateProcessorDto;
+  autoCompleteNewProcessor = "p1";
+  autoCompleteNewProcessorCounter = 1;
 
   //Context Menu Diagram
   @ViewChild('contextMenuDiagramTrigger', { static: false }) contextMenuDiagram: MatMenuTrigger;
@@ -552,6 +556,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.createInterfaceTypeDto.component.graph.getModel().endUpdate();
     DiagramComponentHelper.loadDiagram(this.createInterfaceTypeDto.component.diagramId,
       this.createInterfaceTypeDto.component.graph);
+      this.autoCompleteNewInterfaceType = `it${++this.autoCompleteNewInterfaceTypeCounter}`;
     this.updateTree();
     return true;
   }
@@ -728,7 +733,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         entityId);
       this.createProcessorDto.component.graph.getModel().endUpdate();
       DiagramComponentHelper.loadDiagram(this.createProcessorDto.component.diagramId,
-        this.createProcessorDto.component.graph)
+        this.createProcessorDto.component.graph);
+        this.autoCompleteNewProcessor = `p${++this.autoCompleteNewProcessorCounter}`;
       this.updateTree();
     }
   }

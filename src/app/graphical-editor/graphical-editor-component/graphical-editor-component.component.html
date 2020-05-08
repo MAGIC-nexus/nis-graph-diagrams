@@ -193,7 +193,13 @@
         <nz-form-label [nzSpan]="5">Name</nz-form-label>
         <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateProcessor" nzErrorTip="The name cannot be empty"
           [nzSpan]="18">
-          <input [(ngModel)]="nameFormCreateProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}" />
+          <input [(ngModel)]="nameFormCreateProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}" 
+          [matAutocomplete]="matAutoCompleteNewProcessor"/>
+          <mat-autocomplete #matAutoCompleteNewProcessor="matAutocomplete">
+            <mat-option [value]="autoCompleteNewProcessor">
+              {{autoCompleteNewProcessor}}
+            </mat-option>
+          </mat-autocomplete>
         </nz-form-control>
       </nz-form-item>
     </form>
@@ -467,7 +473,12 @@
         <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateInterfaceType"
           nzErrorTip="The name cannot be empty" [nzSpan]="18">
           <input autocomplete="off" [(ngModel)]="nameFormCreateInterfaceType" type="text" nz-input
-            [ngModelOptions]="{standalone: true}" />
+            [ngModelOptions]="{standalone: true}" [matAutocomplete]="matAutoCompleteNewInterfaceType"/>
+            <mat-autocomplete #matAutoCompleteNewInterfaceType="matAutocomplete">
+              <mat-option [value]="autoCompleteNewInterfaceType">
+                {{autoCompleteNewInterfaceType}}
+              </mat-option>
+            </mat-autocomplete>
         </nz-form-control>
       </nz-form-item>
     </form>
