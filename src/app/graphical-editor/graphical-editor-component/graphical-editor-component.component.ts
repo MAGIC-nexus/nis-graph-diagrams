@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, TemplateRef, Renderer2, AfterViewInit, EventEmitter } from '@angular/core';
 import { TreeNode, IActionMapping } from 'angular-tree-component';
 import { Subject } from 'rxjs';
 import { NzModalRef, NzModalService, ModalOptionsForService } from 'ng-zorro-antd';
@@ -141,6 +141,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formCreateDiagramFooter', { static: false }) formCreateDiagramFooter: TemplateRef<any>;
 
   //Form Create InterfaceType
+  @ViewChild('inputNameCreateInterfaceType', { static: false }) inputNameCreateInterfaceType: ElementRef<any>;
   nameFormCreateInterfaceType = "";
   nameValidationFormCreateInterfaceType = "";
   @ViewChild('formCreateInterfaceTypeTitle', { static: false }) formCreateInterfaceTypeTitle: TemplateRef<any>;
@@ -148,9 +149,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   @ViewChild('formCreateInterfaceTypeFooter', { static: false }) formCreateInterfaceTypeFooter: TemplateRef<any>;
   createInterfaceTypeDto: CreateInterfaceTypeDto;
   autoCompleteNewInterfaceType = "it1";
-  autoCompleteNewInterfaceTypeCounter = 1; 
+  autoCompleteNewInterfaceTypeCounter = 1;
 
   //Form Create Processor
+  @ViewChild('inputNameCreateProcessor', { static: false }) inputNameCreateProcessor: ElementRef<any>;
   nameFormCreateProcessor = "";
   nameValidationFormCreateProcessor = "";
   @ViewChild('formCreateProcessorTitle', { static: false }) formCreateProcessorTitle: TemplateRef<any>;
@@ -533,6 +535,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       for (let i = 0; i < titles.length; i++) {
         titles[0].parentElement.parentElement.style.cursor = "move";
       }
+      this.inputNameCreateInterfaceType.nativeElement.focus();
     });
 
   }
@@ -691,16 +694,15 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   showFormCreateProcessor(event: CreateProcessorDto) {
-
     this.createProcessorDto = event;
     this.nameValidationFormCreateProcessor = "";
     this.nameFormCreateProcessor = "";
-
     this.modalRef = this.nzModalService.create({
       nzTitle: this.formCreateProcessorTitle,
       nzContent: this.formCreateProcessorContent,
       nzFooter: this.formCreateProcessorFooter,
       nzWrapClassName: 'vertical-center-modal',
+      nzAfterOpen: new EventEmitter<any>(),
     });
     this.modalRef.afterOpen.subscribe(() => {
       this.draggableModal();
@@ -709,6 +711,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       for (let i = 0; i < titles.length; i++) {
         titles[0].parentElement.parentElement.style.cursor = "move";
       }
+      this.inputNameCreateProcessor.nativeElement.focus();
     });
   }
 

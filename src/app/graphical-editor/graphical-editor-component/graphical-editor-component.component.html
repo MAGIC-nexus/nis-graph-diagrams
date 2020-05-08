@@ -99,10 +99,11 @@
             <nz-tab *ngFor="let item of tabsDiagram" [nzTitle]="titleTabTemplate">
 
               <ng-template #titleTabTemplate>
-                <div>{{item.name}}<i nz-icon nzType="close" class="ant-tabs-close-x" (click)="closeTabDiagram(item)"></i>
+                <div>{{item.name}}<i nz-icon nzType="close" class="ant-tabs-close-x"
+                    (click)="closeTabDiagram(item)"></i>
                 </div>
               </ng-template>
-              
+
               <app-processors-diagram-component *ngIf="item.type == 0" [diagramId]="item.id"
                 [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
                 (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
@@ -128,8 +129,9 @@
   </as-split>
 
   <!-- Context Menu Diagram-->
-  <div #contextMenuDiagramTrigger='matMenuTrigger' style="visibility: hidden; position: fixed" [style.left]="contextMenuDiagramPosition.x"
-    [style.top]="contextMenuDiagramPosition.y" [matMenuTriggerFor]="contextMenuDiagram">
+  <div #contextMenuDiagramTrigger='matMenuTrigger' style="visibility: hidden; position: fixed"
+    [style.left]="contextMenuDiagramPosition.x" [style.top]="contextMenuDiagramPosition.y"
+    [matMenuTriggerFor]="contextMenuDiagram">
   </div>
   <mat-menu #contextMenuDiagram="matMenu">
     <ng-template matMenuContent let-item="item">
@@ -138,8 +140,9 @@
   </mat-menu>
 
   <!-- Context Menu InterfaceType-->
-  <div #contextMenuInterfaceTypeTrigger='matMenuTrigger' style="visibility: hidden; position: fixed" [style.left]="contextMenuInterfaceTypePosition.x"
-    [style.top]="contextMenuInterfaceTypePosition.y" [matMenuTriggerFor]="contextMenuInterfaceType">
+  <div #contextMenuInterfaceTypeTrigger='matMenuTrigger' style="visibility: hidden; position: fixed"
+    [style.left]="contextMenuInterfaceTypePosition.x" [style.top]="contextMenuInterfaceTypePosition.y"
+    [matMenuTriggerFor]="contextMenuInterfaceType">
   </div>
   <mat-menu #contextMenuInterfaceType="matMenu">
     <ng-template matMenuContent let-item="item">
@@ -147,15 +150,16 @@
     </ng-template>
   </mat-menu>
 
-   <!-- Context Menu Processor-->
-   <div #contextMenuProcessorTrigger='matMenuTrigger' style="visibility: hidden; position: fixed" [style.left]="contextMenuProcessorPosition.x"
-   [style.top]="contextMenuProcessorPosition.y" [matMenuTriggerFor]="contextMenuInterfaceType">
- </div>
- <mat-menu #contextMenuProcessor="matMenu">
-   <ng-template matMenuContent let-item="item">
-     <button mat-menu-item (click)="onContextMenuProcessorDelete(item)">Remove</button>
-   </ng-template>
- </mat-menu>
+  <!-- Context Menu Processor-->
+  <div #contextMenuProcessorTrigger='matMenuTrigger' style="visibility: hidden; position: fixed"
+    [style.left]="contextMenuProcessorPosition.x" [style.top]="contextMenuProcessorPosition.y"
+    [matMenuTriggerFor]="contextMenuInterfaceType">
+  </div>
+  <mat-menu #contextMenuProcessor="matMenu">
+    <ng-template matMenuContent let-item="item">
+      <button mat-menu-item (click)="onContextMenuProcessorDelete(item)">Remove</button>
+    </ng-template>
+  </mat-menu>
 
 
   <!-- Modal Create Diagram -->
@@ -193,8 +197,8 @@
         <nz-form-label [nzSpan]="5">Name</nz-form-label>
         <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateProcessor" nzErrorTip="The name cannot be empty"
           [nzSpan]="18">
-          <input [(ngModel)]="nameFormCreateProcessor" nz-input type="text" [ngModelOptions]="{standalone: true}" 
-          [matAutocomplete]="matAutoCompleteNewProcessor"/>
+          <input #inputNameCreateProcessor [(ngModel)]="nameFormCreateProcessor" nz-input type="text"
+            [ngModelOptions]="{standalone: true}" [matAutocomplete]="matAutoCompleteNewProcessor" />
           <mat-autocomplete #matAutoCompleteNewProcessor="matAutocomplete">
             <mat-option [value]="autoCompleteNewProcessor">
               {{autoCompleteNewProcessor}}
@@ -312,7 +316,7 @@
     </button>
   </ng-template>
 
-  <!-- Modal Create InterfaceType -->
+  <!-- Modal InterfaceType -->
   <ng-template #formInterfaceTypeTitle>
     <span class="title-modal">Edit interface type</span>
   </ng-template>
@@ -472,13 +476,13 @@
         <nz-form-label [nzSpan]="6">Name</nz-form-label>
         <nz-form-control [(nzValidateStatus)]="nameValidationFormCreateInterfaceType"
           nzErrorTip="The name cannot be empty" [nzSpan]="18">
-          <input autocomplete="off" [(ngModel)]="nameFormCreateInterfaceType" type="text" nz-input
-            [ngModelOptions]="{standalone: true}" [matAutocomplete]="matAutoCompleteNewInterfaceType"/>
-            <mat-autocomplete #matAutoCompleteNewInterfaceType="matAutocomplete">
-              <mat-option [value]="autoCompleteNewInterfaceType">
-                {{autoCompleteNewInterfaceType}}
-              </mat-option>
-            </mat-autocomplete>
+          <input #inputNameCreateInterfaceType autocomplete="off" [(ngModel)]="nameFormCreateInterfaceType" type="text" nz-input
+            [ngModelOptions]="{standalone: true}" [matAutocomplete]="matAutoCompleteNewInterfaceType" />
+          <mat-autocomplete #matAutoCompleteNewInterfaceType="matAutocomplete">
+            <mat-option [value]="autoCompleteNewInterfaceType">
+              {{autoCompleteNewInterfaceType}}
+            </mat-option>
+          </mat-autocomplete>
         </nz-form-control>
       </nz-form-item>
     </form>
