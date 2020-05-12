@@ -1022,6 +1022,7 @@ export class ModelService {
 
     getRelationshipChildren(parentId: number) {
         let children = new Array<Relationship>();
+        if(this.entitiesRelationships.get(parentId))
         for (let relId of this.entitiesRelationships.get(parentId)) { //
             let r = this.allObjects.get(relId);
             if (r.destinationId == parentId) children.push(r);
@@ -1031,6 +1032,7 @@ export class ModelService {
 
     getRelationshipParent(parentId: number) {
         let children = new Array<Relationship>();
+        if(this.entitiesRelationships.get(parentId))
         for (let relId of this.entitiesRelationships.get(parentId)) { //
             let r = this.allObjects.get(relId);
             if (r.originId == parentId) children.push(r);

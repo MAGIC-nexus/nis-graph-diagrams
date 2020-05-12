@@ -819,6 +819,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.subModalRefInterfaceActive = false;
     }
     let interfaceEntity = new Interface();
+    interfaceEntity.id = Number(this.interfaceIdForm);
     interfaceEntity.name = this.nameFormInterface;
     interfaceEntity.orientation = this.orientationFormInterface;
     interfaceEntity.roegenType = this.roegenTypeFormInterface;
@@ -837,22 +838,11 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
     this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
     this.modelService.updateInterfaceValues(Number(this.interfaceIdForm), interfaceValues);
-    if (this.oldNameFormInterface != this.nameFormInterface ||
-      this.oldOrientationFormInterface != this.orientationFormInterface) {
-      for (let diagram of this.getAllDiagramsModel()) {
-        let data: ChangeInterfaceInGraphDto = {
-          diagramId: Number(diagram.modelId),
-          cellId: this.interfaceIdForm,
-          name: this.nameFormInterface,
-          orientation: this.orientationFormInterface,
-        };
-        ProcessorsDiagramComponentComponent.changeInterfaceInGraphEvent(data);
-      }
-      this.proccesorSubject.next({
-        name: "refreshDiagram",
-        data: null,
-      });
-    }
+    ProcessorsDiagramComponentComponent.changeInterfaceInGraph(interfaceEntity);
+    this.proccesorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
   }
 
   changeListInterfaceValues(event) {
