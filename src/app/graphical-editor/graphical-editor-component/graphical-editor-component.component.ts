@@ -185,7 +185,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
           }
           switch (parentNode.data.id) {
             case this.ID_DIAGRAMS:
-              let indexTabAux = this.addTabDiagram(node.data.id);
+              let indexTabAux = this.addTabDiagram(node.data.modelId);
               if (indexTabAux != -1) {
                 this.indexTab = indexTabAux;
               }
@@ -289,6 +289,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     if (!diagramTabExist) {
       this.indexTab = this.tabsDiagram.length + this.closeCount;
       let diagram: Diagram = this.modelService.readDiagram(diagramId);
+      console.log(diagramId);
+      console.log(diagram);
       this.tabsDiagram.push({ id: diagram.id, name: diagram.name, type: diagram.diagramType });
       // this.indexTab = this.tabsDiagram.length - 1;
       return -1;
