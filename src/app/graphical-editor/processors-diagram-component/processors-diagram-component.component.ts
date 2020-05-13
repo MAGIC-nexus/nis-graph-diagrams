@@ -348,15 +348,15 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   static printCellsPositionY(graph, cellProcessor, widthInterface : number, cellsInterface : Array<any>, space : number,
     positionX : POSTION_INTERFACE_X) {
-    let minWidth = widthInterface * cellsInterface.length + space * ( cellsInterface.length + 1);
-    if ( minWidth > cellProcessor.geometry.width) {
-      let geometry = new mxGeometry(cellProcessor.geometry.x , cellProcessor.geometry.y , minWidth , cellProcessor.geometry.height);
+    let minHeight = widthInterface * cellsInterface.length + space * ( cellsInterface.length + 1);
+    if ( minHeight > cellProcessor.geometry.height) {
+      let geometry = new mxGeometry(cellProcessor.geometry.x , cellProcessor.geometry.y , cellProcessor.geometry.width , minHeight);
       graph.getModel().setGeometry(cellProcessor, geometry);
     }
-    let incInterface = cellProcessor.geometry.width / (cellsInterface.length + 1);
+    let incInterface = cellProcessor.geometry.height / (cellsInterface.length + 1);
     for (let i = 0;  i < cellsInterface.length; i++) {
       let centerY = incInterface * (i+1);
-      centerY = centerY / cellProcessor.geometry.width;
+      centerY = centerY / cellProcessor.geometry.height;
       let centerX = positionX == POSTION_INTERFACE_X.LEFT ? 0 : 1;
       let geometry = new mxGeometry(centerX, centerY, widthInterface, widthInterface);
       geometry.offset = new mxPoint(-15, -15);
