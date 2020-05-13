@@ -164,7 +164,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   static printInterfaceTypeScaleRelationship(graph: mxGraph, newCell: mxCell, relationship: InterfaceTypeScaleChange) {
-    console.log(graph.getChildEdges());
     for (let edge of graph.getChildEdges()) {
       if (edge.getAttribute("idRelationship") == relationship.id) {
         return;
@@ -477,7 +476,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let interfaceTypeInstance = this;
 
     function createPopupMenu(cell: mxCell, event: PointerEvent) {
-      console.log(cell);
       if (cell.value.nodeName.toLowerCase() == "interfacetype") {
         interfaceTypeInstance.contextMenuInterfaceTypePosition.x = event.clientX + 'px';
         interfaceTypeInstance.contextMenuInterfaceTypePosition.y = event.clientY + 'px';

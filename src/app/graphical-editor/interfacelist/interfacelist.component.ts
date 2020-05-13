@@ -84,7 +84,6 @@ export class InterfacelistComponent implements OnInit {
     this.editUnitId = null;
     this.editTimeId = null;
     this.editSourceId = null;
-    console.log(this.listOfData);
     this.changeDataEmmiter.emit(this.listOfData);
   }
 

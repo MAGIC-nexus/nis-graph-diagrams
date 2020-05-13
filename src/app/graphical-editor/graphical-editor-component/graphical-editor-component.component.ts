@@ -261,7 +261,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   updateTree() {
     this.nodes = this.modelService.getTreeModelView();
     this.treeRoot.treeModel.update();
-    console.log(this.nodes);
   }
 
   updateDataTree(event) {
@@ -289,8 +288,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     if (!diagramTabExist) {
       this.indexTab = this.tabsDiagram.length + this.closeCount;
       let diagram: Diagram = this.modelService.readDiagram(diagramId);
-      console.log(diagramId);
-      console.log(diagram);
       this.tabsDiagram.push({ id: diagram.id, name: diagram.name, type: diagram.diagramType });
       // this.indexTab = this.tabsDiagram.length - 1;
       return -1;
@@ -801,7 +798,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   closeModalInterface() {
-    console.log(this.subModalRefInterfaceActive);
     if (!this.subModalRefInterfaceActive) this.modalRef.destroy();
     else {
       this.subModalRef.destroy();
@@ -922,7 +918,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   showFormScale(event: CellDto) {
     this.scaleIdForm = event.cellId;
     let scale: ScaleRelationship = this.modelService.readRelationship(Number(event.cellId));
-    console.log(scale);
     this.scaleFormScale = scale.scale;
 
     this.modalRef = this.nzModalService.create({
@@ -1016,8 +1011,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     } else {
       scale.originContextProcessorId = Number(this.originContextProcessorIdFormInterfaceTypeScale);
     }
-
-    console.log(scale);
 
     this.modelService.updateRelationship(Number(this.interfaceTypeScaleIdForm), scale);
   }
