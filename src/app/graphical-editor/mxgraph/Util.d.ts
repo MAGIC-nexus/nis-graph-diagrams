@@ -101,6 +101,7 @@ declare class mxEvent {
   static readonly CONNECT : string;
   static readonly CONNECT_CELL : string;
   static readonly CONNECTED_CELL : string;
+  static readonly CELLS_RESIZED: string;
   static disableContextMenu(container);
 }
 

@@ -104,6 +104,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.contextMenu();
     this.overrideCellSelectable();
     this.eventCellsMoveGraph();
+    this.eventCellsResizeGraph();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -135,6 +136,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let processorDoc = doc.createElement('processor');
       processorDoc.setAttribute('name', entityModel.name);
       processorDoc.setAttribute('entityId', entityId);
+      processorDoc.setAttribute('minHeight', 0);
+      processorDoc.setAttribute('minWidth', 0);
       let newCellProcessor = graph.insertVertex(graph.getDefaultParent(), null, processorDoc, pt.x, pt.y,
         100, 80);
       DiagramComponentHelper.modelService.addEntityToDiagram(Number(diagramId), Number(entityId));
@@ -145,7 +148,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       ProcessorsDiagramComponentComponent.addRelationshipsProcessor(graph, newCellProcessor, childrensRelationship,
         parentsRelationship);
       for (let interfaceModel of entityModel.interfaces) {
-        let cellinterface = ProcessorsDiagramComponentComponent.newCellInterface(interfaceModel.id, newCellProcessor, graph);
+        let cellinterface = ProcessorsDiagramComponentComponent.newCellInterface(diagramId, interfaceModel.id, newCellProcessor, graph);
         let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(interfaceModel.id));
         let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(interfaceModel.id));
         ProcessorsDiagramComponentComponent.addRelationshipsInterface(graph, cellinterface,
@@ -275,7 +278,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         for (let cell of diagramGraph.getChildCells()) {
           if (cell.getAttribute("entityId") == processorId) {
             diagramGraph.getModel().beginUpdate();
-            ProcessorsDiagramComponentComponent.newCellInterface(interfaceId, cell, diagramGraph);
+            ProcessorsDiagramComponentComponent.newCellInterface(key, interfaceId, cell, diagramGraph);
             diagramGraph.getModel().endUpdate();
             DiagramComponentHelper.updateGraphInModel(key, diagramGraph);
           }
@@ -291,7 +294,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     });
   }
 
-  static newCellInterface(entityId, cellTarget, graph: mxGraph) {
+  static newCellInterface(diagramId, entityId, cellTarget, graph: mxGraph) {
     let interfaceModel = <Interface>DiagramComponentHelper.modelService.readInterface(Number(entityId));
     let doc = mxUtils.createXmlDocument();
     let port = doc.createElement('interface');
@@ -308,35 +311,43 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       style, true);
     portVertex.geometry.offset = new mxPoint(-15, -15);
     portVertex.geometry.relative = true;
-    ProcessorsDiagramComponentComponent.printCellsPositon(graph, cellTarget);
+    ProcessorsDiagramComponentComponent.printCellsInterfacePosition(diagramId, graph, cellTarget);
     return portVertex;
   }
 
-  static printCellsPositon(graph, cellProcessor) {
+  static printCellsInterfacePosition(diagramId, graph, cellProcessor) {
+    cellProcessor.setAttribute('minWidth', 0);
+    cellProcessor.setAttribute('minHeight', 0);
+
     let cellsInterfacePositon = ProcessorsDiagramComponentComponent.cellsInterfacePositon(cellProcessor);
-    if(cellsInterfacePositon.leftTop.length > 0)
-    ProcessorsDiagramComponentComponent.printCellsPositionX(graph, cellProcessor, 30, cellsInterfacePositon.leftTop, 17, false, POSTION_INTERFACE_Y.TOP);
-    if(cellsInterfacePositon.leftBottom.length > 0)
-    ProcessorsDiagramComponentComponent.printCellsPositionX(graph, cellProcessor, 30, cellsInterfacePositon.leftBottom, 17, false, POSTION_INTERFACE_Y.BOTTOM);
-    if(cellsInterfacePositon.rightTop.length > 0)
-    ProcessorsDiagramComponentComponent.printCellsPositionX(graph, cellProcessor, 30, cellsInterfacePositon.rightTop, 17, true, POSTION_INTERFACE_Y.TOP);
-    if(cellsInterfacePositon.rightBottom.length > 0)
-    ProcessorsDiagramComponentComponent.printCellsPositionX(graph, cellProcessor, 30, cellsInterfacePositon.rightBottom, 17, true, POSTION_INTERFACE_Y.BOTTOM);
-    if(cellsInterfacePositon.rightCenter.length > 0)
-    ProcessorsDiagramComponentComponent.printCellsPositionY(graph, cellProcessor, 30, cellsInterfacePositon.rightCenter, 17, POSTION_INTERFACE_X.RIGHT);
+    if (cellsInterfacePositon.leftTop.length > 0)
+      ProcessorsDiagramComponentComponent.printCellsInterfacePositionX(diagramId, graph, cellProcessor, 30, cellsInterfacePositon.leftTop, 17, false, POSTION_INTERFACE_Y.TOP);
+    if (cellsInterfacePositon.leftBottom.length > 0)
+      ProcessorsDiagramComponentComponent.printCellsInterfacePositionX(diagramId, graph, cellProcessor, 30, cellsInterfacePositon.leftBottom, 17, false, POSTION_INTERFACE_Y.BOTTOM);
+    if (cellsInterfacePositon.rightTop.length > 0)
+      ProcessorsDiagramComponentComponent.printCellsInterfacePositionX(diagramId, graph, cellProcessor, 30, cellsInterfacePositon.rightTop, 17, true, POSTION_INTERFACE_Y.TOP);
+    if (cellsInterfacePositon.rightBottom.length > 0)
+      ProcessorsDiagramComponentComponent.printCellsInterfacePositionX(diagramId, graph, cellProcessor, 30, cellsInterfacePositon.rightBottom, 17, true, POSTION_INTERFACE_Y.BOTTOM);
+    if (cellsInterfacePositon.rightCenter.length > 0)
+      ProcessorsDiagramComponentComponent.printCellsInterfacePositionY(diagramId, graph, cellProcessor, 30, cellsInterfacePositon.rightCenter, 17, POSTION_INTERFACE_X.RIGHT);
+
   }
 
-  static printCellsPositionX(graph, cellProcessor, widthInterface : number, cellsInterface : Array<any>, space : number, afterCenter: boolean,
-    positionY : POSTION_INTERFACE_Y) {
-    let minWidth = widthInterface * cellsInterface.length + space * ( cellsInterface.length + 1);
-    if ( minWidth > (cellProcessor.geometry.width / 2) ) {
-      let geometry = new mxGeometry(cellProcessor.geometry.x , cellProcessor.geometry.y , minWidth * 2, cellProcessor.geometry.height);
+  static printCellsInterfacePositionX(diagramId, graph, cellProcessor, widthInterface: number, cellsInterface: Array<any>, space: number, afterCenter: boolean,
+    positionY: POSTION_INTERFACE_Y) {
+    let minWidth = widthInterface * cellsInterface.length + space * (cellsInterface.length + 1);
+    if (Number(cellProcessor.getAttribute('minWidth')) < (minWidth * 2))
+      cellProcessor.setAttribute('minWidth', minWidth * 2);
+    if (minWidth > (cellProcessor.geometry.width / 2)) {
+      let geometry = new mxGeometry(cellProcessor.geometry.x, cellProcessor.geometry.y, minWidth * 2, cellProcessor.geometry.height);
       graph.getModel().setGeometry(cellProcessor, geometry);
+      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), cellProcessor.getAttribute('entityId'),
+        minWidth * 2, cellProcessor.geometry.height, cellProcessor.geometry.x, cellProcessor.geometry.y);
     }
-    let incInterface = (cellProcessor.geometry.width/2) / (cellsInterface.length + 1);
-    for (let i = 0;  i < cellsInterface.length; i++) {
-      let centerX = incInterface * (i+1);
-      if(afterCenter) centerX += (cellProcessor.geometry.width/2);
+    let incInterface = (cellProcessor.geometry.width / 2) / (cellsInterface.length + 1);
+    for (let i = 0; i < cellsInterface.length; i++) {
+      let centerX = incInterface * (i + 1);
+      if (afterCenter) centerX += (cellProcessor.geometry.width / 2);
       centerX = centerX / cellProcessor.geometry.width;
       let centerY = positionY == POSTION_INTERFACE_Y.TOP ? 0 : 1;
       let geometry = new mxGeometry(centerX, centerY, widthInterface, widthInterface);
@@ -346,16 +357,20 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     }
   }
 
-  static printCellsPositionY(graph, cellProcessor, widthInterface : number, cellsInterface : Array<any>, space : number,
-    positionX : POSTION_INTERFACE_X) {
-    let minHeight = widthInterface * cellsInterface.length + space * ( cellsInterface.length + 1);
-    if ( minHeight > cellProcessor.geometry.height) {
-      let geometry = new mxGeometry(cellProcessor.geometry.x , cellProcessor.geometry.y , cellProcessor.geometry.width , minHeight);
+  static printCellsInterfacePositionY(diagramId, graph, cellProcessor, widthInterface: number, cellsInterface: Array<any>, space: number,
+    positionX: POSTION_INTERFACE_X) {
+    let minHeight = widthInterface * cellsInterface.length + space * (cellsInterface.length + 1);
+    if (Number(cellProcessor.getAttribute('minHeight')) < minHeight)
+      cellProcessor.setAttribute('minHeight', minHeight);
+    if (minHeight > cellProcessor.geometry.height) {
+      let geometry = new mxGeometry(cellProcessor.geometry.x, cellProcessor.geometry.y, cellProcessor.geometry.width, minHeight);
       graph.getModel().setGeometry(cellProcessor, geometry);
+      DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), cellProcessor.getAttribute('entityId'),
+        cellProcessor.geometry.width, minHeight, cellProcessor.geometry.x, cellProcessor.geometry.y);
     }
     let incInterface = cellProcessor.geometry.height / (cellsInterface.length + 1);
-    for (let i = 0;  i < cellsInterface.length; i++) {
-      let centerY = incInterface * (i+1);
+    for (let i = 0; i < cellsInterface.length; i++) {
+      let centerY = incInterface * (i + 1);
       centerY = centerY / cellProcessor.geometry.height;
       let centerX = positionX == POSTION_INTERFACE_X.LEFT ? 0 : 1;
       let geometry = new mxGeometry(centerX, centerY, widthInterface, widthInterface);
@@ -367,7 +382,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   static cellsInterfacePositon(cellProcessor): CellsInterfacePositions {
     console.log(cellProcessor);
-    let cellsPostion : CellsInterfacePositions = {
+    let cellsPostion: CellsInterfacePositions = {
       leftTop: new Array(),
       leftBottom: new Array(),
       rightTop: new Array(),
@@ -393,8 +408,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             cellsPostion.rightCenter.push(cellChildren);
         }
       }
-      console.log(cellsPostion);
-      return cellsPostion;
+    console.log(cellsPostion);
+    return cellsPostion;
   }
 
   static changeInterfaceInGraph(interfaceModel: Interface) {
@@ -405,7 +420,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         if (cell.children)
           for (let cellChildren of cell.children) {
             if (cellChildren.getAttribute('entityId') == interfaceModel.id) {
-              ProcessorsDiagramComponentComponent.changeInterfaceStyle(interfaceModel, cellChildren, diagramGraph);
+              ProcessorsDiagramComponentComponent.changeInterfaceStyle(key, interfaceModel, cellChildren, diagramGraph);
             }
           }
       }
@@ -416,7 +431,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     });
   }
 
-  static changeInterfaceStyle(interfaceModel: Interface, cell, graph: mxGraph): void {
+  static changeInterfaceStyle(diagramId, interfaceModel: Interface, cell, graph: mxGraph): void {
     if (interfaceModel.orientation == InterfaceOrientation.Input) {
       graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#FF0000', [cell]);
       graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#FF8E8E', [cell]);
@@ -425,7 +440,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#00FF0E', [cell]);
       graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, '#82FF89', [cell]);
     }
-    ProcessorsDiagramComponentComponent.printCellsPositon(graph, cell.parent);
+    ProcessorsDiagramComponentComponent.printCellsInterfacePosition(diagramId, graph, cell.parent);
   }
 
   static createExchangeRelationship(sourceId, targetId) {
@@ -1032,6 +1047,30 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         if (cell.value.nodeName.toLowerCase() == 'processor') {
           processorInstance.modelService.updateEntityAppearanceInDiagram(processorInstance.diagramId, Number(cell.getAttribute("entityId", "")),
             cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        }
+      }
+      DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, processorInstance.graph);
+    });
+  }
+
+  private eventCellsResizeGraph() {
+    let processorInstance = this;
+    this.graph.addListener(mxEvent.CELLS_RESIZED, function (sender : mxGraph, event) {
+      let cellsResize: [mxCell] = event.properties.cells;
+      for (let cell of cellsResize) {
+        if (cell.value.nodeName.toLowerCase() == 'processor') {
+          let cellWidth = cell.geometry.width;
+          let cellHeight = cell.geometry.height;
+          if (cell.geometry.width < Number(cell.getAttribute('minWidth')))
+            cellWidth = Number(cell.getAttribute('minWidth'));
+          if (cell.geometry.height < Number(cell.getAttribute('minHeight')))
+            cellHeight = Number(cell.getAttribute('minHeight'));
+          sender.getModel().beginUpdate();
+          let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, cellWidth, cellHeight);
+          sender.getModel().setGeometry(cell, geometry);
+          sender.getModel().endUpdate();
+          DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(processorInstance.diagramId, Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
         }
       }
       DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, processorInstance.graph);

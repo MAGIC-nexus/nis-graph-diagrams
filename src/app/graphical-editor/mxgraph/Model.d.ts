@@ -58,6 +58,7 @@ declare class mxCell {
   removeEdge(edge, isOutgoing);
   removeFromTerminal(isSource);
   getAttribute(name, defaultValue);
+  getAttribute(name);
   setAttribute(name, value);
 
   /**
