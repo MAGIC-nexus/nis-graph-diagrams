@@ -127,7 +127,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     mxUtils.makeDraggable(this.processorToolbar.nativeElement, this.graph, functionProcessor, dragElement);
   }
 
-  static printProcessor(diagramId, graph, pt: mxPoint, entityId) {
+  static printProcessor(diagramId, graph, entityId, x: number, y: number, width : number, height : number) {
     try {
       if (DiagramComponentHelper.modelService.readEntityAppearanceInDiagram(Number(diagramId),
         Number(entityId))) return;
@@ -138,11 +138,11 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       processorDoc.setAttribute('entityId', entityId);
       processorDoc.setAttribute('minHeight', 0);
       processorDoc.setAttribute('minWidth', 0);
-      let newCellProcessor = graph.insertVertex(graph.getDefaultParent(), null, processorDoc, pt.x, pt.y,
-        100, 80);
+      let newCellProcessor = graph.insertVertex(graph.getDefaultParent(), null, processorDoc, x, y,
+        width, height);
       DiagramComponentHelper.modelService.addEntityToDiagram(Number(diagramId), Number(entityId));
       DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId),
-        Number(entityId), 100, 80, pt.x, pt.y);
+        Number(entityId), width, height, x, y);
       let childrensRelationship = DiagramComponentHelper.modelService.getRelationshipChildren(Number(entityId));
       let parentsRelationship = DiagramComponentHelper.modelService.getRelationshipParent(Number(entityId));
       ProcessorsDiagramComponentComponent.addRelationshipsProcessor(graph, newCellProcessor, childrensRelationship,
@@ -509,6 +509,31 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     });
   }
 
+  static changeSizeProcessorInDiagram(diagramId, entityId, width, height) {
+    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        let cellWidth = width;
+        let cellHeight = height;
+        if (width < Number(cell.getAttribute('minWidth')))
+          cellWidth = Number(cell.getAttribute('minWidth'));
+        if (height < Number(cell.getAttribute('minHeight')))
+          cellHeight = Number(cell.getAttribute('minHeight'));
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, cellWidth, cellHeight);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+      }
+    }
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+  }
+
 
   private eventsProcessorSubject() {
     this.proccesorSubject.subscribe(event => {
@@ -536,7 +561,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let pt: mxPoint = graph.getPointForEvent(evt);
       proccesorDiagramInstance.graph.getModel().beginUpdate();
       ProcessorsDiagramComponentComponent.printProcessor(proccesorDiagramInstance.diagramId,
-        proccesorDiagramInstance.graph, pt, element.getAttribute('data-node-id'));
+        proccesorDiagramInstance.graph, element.getAttribute('data-node-id'), pt.x, pt.y, 100, 80);
       proccesorDiagramInstance.graph.getModel().endUpdate();
       DiagramComponentHelper.loadDiagram(proccesorDiagramInstance.diagramId, proccesorDiagramInstance.graph);
     }
@@ -1055,25 +1080,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private eventCellsResizeGraph() {
     let processorInstance = this;
-    this.graph.addListener(mxEvent.CELLS_RESIZED, function (sender : mxGraph, event) {
+    this.graph.addListener(mxEvent.CELLS_RESIZED, function (sender: mxGraph, event) {
       let cellsResize: [mxCell] = event.properties.cells;
       for (let cell of cellsResize) {
         if (cell.value.nodeName.toLowerCase() == 'processor') {
-          let cellWidth = cell.geometry.width;
-          let cellHeight = cell.geometry.height;
-          if (cell.geometry.width < Number(cell.getAttribute('minWidth')))
-            cellWidth = Number(cell.getAttribute('minWidth'));
-          if (cell.geometry.height < Number(cell.getAttribute('minHeight')))
-            cellHeight = Number(cell.getAttribute('minHeight'));
-          sender.getModel().beginUpdate();
-          let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, cellWidth, cellHeight);
-          sender.getModel().setGeometry(cell, geometry);
-          sender.getModel().endUpdate();
-          DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(processorInstance.diagramId, Number(cell.getAttribute("entityId", "")),
-          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+          ProcessorsDiagramComponentComponent.changeSizeProcessorInDiagram(processorInstance.diagramId, cell.getAttribute('entityId'),
+            cell.geometry.width, cell.geometry.height);
         }
       }
-      DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, processorInstance.graph);
     });
   }
 

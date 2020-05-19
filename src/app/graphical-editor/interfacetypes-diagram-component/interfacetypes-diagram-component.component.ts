@@ -83,6 +83,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.customLabel();
     this.overrideCellSelectable();
     this.contextMenu();
+    this.eventCellsResizeGraph();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -193,6 +194,25 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         }
       }
     }
+  }
+
+  static changeSizeInterfaceTypeInDiagram(diagramId, entityId, width, height) {
+    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        diagramGraph.getModel().beginUpdate();  
+        let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, width, height);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+      }
+    }
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
   }
 
   private makeDraggableToolbar() {
@@ -540,5 +560,19 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   onContextMenuInterfaceScalRemove(cell) {
     DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
+  }
+
+
+  private eventCellsResizeGraph() {
+    let interfaceTypeInstance = this;
+    this.graph.addListener(mxEvent.CELLS_RESIZED, function (sender : mxGraph, event) {
+      let cellsResize: [mxCell] = event.properties.cells;
+      for (let cell of cellsResize) {
+        if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
+          InterfacetypesDiagramComponentComponent.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'), 
+          cell.geometry.width, cell.geometry.height);
+        }
+      }
+    });
   }
 }

@@ -418,10 +418,10 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   submitCreateDiagram(event: Event) {
     event.preventDefault();
-    this.createDiagram();
+    this.createDiagramByForm();
   }
 
-  createDiagram(): boolean {
+  createDiagramByForm(): boolean {
     if (this.nameFormCreateDiagram == "") {
       this.nameValidationFormCreateDiagram = "error";
       this.nameErrorTipFormCreateDiagram = "The name cannot be empty";
@@ -440,26 +440,28 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
 
     let diagramId = this.modelService.createDiagram(this.nameFormCreateDiagram.trim(), typeDiagram);
-
     if (diagramId == -1) {
       this.nameValidationFormCreateDiagram = "error";
       this.nameErrorTipFormCreateDiagram = `The name ${this.nameFormCreateDiagram.trim()} already exists`;
       return false;
     }
-
     this.modalRef.destroy();
-    switch (this.typeCreateDiagram) {
-      case 'InterfaceTypes':
+    this.createDiagram(diagramId, typeDiagram);
+    return true;
+
+  }
+
+  createDiagram(diagramId, diagramType: DiagramType) {
+    switch (diagramType) {
+      case DiagramType.InterfaceTypes:
         this.numberCreateDiagramInterfaceType++;
         break;
-      case 'Processors':
+      case DiagramType.Processors:
         this.numberCreateDiagramProcessor++;
         break;
     }
     this.updateTree();
     this.addTabDiagram(<number>diagramId);
-    return true;
-
   }
 
   getParentTreeNode(node: TreeNode): string {
@@ -731,8 +733,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.createProcessorDto.component.graph.getModel().beginUpdate();
       let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.Processor, this.nameFormCreateProcessor.trim());
       ProcessorsDiagramComponentComponent.printProcessor(this.createProcessorDto.component.diagramId,
-        this.createProcessorDto.component.graph, this.createProcessorDto.pt,
-        entityId);
+        this.createProcessorDto.component.graph, entityId, this.createProcessorDto.pt.x, this.createProcessorDto.pt.y, 100, 80);
       this.createProcessorDto.component.graph.getModel().endUpdate();
       DiagramComponentHelper.loadDiagram(this.createProcessorDto.component.diagramId,
         this.createProcessorDto.component.graph);
