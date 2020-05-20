@@ -76,6 +76,10 @@ declare class mxGraphModel {
 declare class mxGeometry {
 
   constructor(x, y, width, height);
+  x;
+  y;
+  height;
+  width;
   offset;
   relative;
   
