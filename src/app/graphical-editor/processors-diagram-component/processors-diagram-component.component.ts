@@ -5,6 +5,7 @@ import {
   StatusCreatingRelationship,
   SnackErrorDto,
   PartOfFormDto,
+  GeometryCell,
 } from '../diagram-component-helper';
 import {
   ModelService,
@@ -509,33 +510,20 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     });
   }
 
-  
-  /* In the "newGeometry" parameter just change the height and width, the old and new geometry are needed 
-  to correct the positioning when you change it in the editor */
-  static changeSizeProcessorInDiagram(diagramId, entityId, newGeometry : GeometryCell, previousGeometry: GeometryCell) {
+  static changeSizeProcessorInDiagram(diagramId, entityId, width, height) {
     let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
     for (let cell of diagramGraph.getChildCells()) {
       if (cell.getAttribute('entityId') == entityId) {
-        let cellWidth = newGeometry.width;
-        let cellHeight = newGeometry.height;
-        let cellX = newGeometry.x;
-        let cellY = newGeometry.y;
+        let cellWidth = width;
+        let cellHeight = height;
         if (cellWidth < Number(cell.getAttribute('minWidth'))) {
-          if(newGeometry.x > previousGeometry.x) {
-            let differenceWidth = Number(cell.getAttribute('minWidth')) - cellWidth;
-            cellX = cellX - differenceWidth;
-          }
           cellWidth = Number(cell.getAttribute('minWidth'));
         }
         if (cellHeight < Number(cell.getAttribute('minHeight'))) {
-          if(newGeometry.y > previousGeometry.y) {
-            let differenceHeight = Number(cell.getAttribute('minHeight')) - cellHeight;
-            cellY = cellY - differenceHeight;
-          }
           cellHeight = Number(cell.getAttribute('minHeight'));
         }
         diagramGraph.getModel().beginUpdate();
-        let geometry = new mxGeometry(cellX, cellY, cellWidth, cellHeight);
+        let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, cellWidth, cellHeight);
         diagramGraph.getModel().setGeometry(cell, geometry);
         diagramGraph.getModel().endUpdate();
         DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
@@ -549,6 +537,24 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     });
   }
 
+  static changePostitionProcessorInDiagram(diagramId, entityId, x, y)  {
+    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+      }
+    }
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+  }
 
   private eventsProcessorSubject() {
     this.proccesorSubject.subscribe(event => {
@@ -1085,11 +1091,10 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cellsMoved: [mxCell] = event.properties.cells;
       for (let cell of cellsMoved) {
         if (cell.value.nodeName.toLowerCase() == 'processor') {
-          processorInstance.modelService.updateEntityAppearanceInDiagram(processorInstance.diagramId, Number(cell.getAttribute("entityId", "")),
-            cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+          ProcessorsDiagramComponentComponent.changePostitionProcessorInDiagram(processorInstance.diagramId, cell.getAttribute('entityId'),
+          cell.geometry.x, cell.geometry.y);
         }
       }
-      DiagramComponentHelper.updateGraphInModel(processorInstance.diagramId, processorInstance.graph);
     });
   }
 
@@ -1113,28 +1118,60 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             height: cellsPreviousResize[i].height,
             width: cellsPreviousResize[i].width,
           }
-          ProcessorsDiagramComponentComponent.changeSizeProcessorInDiagram(processorInstance.diagramId, cellsResize[i].getAttribute('entityId'),
+          processorInstance.changeSizeProcessorInDiagram(processorInstance.diagramId, cellsResize[i].getAttribute('entityId'),
             newGeometryCell, prevoiousGeometryCell);
         }
       }
     });
   }
 
+  /* In the "newGeometry" parameter just change the height and width, the old and new geometry are needed 
+  to correct the positioning when you change it in the editor */
+  private changeSizeProcessorInDiagram(diagramId, entityId, newGeometry : GeometryCell, previousGeometry: GeometryCell) {
+    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        let cellWidth = newGeometry.width;
+        let cellHeight = newGeometry.height;
+        let cellX = newGeometry.x;
+        let cellY = newGeometry.y;
+        if (cellWidth < Number(cell.getAttribute('minWidth'))) {
+          if(newGeometry.x > previousGeometry.x) {
+            let differenceWidth = Number(cell.getAttribute('minWidth')) - cellWidth;
+            cellX = cellX - differenceWidth;
+          }
+          cellWidth = Number(cell.getAttribute('minWidth'));
+        }
+        if (cellHeight < Number(cell.getAttribute('minHeight'))) {
+          if(newGeometry.y > previousGeometry.y) {
+            let differenceHeight = Number(cell.getAttribute('minHeight')) - cellHeight;
+            cellY = cellY - differenceHeight;
+          }
+          cellHeight = Number(cell.getAttribute('minHeight'));
+        }
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(cellX, cellY, cellWidth, cellHeight);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.x, cell.geometry.y, cell.geometry.width, cell.geometry.height);
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+      }
+    }
+    DiagramComponentHelper.processorSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+  }
+
 }
 
-interface CellsInterfacePositions {
+export interface CellsInterfacePositions {
   leftTop: Array<any>;
   leftBottom: Array<any>;
   rightTop: Array<any>;
   rightBottom: Array<any>;
   rightCenter: Array<any>;
-}
-
-interface GeometryCell {
-  x: number;
-  y: number;
-  height: number;
-  width: number;
 }
 
 enum POSTION_INTERFACE_Y {

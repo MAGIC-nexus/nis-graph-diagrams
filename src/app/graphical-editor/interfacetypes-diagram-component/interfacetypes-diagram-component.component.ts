@@ -10,7 +10,8 @@ import {
   StatusCreatingRelationship,
   SnackErrorDto,
   PartOfFormDto,
-  CellDto
+  CellDto,
+  GeometryCell,
 } from '../diagram-component-helper';
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
@@ -79,10 +80,10 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.makeDraggableToolbar();
     this.eventsInterfaceTypeSubject();
     this.graphMouseEvent();
-    this.graphEvents();
     this.customLabel();
     this.overrideCellSelectable();
     this.contextMenu();
+    this.eventCellsMoveGraph()
     this.eventCellsResizeGraph();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
@@ -196,6 +197,25 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     }
   }
 
+  static changePostitionInterfaceTypeInDiagram(diagramId, entityId, x, y)  {
+    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+      }
+    }
+    DiagramComponentHelper.interfaceTypeSubject.next({
+      name: "refreshDiagram",
+      data: null,
+    });
+  }
+
   static changeSizeInterfaceTypeInDiagram(diagramId, entityId, width, height) {
     let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
     for (let cell of diagramGraph.getChildCells()) {
@@ -209,7 +229,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
       }
     }
-    DiagramComponentHelper.processorSubject.next({
+    DiagramComponentHelper.interfaceTypeSubject.next({
       name: "refreshDiagram",
       data: null,
     });
@@ -418,21 +438,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     }
   }
 
-  private graphEvents() {
-    this.graph.addListener(mxEvent.CELLS_MOVED, this.cellsMoveGraph.bind(this));
-  }
-
-  private cellsMoveGraph(graph, event: mxEventObject) {
-    let cellsMoved: [mxCell] = event.properties.cells;
-    for (let cell of cellsMoved) {
-      if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
-        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(this.diagramId, Number(cell.getAttribute("entityId", "")),
-          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
-      }
-      DiagramComponentHelper.updateGraphInModel(this.diagramId, this.graph);
-    }
-  }
-
   private customLabel() {
     let interfacetypeInstance = this;
 
@@ -562,6 +567,19 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 
+  private eventCellsMoveGraph() {
+    let interfaceTypeInstance = this;
+    this.graph.addListener(mxEvent.CELLS_MOVED, function (sender, event) {
+      let cellsMoved: [mxCell] = event.properties.cells;
+      for (let cell of cellsMoved) {
+        if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
+          InterfacetypesDiagramComponentComponent.changePostitionInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'),
+          cell.geometry.x, cell.geometry.y);
+        }
+      }
+    });
+  }
+
 
   private eventCellsResizeGraph() {
     let interfaceTypeInstance = this;
@@ -569,10 +587,35 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       let cellsResize: [mxCell] = event.properties.cells;
       for (let cell of cellsResize) {
         if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
-          InterfacetypesDiagramComponentComponent.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'), 
-          cell.geometry.width, cell.geometry.height);
+          let newGeometry = {
+            x: cell.geometry.x,
+            y: cell.geometry.y,
+            height: cell.geometry.height,
+            width: cell.geometry.width,
+          }
+          interfaceTypeInstance.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'), 
+          newGeometry);
         }
       }
+    });
+  }
+
+  private changeSizeInterfaceTypeInDiagram(diagramId, entityId, newGeometry : GeometryCell) {
+    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        diagramGraph.getModel().beginUpdate();  
+        let geometry = new mxGeometry(newGeometry.x, newGeometry.y, newGeometry.width , newGeometry.height);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+      }
+    }
+    DiagramComponentHelper.interfaceTypeSubject.next({
+      name: "refreshDiagram",
+      data: null,
     });
   }
 }

@@ -377,3 +377,10 @@ export interface PartOfFormDto {
 export interface CellDto {
   cellId;
 }
+
+export interface GeometryCell {
+  x: number;
+  y: number;
+  height: number;
+  width: number;
+}
