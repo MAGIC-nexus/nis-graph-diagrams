@@ -904,13 +904,24 @@ export class ModelService {
         let interfaceOrigin  = this.readInterface(originId);
         let interfaceDestination = this.readInterface(destinationId);
         if (interfaceOrigin instanceof Interface && interfaceDestination instanceof Interface) {
-            if (interfaceDestination.orientation != InterfaceOrientation.Input) {
-                return 'The target in an "exchange" type relationship should be of type input';
+            if (interfaceOrigin.orientation == InterfaceOrientation.Input && interfaceDestination.orientation == InterfaceOrientation.Input) {
+                for (let relationship of this.getRelationshipChildren(interfaceOrigin.processorId)) {
+                    if (relationship instanceof EntityRelationship && relationship.originId == interfaceDestination.processorId) {
+                        return "";
+                    }
+                }
             }
-            if (interfaceOrigin.orientation != InterfaceOrientation.Output) {
-                return 'The source in an "exchange" type relationship should be of type output';
+            if (interfaceOrigin.orientation == InterfaceOrientation.Output && interfaceDestination.orientation == InterfaceOrientation.Output) {
+                for (let relationship of this.getRelationshipParent(interfaceOrigin.processorId)) {
+                    if (relationship instanceof EntityRelationship && relationship.destinationId == interfaceDestination.processorId) {
+                        return "";
+                    }
+                }
             }
-            return "";
+            if (interfaceOrigin.orientation == InterfaceOrientation.Output && interfaceDestination.orientation == InterfaceOrientation.Input) {
+                return '';
+            }
+            return "Cannot make relationship";
         } else {
             return 'A relationship of type "exchange" should be the union between two entity of type "interface"';
         }
@@ -1031,13 +1042,13 @@ export class ModelService {
     }
 
     getRelationshipParent(parentId: number) {
-        let children = new Array<Relationship>();
+        let parent = new Array<Relationship>();
         if(this.entitiesRelationships.get(parentId))
         for (let relId of this.entitiesRelationships.get(parentId)) { //
             let r = this.allObjects.get(relId);
-            if (r.originId == parentId) children.push(r);
+            if (r.originId == parentId) parent.push(r);
         }
-        return children;
+        return parent;
     }
 
     getEntityPartOfParents(childId: number) {
