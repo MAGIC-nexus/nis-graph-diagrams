@@ -273,9 +273,6 @@ export class DiagramComponentHelper {
     cells, typeMove: string) {
     for (let cell of cells) {
       component.graph.setCellStyles('movable', typeMove, [cell]);
-      if (cell.children) {
-        DiagramComponentHelper.changeStateMovableCells(component, cell.children, typeMove)
-      }
     }
   }
 

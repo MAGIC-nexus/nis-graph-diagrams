@@ -1075,7 +1075,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   private overrideCellSelectable() {
     this.graph.isCellSelectable = function (cell: mxCell) {
-      if (cell.isEdge()) {
+      if (cell.isEdge() || cell.value.nodeName.toLowerCase() == 'interface') {
         return false;
       }
       var state = this.view.getState(cell);
