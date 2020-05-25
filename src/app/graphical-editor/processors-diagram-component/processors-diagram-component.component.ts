@@ -413,8 +413,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     return cellsPostion;
   }
 
-  static changeInterfaceInGraph(interfaceModel: Interface) {
+  static changeInterfaceInGraph(interfaceId : number) {
     DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
+      let interfaceModel = DiagramComponentHelper.modelService.readInterface(interfaceId);
       let diagramGraph = DiagramComponentHelper.getDiagram(key);
       diagramGraph.getModel().beginUpdate();
       for (let cell of diagramGraph.getChildCells(diagramGraph.getDefaultParent())) {

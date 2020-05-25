@@ -837,7 +837,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
     this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
     this.modelService.updateInterfaceValues(Number(this.interfaceIdForm), interfaceValues);
-    ProcessorsDiagramComponentComponent.changeInterfaceInGraph(interfaceEntity);
+    ProcessorsDiagramComponentComponent.changeInterfaceInGraph(Number(this.interfaceIdForm));
+    let interfaceModel = DiagramComponentHelper.modelService.readInterface(Number(this.interfaceIdForm));
+    if (interfaceModel.orientation != interfaceEntity.orientation) {
+      this.snackBarService.open('Cannot change orientation', null, {
+        duration: 2000,
+      });
+    }
     this.proccesorSubject.next({
       name: "refreshDiagram",
       data: null,

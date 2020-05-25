@@ -799,16 +799,50 @@ export class ModelService {
     updateInterface(interfaceId, properties: Interface) {
         let i: Interface = this.allObjects.get(interfaceId);
         if (i) {
+            if (i.orientation != properties.orientation) {
+                if (this.interfaceCanChangeOrientation(i, properties.orientation))
+                i.orientation = properties.orientation;
+            }
             i.name = properties.name;
             i.sphere = properties.sphere;
             i.roegenType = properties.roegenType;
-            i.orientation = properties.orientation;
             i.oppositeSubsystemType = properties.oppositeSubsystemType;
             i.description = properties.description;
             return 0;
         } else {
             return -1; // Could not find Interface
         }
+    }
+
+    interfaceCanChangeOrientation(interfaceModel : Interface, orientation) : boolean {
+        let canChangeOrientation = true;
+        for (let relationship of this.getRelationshipChildren(interfaceModel.id)) {
+            if (relationship instanceof ExchangeRelationship) {
+                let interfaceOrigin = this.allObjects.get(relationship.originId);
+                if (interfaceModel.orientation == InterfaceOrientation.Input && interfaceOrigin.orientation == InterfaceOrientation.Input) {
+                    canChangeOrientation = false;
+                    break;
+                }
+                if (interfaceModel.orientation == InterfaceOrientation.Output && interfaceOrigin.orientation == InterfaceOrientation.Output) {
+                    canChangeOrientation = false;
+                    break;
+                }
+            }
+        }
+        for (let relationship of this.getRelationshipParent(interfaceModel.id)) {
+            if (relationship instanceof ExchangeRelationship) {
+                let interfaceDestination = this.allObjects.get(relationship.destinationId);
+                if (interfaceModel.orientation == InterfaceOrientation.Input && interfaceDestination.orientation == InterfaceOrientation.Input) {
+                    canChangeOrientation = false;
+                    break;
+                }
+                if (interfaceModel.orientation == InterfaceOrientation.Output && interfaceDestination.orientation == InterfaceOrientation.Output) {
+                    canChangeOrientation = false;
+                    break;
+                }
+            }
+        }
+        return canChangeOrientation;
     }
 
     updateInterfaceValues(interfaceId, values: Array<InterfaceValue>) {
