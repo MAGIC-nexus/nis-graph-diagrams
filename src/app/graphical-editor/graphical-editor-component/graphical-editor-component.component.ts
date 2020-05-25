@@ -626,7 +626,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateEntity(Number(this.proccesorIdForm), processor);
     if (this.oldNameFormProcessor != this.nameFormProcessor) {
       for (let diagram of this.getAllDiagramsModel()) {
-        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), this.nameFormProcessor, this.proccesorIdForm);
+        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.modelId), this.nameFormProcessor, this.proccesorIdForm);
       }
       this.proccesorSubject.next({
         name: "refreshDiagram",
@@ -685,7 +685,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modelService.updateEntity(Number(this.interfaceTypeIdForm), interfaceType);
     if (this.oldNameFormInterfaceType != this.nameFormInterfaceType) {
       for (let diagram of this.getAllDiagramsModel()) {
-        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), this.nameFormInterfaceType, this.interfaceTypeIdForm);
+        DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.modelId), this.nameFormInterfaceType, this.interfaceTypeIdForm);
       }
       this.interfaceTypeSubject.next({
         name: "refreshDiagram",

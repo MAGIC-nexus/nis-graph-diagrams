@@ -456,7 +456,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       switch (cell.value.nodeName.toLowerCase()) {
         case 'interfacetype':
           for (let diagram of DiagramComponentHelper.modelService.getTreeModelViewDiagrams()) {
-            DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), newValue,
+            DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.modelId), newValue,
               Number(cell.getAttribute('entityId', '')));
           }
           DiagramComponentHelper.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);

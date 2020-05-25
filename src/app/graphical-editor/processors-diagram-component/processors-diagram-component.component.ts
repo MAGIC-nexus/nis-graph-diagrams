@@ -421,6 +421,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         if (cell.children)
           for (let cellChildren of cell.children) {
             if (cellChildren.getAttribute('entityId') == interfaceModel.id) {
+              cellChildren.setAttribute('name', interfaceModel.name);
               ProcessorsDiagramComponentComponent.changeInterfaceStyle(key, interfaceModel, cellChildren, diagramGraph);
             }
           }
@@ -961,7 +962,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       switch (cell.value.nodeName.toLowerCase()) {
         case 'processor':
           for (let diagram of processorInstance.modelService.getTreeModelViewDiagrams()) {
-            DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.id), newValue,
+            DiagramComponentHelper.changeNameEntityOnlyXML(Number(diagram.modelId), newValue,
               Number(cell.getAttribute('entityId', '')));
           }
           processorInstance.modelService.updateEntityName(Number(cell.getAttribute('entityId', '')), newValue);
