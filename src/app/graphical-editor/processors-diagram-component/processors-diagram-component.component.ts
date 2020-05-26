@@ -382,7 +382,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   static cellsInterfacePositon(cellProcessor): CellsInterfacePositions {
-    console.log(cellProcessor);
     let cellsPostion: CellsInterfacePositions = {
       leftTop: new Array(),
       leftBottom: new Array(),
@@ -409,7 +408,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
             cellsPostion.rightCenter.push(cellChildren);
         }
       }
-    console.log(cellsPostion);
     return cellsPostion;
   }
 
@@ -1053,8 +1051,14 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   onContextMenuPartOfRemove(cell: mxCell) {
-    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
-    this.updateTreeEmitter.emit(null);
+    if ( DiagramComponentHelper.modelService.checkCanDeleteRelationshipPartof( Number(cell.getAttribute('idRelationship', '')))) {
+      DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
+      this.updateTreeEmitter.emit(null);
+    } else {
+      let relationshipErrorDto = new SnackErrorDto();
+        relationshipErrorDto.message = 'Cannot delete "partof" relationship';
+        this.snackBarErrorEmitter.emit(relationshipErrorDto);
+    } 
   }
 
   onContextMenuInterfaceScaleForm(cell: mxCell) {

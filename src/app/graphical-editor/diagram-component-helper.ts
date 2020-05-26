@@ -277,6 +277,7 @@ export class DiagramComponentHelper {
   }
 
   static removeRelationship(relationshipId) {
+    DiagramComponentHelper.modelService.checkCanDeleteRelationshipPartof(Number(relationshipId));
     if (DiagramComponentHelper.modelService.deleteRelationship(Number(relationshipId)) == 0) {
       DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
         let diagramGraph = DiagramComponentHelper.getDiagram(key);

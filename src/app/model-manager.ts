@@ -817,15 +817,15 @@ export class ModelService {
     interfaceCanChangeOrientation(interfaceModel : Interface, orientation) : boolean {
         let canChangeOrientation = true;
         for (let relationship of this.getRelationshipChildren(interfaceModel.id)) {
+            console.log(this.getRelationshipChildren(interfaceModel.id));
             if (relationship instanceof ExchangeRelationship) {
+                console.log(relationship)
                 let interfaceOrigin = this.allObjects.get(relationship.originId);
                 if (interfaceModel.orientation == InterfaceOrientation.Input && interfaceOrigin.orientation == InterfaceOrientation.Input) {
                     canChangeOrientation = false;
-                    break;
                 }
                 if (interfaceModel.orientation == InterfaceOrientation.Output && interfaceOrigin.orientation == InterfaceOrientation.Output) {
                     canChangeOrientation = false;
-                    break;
                 }
             }
         }
@@ -834,11 +834,9 @@ export class ModelService {
                 let interfaceDestination = this.allObjects.get(relationship.destinationId);
                 if (interfaceModel.orientation == InterfaceOrientation.Input && interfaceDestination.orientation == InterfaceOrientation.Input) {
                     canChangeOrientation = false;
-                    break;
                 }
                 if (interfaceModel.orientation == InterfaceOrientation.Output && interfaceDestination.orientation == InterfaceOrientation.Output) {
                     canChangeOrientation = false;
-                    break;
                 }
             }
         }
@@ -1005,6 +1003,48 @@ export class ModelService {
         } else {
             return -1; // Relationship not found
         }
+    }
+
+    checkCanDeleteRelationshipPartof(relationshipId) : boolean {
+        let canDelete = true;
+        let r: Relationship = this.allObjects.get(relationshipId);
+        if (r instanceof EntityRelationshipPartOf) {
+            let entityOrigin = this.readEntity(r.originId);
+            let entityDestination = this.readEntity(r.destinationId);
+            if(entityOrigin instanceof Processor && entityDestination instanceof Processor) {
+                for (let interfaceModelOrigin of entityOrigin.interfaces) {
+                    for (let interfaceModelDestination of entityDestination.interfaces) {
+                        let exchangesRelationships = this.getExchangeRelationshipTwoInterface(interfaceModelOrigin.id, interfaceModelDestination.id);
+                        for (let exchange of exchangesRelationships) {
+                            if(exchange.intefaceOrigin.orientation == InterfaceOrientation.Input && exchange.interfaceDestination.orientation == InterfaceOrientation.Input) {
+                                canDelete = false;
+                            }
+                            if(exchange.intefaceOrigin.orientation == InterfaceOrientation.Output && exchange.interfaceDestination.orientation == InterfaceOrientation.Output) {
+                                canDelete = false;
+                            }
+                        }
+                    }
+                }
+            }
+        } 
+        console.log(canDelete);
+        return canDelete;
+    }
+
+    getExchangeRelationshipTwoInterface(interfaceId1 : number, interfaceId2 : number) {
+        let exchangeRelationships = new Array<{intefaceOrigin: Interface, interfaceDestination: Interface}>();
+        if(this.entitiesRelationships.get(interfaceId1))
+        for(let relationshipId of this.entitiesRelationships.get(interfaceId1)) {
+            let relationship = this.readRelationship(relationshipId);
+            if (relationship instanceof ExchangeRelationship &&  ( (relationship.originId == interfaceId1 && relationship.destinationId == interfaceId2) ||
+            (relationship.originId == interfaceId2 && relationship.destinationId == interfaceId1) ) ) {
+                exchangeRelationships.push({
+                    intefaceOrigin: this.readInterface(relationship.originId),
+                    interfaceDestination: this.readInterface(relationship.destinationId),
+                })
+            }
+        }
+        return exchangeRelationships;
     }
 
     updateRelationship(relationshipId, properties: EntityRelationshipPartOf | ExchangeRelationship | ScaleRelationship | InterfaceTypeScaleChange) {
