@@ -816,27 +816,29 @@ export class ModelService {
 
     interfaceCanChangeOrientation(interfaceModel : Interface, orientation) : boolean {
         let canChangeOrientation = true;
-        for (let relationship of this.getRelationshipChildren(interfaceModel.id)) {
-            console.log(this.getRelationshipChildren(interfaceModel.id));
-            if (relationship instanceof ExchangeRelationship) {
-                console.log(relationship)
-                let interfaceOrigin = this.allObjects.get(relationship.originId);
-                if (interfaceModel.orientation == InterfaceOrientation.Input && interfaceOrigin.orientation == InterfaceOrientation.Input) {
-                    canChangeOrientation = false;
+        let relationshipsInterface = this.entitiesRelationships.get(interfaceModel.id);
+        if(relationshipsInterface)
+        for (let relationshipInterfaceId of relationshipsInterface) {
+            let relationshipInterface = this.readRelationship(relationshipInterfaceId);
+            if (relationshipInterface instanceof ExchangeRelationship) {
+                if(relationshipInterface.originId == interfaceModel.id && orientation == InterfaceOrientation.Input) {
+                    let existPartOfRelationship = false;
+                    let interfaceModelDestination = <Interface> this.readInterface(relationshipInterface.destinationId);
+                    for (let relationshipParent of this.getRelationshipChildren(interfaceModel.processorId)) {
+                        console.log(relationshipParent);
+                        if (relationshipParent instanceof EntityRelationshipPartOf && relationshipParent.originId == interfaceModelDestination.processorId)
+                        existPartOfRelationship = true;
+                    }
+                    canChangeOrientation = existPartOfRelationship;
                 }
-                if (interfaceModel.orientation == InterfaceOrientation.Output && interfaceOrigin.orientation == InterfaceOrientation.Output) {
-                    canChangeOrientation = false;
-                }
-            }
-        }
-        for (let relationship of this.getRelationshipParent(interfaceModel.id)) {
-            if (relationship instanceof ExchangeRelationship) {
-                let interfaceDestination = this.allObjects.get(relationship.destinationId);
-                if (interfaceModel.orientation == InterfaceOrientation.Input && interfaceDestination.orientation == InterfaceOrientation.Input) {
-                    canChangeOrientation = false;
-                }
-                if (interfaceModel.orientation == InterfaceOrientation.Output && interfaceDestination.orientation == InterfaceOrientation.Output) {
-                    canChangeOrientation = false;
+                if(relationshipInterface.destinationId == interfaceModel.id && orientation == InterfaceOrientation.Output) {
+                    let existPartOfRelationship = false;
+                    let interfaceModelOrigin = <Interface> this.readInterface(relationshipInterface.originId);
+                    for (let relationshipParent of this.getRelationshipChildren(interfaceModel.processorId)) {
+                        if (relationshipParent instanceof EntityRelationshipPartOf && relationshipParent.originId == interfaceModelOrigin.processorId)
+                        existPartOfRelationship = true;
+                    }
+                    canChangeOrientation = existPartOfRelationship;
                 }
             }
         }
