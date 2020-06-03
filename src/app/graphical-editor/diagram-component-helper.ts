@@ -1,6 +1,4 @@
 import { ModelService, RelationshipType, EntityRelationshipPartOf } from '../model-manager';
-import { ProcessorsDiagramComponentComponent } from './processors-diagram-component/processors-diagram-component.component';
-import { InterfacetypesDiagramComponentComponent } from './interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 import { Subject } from 'rxjs';
 
 export class DiagramComponentHelper {
@@ -10,8 +8,6 @@ export class DiagramComponentHelper {
   static processorSubject: Subject<{ name: string, data: any }>;
 
   static readonly NOT_RELATIONSHIP = -1;
-  static readonly STYLE_PART_OF = 'endArrow=block;endFill=0;strokeColor=black;perimeterSpacing=4;' +
-    'labelBackgroundColor=white;fontStyle=1';
 
   static setModelService(modelService: ModelService) {
     DiagramComponentHelper.modelService = modelService;
@@ -102,22 +98,18 @@ export class DiagramComponentHelper {
     line.setAttribute("y2", positionY.toString());
   }
 
-  static cancelCreateRelationship(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent) {
+  static cancelCreateRelationship(component: any) {
     component.relationshipSelect = DiagramComponentHelper.NOT_RELATIONSHIP;
     component.imageToolbarRelationship.style.backgroundColor = "transparent";
     DiagramComponentHelper.changeStateMovableCells(component, component.graph.getChildCells(), "1");
     component.graph.setCellStyles('movable', '0', component.graph.getChildEdges());
   }
 
-  static checkRelationshipPartOfSource(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
-    cell): Boolean {
-    let typeCells = "";
-    if (component instanceof ProcessorsDiagramComponentComponent) typeCells = "processor";
-    else if (component instanceof InterfacetypesDiagramComponentComponent) typeCells = "interfaceType";
+  static checkRelationshipPartOfSource(component, cell, typeCell): Boolean {
     if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
       if (!cell.isEdge()) {
         let relationshipErrorDto = new SnackErrorDto();
-        relationshipErrorDto.message = `A relationship of type "part of" should be the union between two boxes of type "${typeCells}"`;
+        relationshipErrorDto.message = `A relationship of type "part of" should be the union between two boxes of type "${typeCell}"`;
         component.snackBarErrorEmitter.emit(relationshipErrorDto);
       }
       return false;
@@ -125,15 +117,11 @@ export class DiagramComponentHelper {
     return true;
   }
 
-  static checkRelationshipPartOfTarget(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
-    cell): Boolean {
-    let typeCells = "";
-    if (component instanceof ProcessorsDiagramComponentComponent) typeCells = "processor";
-    else if (component instanceof InterfacetypesDiagramComponentComponent) typeCells = "interfaceType";
+  static checkRelationshipPartOfTarget(component, cell, typeCell): Boolean {
     if (cell.value.nodeName.toLowerCase() != 'processor' && cell.value.nodeName.toLowerCase() != 'interfacetype') {
       if (!cell.isEdge()) {
         let relationshipErrorDto = new SnackErrorDto();
-        relationshipErrorDto.message = `A relationship of type "part of" should be the union between two boxes of type "${typeCells}"`;
+        relationshipErrorDto.message = `A relationship of type "part of" should be the union between two boxes of type "${typeCell}"`;
         component.snackBarErrorEmitter.emit(relationshipErrorDto);
       }
       return false;
@@ -152,75 +140,7 @@ export class DiagramComponentHelper {
     return true;
   }
 
-  static createPartOfRelationship(sourceId, targetId) {
-    let id = DiagramComponentHelper.modelService.createRelationship(RelationshipType.PartOf,
-      Number(sourceId), Number(targetId));
-    DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
-      let cellSourceInDiagram = null;
-      let cellTargetInDiagram = null;
-      let diagramGraph = DiagramComponentHelper.getDiagram(key);
-      for (let cell of diagramGraph.getChildCells()) {
-        if (cell.getAttribute("entityId") == sourceId) cellSourceInDiagram = cell;
-        if (cell.getAttribute("entityId") == targetId) cellTargetInDiagram = cell;
-      }
-      if (cellSourceInDiagram != null && cellTargetInDiagram != null) {
-        diagramGraph.getModel().beginUpdate();
-        let doc = mxUtils.createXmlDocument();
-        let partOfDoc = doc.createElement('partof');
-        partOfDoc.setAttribute("name", "name");
-        partOfDoc.setAttribute("idRelationship", id);
-        diagramGraph.insertEdge(diagramGraph.getDefaultParent(), null, partOfDoc,
-          cellSourceInDiagram, cellTargetInDiagram, DiagramComponentHelper.STYLE_PART_OF);
-        diagramGraph.getModel().endUpdate();
-        let encoder = new mxCodec(null);
-        let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
-        DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
-      }
-    });
-    DiagramComponentHelper.interfaceTypeSubject.next({
-      name: "refreshDiagram",
-      data: null,
-    });
-    DiagramComponentHelper.processorSubject.next({
-      name: "refreshDiagram",
-      data: null,
-    });
-  }
-
-  static printPartOfRelationship(graph: mxGraph, newCell: mxCell, relationship: EntityRelationshipPartOf) {
-    for (let edge of graph.getChildEdges()) {
-      if (edge.getAttribute("idRelationship") == relationship.id) {
-        return;
-      }
-    }
-    if (newCell.getAttribute("entityId", "") == relationship.destinationId) {
-      for (let cell of graph.getChildCells()) {
-        if (cell.getAttribute("entityId") == relationship.originId) {
-          let doc = mxUtils.createXmlDocument();
-          let partOfDoc = doc.createElement('partof');
-          partOfDoc.setAttribute("name", "name");
-          partOfDoc.setAttribute("idRelationship", relationship.id);
-          graph.insertEdge(graph.getDefaultParent(), null, partOfDoc,
-            cell, newCell, DiagramComponentHelper.STYLE_PART_OF);
-        }
-      }
-    }
-    if (newCell.getAttribute("entityId", "") == relationship.originId) {
-      for (let cell of graph.getChildCells()) {
-        if (cell.getAttribute("entityId") == relationship.destinationId) {
-          let doc = mxUtils.createXmlDocument();
-          let partOfDoc = doc.createElement('partof');
-          partOfDoc.setAttribute("name", "name");
-          partOfDoc.setAttribute("idRelationship", relationship.id);
-          graph.insertEdge(graph.getDefaultParent(), null, partOfDoc,
-            newCell, cell, DiagramComponentHelper.STYLE_PART_OF);
-        }
-      }
-    }
-  }
-
-  static changeNameEntityById(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
-    name: string, id) {
+  static changeNameEntityById(component, name: string, id) {
     let updateGraphXML = false;
     component.graph.getModel().beginUpdate();
     let cells: [mxCell] = component.graph.getChildCells();
@@ -269,8 +189,7 @@ export class DiagramComponentHelper {
     }
   }
 
-  static changeStateMovableCells(component: ProcessorsDiagramComponentComponent | InterfacetypesDiagramComponentComponent,
-    cells, typeMove: string) {
+  static changeStateMovableCells(component, cells, typeMove: string) {
     for (let cell of cells) {
       component.graph.setCellStyles('movable', typeMove, [cell]);
     }

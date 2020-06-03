@@ -395,19 +395,34 @@ export class ModelService {
         return lst;
     }
 
+    generateAttributeGd(entityId : number) : string {
+        let gd = "";
+        this.diagrams.forEach( (value, key) => {
+            let gp = this.readEntityAppearanceInDiagram(key, entityId);
+            if(gp) {
+                gd += `(${key}),(${gp.left},${gp.top},${gp.width},${gp.height}),`
+            }
+        })
+        if (gd != "") {
+            gd = gd.substring(0, gd.length - 1);
+        }
+        return gd;
+    }
+
     exportInterfaceTypes() {
       // Header
       // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
-      let s = new Array("InterfaceTypeHierarchy", "InterfaceType", "Sphere", "RoegenType", "ParentInterfaceType", "Level", "Formula", "Description", "Unit", "OppositeSubsystemType", "Attributes", "@gd_id").join("\t");
+      let s = new Array("InterfaceTypeHierarchy", "InterfaceType", "Sphere", "RoegenType", "ParentInterfaceType", "Level", "Formula", "Description", "Unit", "OppositeSubsystemType", "Attributes", "@gd_id", "@gd").join("\t");
       // Each row
       let tmp = this.getEntitiesInPreorder(-1);
       for (let itypeId of this.getEntitiesInPreorder(-1)) {
         let it = this.interfaceTypes.get(itypeId);
         let parents = this.getEntityPartOfParents(itypeId);
         let parent = "";
+        let gdAttribute = this.generateAttributeGd(itypeId);
         if (parents.length > 0)
           parent = this.allObjects.get(parents[0]).name;
-        s += "\n" + new Array(it.hierarchy, it.name, Sphere[it.sphere], RoegenType[it.roegenType], parent, it.level, "", it.description, it.unit, ProcessorSubsystemType[it.oppositeSubsystemType], "", itypeId.toString()).join("\t");
+        s += "\n" + new Array(it.hierarchy, it.name, Sphere[it.sphere], RoegenType[it.roegenType], parent, it.level, "", it.description, it.unit, ProcessorSubsystemType[it.oppositeSubsystemType], "", itypeId.toString(), gdAttribute).join("\t");
       }
       return convertTabSeparatedSheetToJSON("IntefaceTypes", s, true, false, this.embeddedInNISFrontend);
     }
@@ -434,15 +449,16 @@ export class ModelService {
         let bps = [];
         // Header
         // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
-        let s = new Array("ProcessorGroup", "Processor", "ParentProcessor", "SubsystemType", "System", "FunctionalOrStructural", "Accounted", "Level", "Stock", "Description", "GeolocationRef", "GeolocationCode", "GeolocationLatLong", "Attributes", "@gd_id").join("\t");
+        let s = new Array("ProcessorGroup", "Processor", "ParentProcessor", "SubsystemType", "System", "FunctionalOrStructural", "Accounted", "Level", "Stock", "Description", "GeolocationRef", "GeolocationCode", "GeolocationLatLong", "Attributes", "@gd_id", "@gd").join("\t");
         for (let pId of this.getEntitiesInPreorder(-2)) {
             let p: Processor = this.allObjects.get(pId);
             p.hierarchyName = p.name;
             let parents = this.getEntityPartOfParents(pId);
             let parent = "";
+            let gdAttribute = this.generateAttributeGd(pId);
             if (parents.length > 0)
                 parent = this.allObjects.get(parents[0]).hierarchyName;
-            s += "\n" + new Array("", p.hierarchyName, parent, ProcessorSubsystemType[p.subsystemType], p.system, ProcessorFunctionalOrStructural[p.functionalOrStructural], ProcessorAccounted[p.accounted], p.level, "", p.description, "", "", p.geolocation, "", pId.toString()).join("\t");
+            s += "\n" + new Array("", p.hierarchyName, parent, ProcessorSubsystemType[p.subsystemType], p.system, ProcessorFunctionalOrStructural[p.functionalOrStructural], ProcessorAccounted[p.accounted], p.level, "", p.description, "", "", p.geolocation, "", pId.toString(), gdAttribute).join("\t");
         }
       return convertTabSeparatedSheetToJSON("BareProcessors", s, true, false, this.embeddedInNISFrontend);
     }

@@ -21,6 +21,7 @@ import {
   ProcessorsDiagramComponentComponent
 } from '../processors-diagram-component/processors-diagram-component.component';
 import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
+import { DiagramManager } from 'src/app/diagram-manager';
 
 @Component({
   selector: 'app-graphical-editor-component',
@@ -232,7 +233,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     public modelService: ModelService,
     private nzModalService: NzModalService,
     private renderer: Renderer2,
-    private snackBarService: MatSnackBar) { }
+    private snackBarService: MatSnackBar,
+    private diagramManager : DiagramManager) { }
 
   ngOnInit() {
     DiagramComponentHelper.setProcessorSubject(this.proccesorSubject);
@@ -554,9 +556,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modalRef.destroy();
     let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.InterfaceType, this.nameFormCreateInterfaceType.trim());
     this.createInterfaceTypeDto.component.graph.getModel().beginUpdate();
-    InterfacetypesDiagramComponentComponent.printInterfaceType(this.createInterfaceTypeDto.component.diagramId,
-      this.createInterfaceTypeDto.component.graph, this.nameFormCreateInterfaceType.trim(), this.createInterfaceTypeDto.pt,
-      entityId);
+    this.diagramManager.printInterfaceType(this.createInterfaceTypeDto.component.diagramId, entityId , this.createInterfaceTypeDto.pt.x, this.createInterfaceTypeDto.pt.y,
+      100, 80);
     this.createInterfaceTypeDto.component.graph.getModel().endUpdate();
     DiagramComponentHelper.loadDiagram(this.createInterfaceTypeDto.component.diagramId,
       this.createInterfaceTypeDto.component.graph);
@@ -730,11 +731,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
     if (validate) {
       this.modalRef.destroy();
-      this.createProcessorDto.component.graph.getModel().beginUpdate();
       let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.Processor, this.nameFormCreateProcessor.trim());
-      ProcessorsDiagramComponentComponent.printProcessor(this.createProcessorDto.component.diagramId,
-        this.createProcessorDto.component.graph, entityId, this.createProcessorDto.pt.x, this.createProcessorDto.pt.y, 100, 80);
-      this.createProcessorDto.component.graph.getModel().endUpdate();
+      this.diagramManager.printProcessor(this.createProcessorDto.component.diagramId, entityId, this.createProcessorDto.pt.x, this.createProcessorDto.pt.y, 100, 80);
       DiagramComponentHelper.loadDiagram(this.createProcessorDto.component.diagramId,
         this.createProcessorDto.component.graph);
         this.autoCompleteNewProcessor = `p${++this.autoCompleteNewProcessorCounter}`;
@@ -837,7 +835,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     }
     this.modelService.updateInterface(Number(this.interfaceIdForm), interfaceEntity);
     this.modelService.updateInterfaceValues(Number(this.interfaceIdForm), interfaceValues);
-    ProcessorsDiagramComponentComponent.changeInterfaceInGraph(Number(this.interfaceIdForm));
+    this.diagramManager.changeInterfaceInGraph(Number(this.interfaceIdForm));
     let interfaceModel = DiagramComponentHelper.modelService.readInterface(Number(this.interfaceIdForm));
     if (interfaceModel.orientation != interfaceEntity.orientation) {
       this.snackBarService.open('Cannot change orientation', null, {
