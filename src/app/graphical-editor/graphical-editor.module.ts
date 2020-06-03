@@ -38,6 +38,7 @@ import { TreeModule } from "angular-tree-component";
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { InterfacelistComponent } from './interfacelist/interfacelist.component';
+import { DiagramManager } from '../diagram-manager';
 
 @NgModule({
   declarations: [
@@ -87,7 +88,8 @@ import { InterfacelistComponent } from './interfacelist/interfacelist.component'
         // { provide: ElementRef, useFactory: () => new ElementRef({})},
         // { provide: ChangeDetectorRef, useFactory: () => new ViewRef({})},
         //
-        { provide: NZ_I18N, useValue: en_US }
+        { provide: NZ_I18N, useValue: en_US },
+        DiagramManager,
         ]
 })
 export class GraphicalEditorModule {
