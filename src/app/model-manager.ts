@@ -401,9 +401,9 @@ export class ModelService {
             let gp = this.readEntityAppearanceInDiagram(key, entityId);
             if(gp) {
                 if(writtenDiagrams.includes(key)) {
-                    gd += `(${key}),(${gp.left},${gp.top},${gp.width},${gp.height}),`;
+                    gd += `((${key}),(${gp.left},${gp.top},${gp.width},${gp.height})),`;
                 } else {
-                    gd += `(${key}, '${diagram.name}'),(${gp.left},${gp.top},${gp.width},${gp.height}),`;
+                    gd += `((${key}, '${diagram.name}'),(${gp.left},${gp.top},${gp.width},${gp.height})),`;
                     writtenDiagrams.push(key);
                 }
             }
