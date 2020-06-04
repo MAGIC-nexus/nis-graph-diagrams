@@ -395,12 +395,17 @@ export class ModelService {
         return lst;
     }
 
-    generateAttributeGd(entityId : number) : string {
+    generateAttributeGd(entityId : number, writtenDiagrams: Array<number>) : string {
         let gd = "";
-        this.diagrams.forEach( (value, key) => {
+        this.diagrams.forEach( (diagram, key) => {
             let gp = this.readEntityAppearanceInDiagram(key, entityId);
             if(gp) {
-                gd += `(${key}),(${gp.left},${gp.top},${gp.width},${gp.height}),`
+                if(writtenDiagrams.includes(key)) {
+                    gd += `(${key}),(${gp.left},${gp.top},${gp.width},${gp.height}),`;
+                } else {
+                    gd += `(${key}, '${diagram.name}'),(${gp.left},${gp.top},${gp.width},${gp.height}),`;
+                    writtenDiagrams.push(key);
+                }
             }
         })
         if (gd != "") {
@@ -412,6 +417,7 @@ export class ModelService {
     exportInterfaceTypes() {
       // Header
       // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
+      let writtenDiagrams = new Array<number>(); 
       let s = new Array("InterfaceTypeHierarchy", "InterfaceType", "Sphere", "RoegenType", "ParentInterfaceType", "Level", "Formula", "Description", "Unit", "OppositeSubsystemType", "Attributes", "@gd_id", "@gd").join("\t");
       // Each row
       let tmp = this.getEntitiesInPreorder(-1);
@@ -419,7 +425,7 @@ export class ModelService {
         let it = this.interfaceTypes.get(itypeId);
         let parents = this.getEntityPartOfParents(itypeId);
         let parent = "";
-        let gdAttribute = this.generateAttributeGd(itypeId);
+        let gdAttribute = this.generateAttributeGd(itypeId, writtenDiagrams);
         if (parents.length > 0)
           parent = this.allObjects.get(parents[0]).name;
         s += "\n" + new Array(it.hierarchy, it.name, Sphere[it.sphere], RoegenType[it.roegenType], parent, it.level, "", it.description, it.unit, ProcessorSubsystemType[it.oppositeSubsystemType], "", itypeId.toString(), gdAttribute).join("\t");
@@ -449,13 +455,14 @@ export class ModelService {
         let bps = [];
         // Header
         // TODO - Diagram attribute: @diagrams="{'<diagram>', w, h, x, y, color}, ..."
+        let writtenDiagrams = new Array<number>();
         let s = new Array("ProcessorGroup", "Processor", "ParentProcessor", "SubsystemType", "System", "FunctionalOrStructural", "Accounted", "Level", "Stock", "Description", "GeolocationRef", "GeolocationCode", "GeolocationLatLong", "Attributes", "@gd_id", "@gd").join("\t");
         for (let pId of this.getEntitiesInPreorder(-2)) {
             let p: Processor = this.allObjects.get(pId);
             p.hierarchyName = p.name;
             let parents = this.getEntityPartOfParents(pId);
             let parent = "";
-            let gdAttribute = this.generateAttributeGd(pId);
+            let gdAttribute = this.generateAttributeGd(pId, writtenDiagrams);
             if (parents.length > 0)
                 parent = this.allObjects.get(parents[0]).hierarchyName;
             s += "\n" + new Array("", p.hierarchyName, parent, ProcessorSubsystemType[p.subsystemType], p.system, ProcessorFunctionalOrStructural[p.functionalOrStructural], ProcessorAccounted[p.accounted], p.level, "", p.description, "", "", p.geolocation, "", pId.toString(), gdAttribute).join("\t");
