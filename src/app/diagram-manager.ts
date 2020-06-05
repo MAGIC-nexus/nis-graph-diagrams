@@ -1,16 +1,15 @@
 import { Injectable } from "@angular/core";
 import { DiagramComponentHelper } from './graphical-editor/diagram-component-helper';
-import { 
-    Relationship, 
-    EntityRelationshipPartOf, 
-    InterfaceTypeScaleChange, 
-    RelationshipType, 
-    Processor, 
-    Interface, 
-    InterfaceOrientation, 
-    RoegenType, Sphere, 
-    ExchangeRelationship, 
-    ScaleRelationship 
+import {
+    Relationship,
+    EntityRelationshipPartOf,
+    InterfaceTypeScaleChange,
+    Processor,
+    Interface,
+    InterfaceOrientation,
+    RoegenType, Sphere,
+    ExchangeRelationship,
+    ScaleRelationship
 } from './model-manager';
 
 const STYLE_INTERFACETYPESCALE = 'dashed=1;strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
@@ -39,6 +38,34 @@ enum POSTION_INTERFACE_X {
 
 @Injectable()
 export class DiagramManager {
+
+    private readonly ID_DIAGRAMS = -3;
+    private readonly ID_PROCESSOR = -2;
+    private readonly ID_INTERFACETYPES = -1;
+
+    public nodes = [
+        {
+            id: this.ID_DIAGRAMS,
+            name: 'Diagrams',
+            description: "<test attribute>",
+            children: [],
+        },
+        {
+            id: this.ID_PROCESSOR,
+            name: 'Processors',
+            children: []
+        },
+        {
+            id: this.ID_INTERFACETYPES,
+            name: 'Interface Types',
+            children: []
+        }
+
+    ];
+
+    updateTree() {
+        this.nodes = DiagramComponentHelper.modelService.getTreeModelView();
+    }
 
     printPartOfRelationship(relationshipId: number) {
         let relationship = DiagramComponentHelper.modelService.readRelationship(Number(relationshipId));
@@ -523,49 +550,116 @@ export class DiagramManager {
     changeSizeProcessorInDiagram(diagramId, entityId, width, height) {
         let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
         for (let cell of diagramGraph.getChildCells()) {
-          if (cell.getAttribute('entityId') == entityId) {
-            let cellWidth = width;
-            let cellHeight = height;
-            if (cellWidth < Number(cell.getAttribute('minWidth'))) {
-              cellWidth = Number(cell.getAttribute('minWidth'));
+            if (cell.getAttribute('entityId') == entityId) {
+                let cellWidth = width;
+                let cellHeight = height;
+                if (cellWidth < Number(cell.getAttribute('minWidth'))) {
+                    cellWidth = Number(cell.getAttribute('minWidth'));
+                }
+                if (cellHeight < Number(cell.getAttribute('minHeight'))) {
+                    cellHeight = Number(cell.getAttribute('minHeight'));
+                }
+                diagramGraph.getModel().beginUpdate();
+                let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, cellWidth, cellHeight);
+                diagramGraph.getModel().setGeometry(cell, geometry);
+                diagramGraph.getModel().endUpdate();
+                DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+                    cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+                DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
             }
-            if (cellHeight < Number(cell.getAttribute('minHeight'))) {
-              cellHeight = Number(cell.getAttribute('minHeight'));
-            }
-            diagramGraph.getModel().beginUpdate();
-            let geometry = new mxGeometry(cell.geometry.x, cell.geometry.y, cellWidth, cellHeight);
-            diagramGraph.getModel().setGeometry(cell, geometry);
-            diagramGraph.getModel().endUpdate();
-            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
-              cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
-            DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
-          }
         }
         DiagramComponentHelper.processorSubject.next({
-          name: "refreshDiagram",
-          data: null,
+            name: "refreshDiagram",
+            data: null,
         });
-      }
-    
-      changePostitionProcessorInDiagram(diagramId, entityId, x, y)  {
+    }
+
+    changePostitionProcessorInDiagram(diagramId, entityId, x, y) {
         let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
         for (let cell of diagramGraph.getChildCells()) {
-          if (cell.getAttribute('entityId') == entityId) {
-            diagramGraph.getModel().beginUpdate();
-            let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
-            diagramGraph.getModel().setGeometry(cell, geometry);
-            diagramGraph.getModel().endUpdate();
-            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
-              cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
-            DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
-          }
+            if (cell.getAttribute('entityId') == entityId) {
+                diagramGraph.getModel().beginUpdate();
+                let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
+                diagramGraph.getModel().setGeometry(cell, geometry);
+                diagramGraph.getModel().endUpdate();
+                DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+                    cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+                DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+            }
         }
         DiagramComponentHelper.processorSubject.next({
-          name: "refreshDiagram",
-          data: null,
+            name: "refreshDiagram",
+            data: null,
         });
-      }
+    }
 
+    removeEntityInDiagram(diagramId, entityId) {
+        let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+        diagramGraph.getModel().beginUpdate();
+        for (let cell of diagramGraph.getChildCells()) {
+            if (cell.getAttribute("entityId") == entityId) {
+                diagramGraph.removeCells([cell], true);
+            };
+        }
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+        DiagramComponentHelper.interfaceTypeSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+        DiagramComponentHelper.processorSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+    }
+
+    removeRelationship(relationshipId) {
+        DiagramComponentHelper.modelService.diagrams.forEach((diagram, id) => {
+            let diagramGraph = DiagramComponentHelper.getDiagram(id);
+            diagramGraph.getModel().beginUpdate();
+            for (let edge of diagramGraph.getChildEdges(diagramGraph.getDefaultParent())) {
+                if (edge.getAttribute('idRelationship', '') == relationshipId) {
+                    diagramGraph.getModel().remove(edge);
+                }
+            }
+            diagramGraph.getModel().endUpdate();
+            let encoder = new mxCodec(null);
+            let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
+            DiagramComponentHelper.modelService.setDiagramGraph(id, xml);
+        });
+        DiagramComponentHelper.interfaceTypeSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+        DiagramComponentHelper.processorSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+    }
+
+    removeEntity(entityId) {
+        DiagramComponentHelper.modelService.diagrams.forEach((value, key) => {
+            let diagramGraph = DiagramComponentHelper.getDiagram(key);
+            diagramGraph.getModel().beginUpdate();
+            for (let cell of diagramGraph.getChildCells(diagramGraph.getDefaultParent())) {
+                if (cell.getAttribute('entityId') == entityId) {
+                    diagramGraph.removeCells([cell], true);
+                }
+            }
+            diagramGraph.getModel().endUpdate();
+            let encoder = new mxCodec(null);
+            let xml = mxUtils.getXml(encoder.encode(diagramGraph.getModel()));
+            DiagramComponentHelper.modelService.setDiagramGraph(key, xml);
+        })
+        DiagramComponentHelper.interfaceTypeSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+        DiagramComponentHelper.processorSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+    }
 
 
 

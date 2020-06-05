@@ -6,7 +6,7 @@
       <button mat-flat-button>Clear Filter</button>
 
       <!-- Tree root -->
-      <tree-root (updateData)="updateDataTree($event)" #treeRoot [nodes]="nodes" [options]="options">
+      <tree-root (updateData)="updateDataTree($event)" #treeRoot [nodes]="diagramManager.nodes" [options]="options">
 
         <ng-template #treeNodeTemplate let-node let-index="index">
           <span (mouseover)="mouseOverTree($event)" [attr.data-node-id]="node.data.modelId"
@@ -107,14 +107,14 @@
               <app-processors-diagram-component *ngIf="item.type == 0" [diagramId]="item.id"
                 [proccesorSubject]="proccesorSubject" (processorForm)="showFormProcessor($event)"
                 (createProccesor)="showFormCreateProcessor($event)" [modelService]="modelService"
-                (snackBarError)="showSnackBarError($event)" (updateTree)="updateTree()"
+                (snackBarError)="showSnackBarError($event)"
                 (interfaceForm)="showFormInterface($event, false)" (exchangeForm)="showFormExchange($event)"
                 (partOfForm)="showFormPartOf($event)" (scaleForm)="showFormScale($event)">
               </app-processors-diagram-component>
 
               <app-interfacetypes-diagram-component *ngIf="item.type == 1" [diagramId]="item.id"
                 (createInterfaceType)="showFormCreateInterfaceType($event)" (snackBarError)="showSnackBarError($event)"
-                (updateTree)="updateTree()" [interfaceTypeSubject]="interfaceTypeSubject"
+                [interfaceTypeSubject]="interfaceTypeSubject"
                 (partOfForm)="showFormPartOf($event)" (interfaceTypeScaleForm)="showFormInterfaceTypeScale($event)"
                 (interfaceTypeForm)="showFormInterfaceType($event)">
               </app-interfacetypes-diagram-component>

@@ -37,7 +37,6 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("createProccesor") createProcessorEmitter = new EventEmitter<CreateProcessorDto>();
   @Output("processorForm") processorFormEmitter = new EventEmitter<CellDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
-  @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("interfaceForm") interfaceFormEmitter = new EventEmitter<CellDto>();
   @Output("exchangeForm") exchangeFormEmitter = new EventEmitter<CellDto>();
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
@@ -349,7 +348,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         let relationshipId = DiagramComponentHelper.modelService.createRelationship(RelationshipType.PartOf,
           Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")))
         this.diagramManager.printPartOfRelationship(relationshipId);
-        this.updateTreeEmitter.emit(null);
+        this.diagramManager.updateTree();
         break;
       case RelationshipType.Exchange:
         let exchangeId = DiagramComponentHelper.modelService.createRelationship(RelationshipType.Exchange, Number(this.sourceCellRelationship.getAttribute("entityId", "")),
@@ -605,10 +604,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   onContextMenuProcessorRemove(cell: mxCell) {
-    this.graph.getModel().beginUpdate();
-    DiagramComponentHelper.removeEntityInDiagram(this.diagramId, this.graph, cell.getAttribute('entityId', ''));
-    this.graph.getModel().endUpdate();
-    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+    DiagramComponentHelper.modelService.removeEntityFromDiagram(Number(this.diagramId), Number(cell.getAttribute('entityId', '')));
+    this.diagramManager.removeEntityInDiagram(this.diagramId, cell.getAttribute('entityId', ''));
   }
 
   onContextMenuPartOfForm(cell: mxCell) {
@@ -618,8 +615,8 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   onContextMenuPartOfRemove(cell: mxCell) {
     if ( DiagramComponentHelper.modelService.checkCanDeleteRelationshipPartof( Number(cell.getAttribute('idRelationship', '')))) {
-      DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
-      this.updateTreeEmitter.emit(null);
+      this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
+      this.diagramManager.updateTree();
     } else {
       let relationshipErrorDto = new SnackErrorDto();
         relationshipErrorDto.message = 'Cannot delete "partof" relationship';
@@ -633,7 +630,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   onContextMenuInterfaceScaleRemove(cell: mxCell) {
-    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
+    this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 
   onContextMenuExchangeForm(cell: mxCell) {
@@ -642,7 +639,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   onContextMenuExchangeRemove(cell: mxCell) {
-    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
+    this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 
   private overrideCellSelectable() {

@@ -31,7 +31,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   @Output("createInterfaceType") createInterfaceTypeEmitter = new EventEmitter<CreateInterfaceTypeDto>();
   @Output("snackBarError") snackBarErrorEmitter = new EventEmitter<SnackErrorDto>();
-  @Output("updateTree") updateTreeEmitter = new EventEmitter<any>();
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
   @Output("interfaceTypeForm") interfaceTypeFormEmitter = new EventEmitter<CellDto>();
   @Output("interfaceTypeScaleForm") interfaceTypeScaleFormEmitter = new EventEmitter<InterfaceTypeScaleFormDto>();
@@ -266,7 +265,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         let partOfId = DiagramComponentHelper.modelService.createRelationship(RelationshipType.PartOf,
           Number(this.sourceCellRelationship.getAttribute("entityId", "")), Number(cell.getAttribute("entityId", "")))
         this.diagramManager.printPartOfRelationship(partOfId);
-        this.updateTreeEmitter.emit(null);
+        this.diagramManager.updateTree();
         break;
       case RelationshipType.InterfaceTypeScale:
         let interfaceTypeScaleId = DiagramComponentHelper.modelService.createRelationship(RelationshipType.InterfaceTypeScale,
@@ -389,10 +388,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   onContextMenuInterfaceTypeRemove(cell: mxCell) {
-    this.graph.getModel().beginUpdate();
-    DiagramComponentHelper.removeEntityInDiagram(this.diagramId, this.graph, cell.getAttribute('entityId', ''));
-    this.graph.getModel().endUpdate();
-    DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
+    DiagramComponentHelper.modelService.removeEntityFromDiagram(Number(this.diagramId), Number(cell.getAttribute('entityId', '')));
+    this.diagramManager.removeEntityInDiagram(this.diagramId, cell.getAttribute('entityId', ''));
   }
 
   onContextMenuPartOfForm(cell) {
@@ -401,8 +398,8 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   onContextMenuPartOfRemove(cell) {
-    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
-    this.updateTreeEmitter.emit(null);
+    this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
+    this.diagramManager.updateTree();
   }
 
   onContextMenuInterfaceScaleForm(cell) {
@@ -411,7 +408,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   onContextMenuInterfaceScalRemove(cell) {
-    DiagramComponentHelper.removeRelationship(cell.getAttribute('idRelationship', ''));
+    this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 
   private eventCellsMoveGraph() {

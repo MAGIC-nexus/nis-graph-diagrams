@@ -17,10 +17,6 @@ import {
 import {
   CreateProcessorDto, ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
-import {
-  ProcessorsDiagramComponentComponent
-} from '../processors-diagram-component/processors-diagram-component.component';
-import { InterfacetypesDiagramComponentComponent } from '../interfacetypes-diagram-component/interfacetypes-diagram-component.component';
 import { DiagramManager } from 'src/app/diagram-manager';
 
 @Component({
@@ -234,7 +230,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     private nzModalService: NzModalService,
     private renderer: Renderer2,
     private snackBarService: MatSnackBar,
-    private diagramManager : DiagramManager) { }
+    private diagramManager: DiagramManager) { }
 
   ngOnInit() {
     DiagramComponentHelper.setProcessorSubject(this.proccesorSubject);
@@ -258,11 +254,6 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
           this.showFormProcessor(event.data.processorId);
       }
     })
-  }
-
-  updateTree() {
-    this.nodes = this.modelService.getTreeModelView();
-    this.treeRoot.treeModel.update();
   }
 
   updateDataTree(event) {
@@ -353,7 +344,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   onContextMenuDiagramDelete(node: TreeNode) {
     if (this.modelService.deleteDiagram(node.data.modelId)) {
       this.closeTabDiagram(node.data.id);
-      this.updateTree();
+      this.diagramManager.updateTree();
     }
   }
 
@@ -367,8 +358,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   onContextMenuInterfaceTypeDelete(node: TreeNode) {
-    DiagramComponentHelper.removeEntity(node.data.modelId);
-    this.updateTree();
+    if (DiagramComponentHelper.modelService.deleteEntity(Number(node.data.modelId), true) != -1) {
+      this.diagramManager.removeEntity(node.data.modelId);
+    } else {
+      this.snackBarService.open('Cannot remove entity', null, {
+        duration: 2000,
+      });
+    }
+    this.diagramManager.updateTree();
   }
 
   onContextMenuProcessor(event: MouseEvent, node) {
@@ -381,8 +378,14 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
   }
 
   onContextMenuProcessorDelete(node: TreeNode) {
-    DiagramComponentHelper.removeEntity(node.data.modelId);
-    this.updateTree();
+    if (DiagramComponentHelper.modelService.deleteEntity(Number(node.data.modelId), true) != -1) {
+      this.diagramManager.removeEntity(node.data.modelId);
+    } else {
+      this.snackBarService.open('Cannot remove entity', null, {
+        duration: 2000,
+      });
+    }
+    this.diagramManager.updateTree();
   }
 
   showFormCreateDiagram(typeDiagram: string) {
@@ -462,7 +465,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
         this.numberCreateDiagramProcessor++;
         break;
     }
-    this.updateTree();
+    this.diagramManager.updateTree();
     this.addTabDiagram(<number>diagramId);
   }
 
@@ -556,13 +559,13 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     this.modalRef.destroy();
     let entityId = DiagramComponentHelper.modelService.createEntity(EntityTypes.InterfaceType, this.nameFormCreateInterfaceType.trim());
     this.createInterfaceTypeDto.component.graph.getModel().beginUpdate();
-    this.diagramManager.printInterfaceType(this.createInterfaceTypeDto.component.diagramId, entityId , this.createInterfaceTypeDto.pt.x, this.createInterfaceTypeDto.pt.y,
+    this.diagramManager.printInterfaceType(this.createInterfaceTypeDto.component.diagramId, entityId, this.createInterfaceTypeDto.pt.x, this.createInterfaceTypeDto.pt.y,
       100, 80);
     this.createInterfaceTypeDto.component.graph.getModel().endUpdate();
     DiagramComponentHelper.loadDiagram(this.createInterfaceTypeDto.component.diagramId,
       this.createInterfaceTypeDto.component.graph);
-      this.autoCompleteNewInterfaceType = `it${++this.autoCompleteNewInterfaceTypeCounter}`;
-    this.updateTree();
+    this.autoCompleteNewInterfaceType = `it${++this.autoCompleteNewInterfaceTypeCounter}`;
+    this.diagramManager.updateTree();
     return true;
   }
 
@@ -735,8 +738,8 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
       this.diagramManager.printProcessor(this.createProcessorDto.component.diagramId, entityId, this.createProcessorDto.pt.x, this.createProcessorDto.pt.y, 100, 80);
       DiagramComponentHelper.loadDiagram(this.createProcessorDto.component.diagramId,
         this.createProcessorDto.component.graph);
-        this.autoCompleteNewProcessor = `p${++this.autoCompleteNewProcessorCounter}`;
-      this.updateTree();
+      this.autoCompleteNewProcessor = `p${++this.autoCompleteNewProcessorCounter}`;
+      this.diagramManager.updateTree();
     }
   }
 
