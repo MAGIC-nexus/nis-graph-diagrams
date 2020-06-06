@@ -11,3 +11,7 @@
 ::ng-deep .mat-tab-body-wrapper {
   flex: 1 1 100%;
 }
+
+::ng-deep .ant-tabs-bar {
+  margin-bottom: 0px;
+}

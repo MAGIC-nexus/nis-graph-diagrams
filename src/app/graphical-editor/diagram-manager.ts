@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { DiagramComponentHelper } from './graphical-editor/diagram-component-helper';
+import { DiagramComponentHelper } from './diagram-component-helper';
 import {
     Relationship,
     EntityRelationshipPartOf,
@@ -10,7 +10,7 @@ import {
     RoegenType, Sphere,
     ExchangeRelationship,
     ScaleRelationship
-} from './model-manager';
+} from '../model-manager';
 
 const STYLE_INTERFACETYPESCALE = 'dashed=1;strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';
 const STYLE_EXCHANGE = 'strokeColor=black;perimeterSpacing=4;labelBackgroundColor=white;fontStyle=1';

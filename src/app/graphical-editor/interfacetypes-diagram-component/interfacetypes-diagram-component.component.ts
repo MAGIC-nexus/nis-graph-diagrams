@@ -13,7 +13,7 @@ import {
 import { CreateInterfaceTypeDto, InterfaceTypeScaleFormDto } from './interfacetypes-diagram-component-dto';
 import { Subject } from 'rxjs';
 import { MatMenuTrigger } from '@angular/material';
-import { DiagramManager } from 'src/app/diagram-manager';
+import { DiagramManager } from '../diagram-manager';
 
 @Component({
   selector: 'app-interfacetypes-diagram-component',
@@ -67,7 +67,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   constructor(private diagramManager: DiagramManager) { }
 
   ngOnInit() {
-    
+
   }
 
   ngAfterViewInit() {
@@ -80,6 +80,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     this.contextMenu();
     this.eventCellsMoveGraph()
     this.eventCellsResizeGraph();
+    this.overrideRubberband();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -133,7 +134,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let interfaceDiagramInstance = this;
     const funct = (graph, evt, cell) => {
       let pt: mxPoint = graph.getPointForEvent(evt);
-      interfaceDiagramInstance.diagramManager.printInterfaceType(interfaceDiagramInstance.diagramId,element.getAttribute('data-node-id'), pt.x, pt.y, 100, 80);
+      interfaceDiagramInstance.diagramManager.printInterfaceType(interfaceDiagramInstance.diagramId, element.getAttribute('data-node-id'), pt.x, pt.y, 100, 80);
       DiagramComponentHelper.loadDiagram(interfaceDiagramInstance.diagramId, interfaceDiagramInstance.graph);
     }
     let dragElement = document.createElement("img");
@@ -418,7 +419,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       for (let cell of cellsMoved) {
         if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
           interfaceTypeInstance.diagramManager.changePostitionInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'),
-          cell.geometry.x, cell.geometry.y);
+            cell.geometry.x, cell.geometry.y);
         }
       }
     });
@@ -427,7 +428,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
   private eventCellsResizeGraph() {
     let interfaceTypeInstance = this;
-    this.graph.addListener(mxEvent.CELLS_RESIZED, function (sender : mxGraph, event) {
+    this.graph.addListener(mxEvent.CELLS_RESIZED, function (sender: mxGraph, event) {
       let cellsResize: [mxCell] = event.properties.cells;
       for (let cell of cellsResize) {
         if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
@@ -437,19 +438,19 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
             height: cell.geometry.height,
             width: cell.geometry.width,
           }
-          interfaceTypeInstance.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'), 
-          newGeometry);
+          interfaceTypeInstance.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'),
+            newGeometry);
         }
       }
     });
   }
 
-  private changeSizeInterfaceTypeInDiagram(diagramId, entityId, newGeometry : GeometryCell) {
+  private changeSizeInterfaceTypeInDiagram(diagramId, entityId, newGeometry: GeometryCell) {
     let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
     for (let cell of diagramGraph.getChildCells()) {
       if (cell.getAttribute('entityId') == entityId) {
-        diagramGraph.getModel().beginUpdate();  
-        let geometry = new mxGeometry(newGeometry.x, newGeometry.y, newGeometry.width , newGeometry.height);
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(newGeometry.x, newGeometry.y, newGeometry.width, newGeometry.height);
         diagramGraph.getModel().setGeometry(cell, geometry);
         diagramGraph.getModel().endUpdate();
         DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
@@ -461,5 +462,51 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       name: "refreshDiagram",
       data: null,
     });
+  }
+
+  private overrideRubberband() {
+    let rb = new mxRubberband(this.graph);
+    rb.defaultOpacity = 100;
+    rb.createShape = function () {
+      if (this.sharedDiv == null) {
+        this.sharedDiv = document.createElement('div');
+        this.sharedDiv.className = 'mxRubberband';
+        (<HTMLDivElement>this.sharedDiv).style.backgroundColor = '#4550FF33';
+        (<HTMLDivElement>this.sharedDiv).style.border = '1px solid blue';
+        (<HTMLDivElement>this.sharedDiv).style.position = 'relative';
+        (<HTMLDivElement>this.sharedDiv).style.zIndex = '100';
+        mxUtils.setOpacity(this.sharedDiv, this.defaultOpacity);
+      }
+
+      this.graph.container.appendChild(this.sharedDiv);
+      var result = this.sharedDiv;
+
+      // if (mxClient.IS_SVG && (!mxClient.IS_IE || document.documentMode >= 10) && this.fadeOut) {
+      //   this.sharedDiv = null;
+      // }
+
+      return result;
+    }
+    let container = this.graphContainer;
+    rb.repaint = function () {
+      if (this.div != null) {
+        let containerHeight = container.nativeElement.getElementsByTagName("svg")[0].clientHeight;
+        var x = this.currentX - this.graph.panDx;
+        var y = this.currentY - this.graph.panDy;
+
+        this.x = Math.min(this.first.x, x);
+        this.y = Math.min(this.first.y, y);
+        this.width = Math.max(this.first.x, x) - this.x;
+        this.height = Math.max(this.first.y, y) - this.y;
+
+        var dx = (mxClient.IS_VML) ? this.graph.panDx : 0;
+        var dy = (mxClient.IS_VML) ? this.graph.panDy : 0;
+
+        this.div.style.left = (this.x + dx) + 'px';
+        this.div.style.top = (this.y + dy - containerHeight) + 'px';
+        this.div.style.width = Math.max(1, this.width) + 'px';
+        this.div.style.height = Math.max(1, this.height) + 'px';
+      }
+    }
   }
 }

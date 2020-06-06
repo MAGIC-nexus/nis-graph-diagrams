@@ -777,6 +777,11 @@ declare class mxVertexHandler {
 declare class mxRubberband {
 
   constructor(graph:mxGraph);
+  defaultOpacity;
+  update(x, y);
+  createShape();
+  repaint();
+
 }
 
 

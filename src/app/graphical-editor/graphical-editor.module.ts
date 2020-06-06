@@ -38,7 +38,7 @@ import { TreeModule } from "angular-tree-component";
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { InterfacelistComponent } from './interfacelist/interfacelist.component';
-import { DiagramManager } from '../diagram-manager';
+import { DiagramManager } from './diagram-manager';
 
 @NgModule({
   declarations: [

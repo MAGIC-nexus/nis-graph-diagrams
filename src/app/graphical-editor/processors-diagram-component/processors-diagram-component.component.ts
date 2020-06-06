@@ -14,7 +14,7 @@ import {
 import { CreateProcessorDto } from './processors-diagram-component-dto';
 import { CellDto } from '../diagram-component-helper';
 import { MatMenuTrigger } from '@angular/material';
-import { DiagramManager } from 'src/app/diagram-manager';
+import { DiagramManager } from '../diagram-manager';
 
 @Component({
   selector: 'app-processors-diagram-component',
@@ -495,8 +495,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     graph.isCellLocked = function (cell) {
       return false;
     };
-
-    new mxRubberband(graph);
+    
   }
 
   private customLabel() {

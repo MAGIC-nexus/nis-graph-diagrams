@@ -84,4 +84,10 @@ declare class mxGeometry {
   relative;
   
 }
+
+declare class mxClient {
+  static IS_SVG
+  static IS_IE
+  static IS_VML;
+}
 /******************      Model end     **************/

@@ -17,7 +17,7 @@ import {
 import {
   CreateProcessorDto, ChangeInterfaceInGraphDto
 } from '../processors-diagram-component/processors-diagram-component-dto';
-import { DiagramManager } from 'src/app/diagram-manager';
+import { DiagramManager } from '../diagram-manager';
 
 @Component({
   selector: 'app-graphical-editor-component',

@@ -153,6 +153,7 @@ declare class mxUtils {
   static getXml(node: any);
   static getXml(node: any, linefeed: any);
   static parseXml(xml: any);
+  static setOpacity(node, value);
 }
 
 /******************      Util end      **************/
