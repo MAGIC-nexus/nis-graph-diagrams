@@ -31,6 +31,17 @@
   </ng-template>
 </mat-menu>
 
+<!-- Context Menu Multiple InterfaceType-->
+<div #contextMenuMultipleInterfaceTypeTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+  [style.left]="contextMenuMultipleInterfaceTypePosition.x" [style.top]="contextMenuMultipleInterfaceTypePosition.y"
+  [matMenuTriggerFor]="contextMenuMultipleInterfaceType">
+</div>
+<mat-menu #contextMenuMultipleInterfaceType="matMenu">
+  <ng-template matMenuContent let-cells="cells">
+    <button mat-menu-item (click)="onContextMenuMultipleInterfaceTypeRemove(cells)">Remove</button>
+  </ng-template>
+</mat-menu>
+
 
 <!-- Context Menu PartOf-->
 <div #contextMenuPartOfTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"

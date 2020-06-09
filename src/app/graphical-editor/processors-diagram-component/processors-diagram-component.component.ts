@@ -94,6 +94,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.overrideCellSelectable();
     this.eventCellsMoveGraph();
     this.eventCellsResizeGraph();
+    this.overrideRubberband();
     DiagramComponentHelper.loadDiagram(this.diagramId, this.graph);
   }
 
@@ -730,6 +731,52 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       name: "refreshDiagram",
       data: null,
     });
+  }
+
+  private overrideRubberband() {
+    let rb = new mxRubberband(this.graph);
+    rb.defaultOpacity = 100;
+    rb.createShape = function () {
+      if (this.sharedDiv == null) {
+        this.sharedDiv = document.createElement('div');
+        this.sharedDiv.className = 'mxRubberband';
+        (<HTMLDivElement>this.sharedDiv).style.backgroundColor = '#4550FF33';
+        (<HTMLDivElement>this.sharedDiv).style.border = '1px solid blue';
+        (<HTMLDivElement>this.sharedDiv).style.position = 'relative';
+        (<HTMLDivElement>this.sharedDiv).style.zIndex = '100';
+        mxUtils.setOpacity(this.sharedDiv, this.defaultOpacity);
+      }
+
+      this.graph.container.appendChild(this.sharedDiv);
+      var result = this.sharedDiv;
+
+      // if (mxClient.IS_SVG && (!mxClient.IS_IE || document.documentMode >= 10) && this.fadeOut) {
+      //   this.sharedDiv = null;
+      // }
+
+      return result;
+    }
+    let container = this.graphContainer;
+    rb.repaint = function () {
+      if (this.div != null) {
+        let containerHeight = container.nativeElement.getElementsByTagName("svg")[0].clientHeight;
+        var x = this.currentX - this.graph.panDx;
+        var y = this.currentY - this.graph.panDy;
+
+        this.x = Math.min(this.first.x, x);
+        this.y = Math.min(this.first.y, y);
+        this.width = Math.max(this.first.x, x) - this.x;
+        this.height = Math.max(this.first.y, y) - this.y;
+
+        var dx = (mxClient.IS_VML) ? this.graph.panDx : 0;
+        var dy = (mxClient.IS_VML) ? this.graph.panDy : 0;
+
+        this.div.style.left = (this.x + dx) + 'px';
+        this.div.style.top = (this.y + dy - containerHeight) + 'px';
+        this.div.style.width = Math.max(1, this.width) + 'px';
+        this.div.style.height = Math.max(1, this.height) + 'px';
+      }
+    }
   }
 
 }

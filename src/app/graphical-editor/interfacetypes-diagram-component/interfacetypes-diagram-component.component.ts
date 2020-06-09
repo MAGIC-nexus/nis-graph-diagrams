@@ -63,6 +63,13 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     y: '0px',
   }
 
+  //ContextMenu Multiple InterfaceTypeScale
+  @ViewChild('contextMenuMultipleInterfaceTypeTrigger', { static: false }) contextMenuMultipleInterfaceType: MatMenuTrigger;
+  contextMenuMultipleInterfaceTypePosition = {
+    x: '0px',
+    y: '0px',
+  }
+
 
   constructor(private diagramManager: DiagramManager) { }
 
@@ -348,25 +355,39 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     let interfaceTypeInstance = this;
 
     function createPopupMenu(cell: mxCell, event: PointerEvent) {
-      if (cell.value.nodeName.toLowerCase() == "interfacetype") {
-        interfaceTypeInstance.contextMenuInterfaceTypePosition.x = event.clientX + 'px';
-        interfaceTypeInstance.contextMenuInterfaceTypePosition.y = event.clientY + 'px';
-        interfaceTypeInstance.contextMenuInterfaceType.menuData = { 'cell': cell };
-        interfaceTypeInstance.contextMenuInterfaceType.menu.focusFirstItem('mouse');
-        interfaceTypeInstance.contextMenuInterfaceType.openMenu();
+      let selectionCells = interfaceTypeInstance.graph.getSelectionCells();
+      if (selectionCells.length > 1) {
+        interfaceTypeInstance.contextMenuMultipleInterfaceTypePosition.x = event.clientX + 'px';
+        interfaceTypeInstance.contextMenuMultipleInterfaceTypePosition.y = event.clientY + 'px';
+        interfaceTypeInstance.contextMenuMultipleInterfaceType.menuData = { 'cells': selectionCells };
+        interfaceTypeInstance.contextMenuMultipleInterfaceType.menu.focusFirstItem('mouse');
+        interfaceTypeInstance.contextMenuMultipleInterfaceType.openMenu();
+        return;
       }
-      else if (cell.value.nodeName.toLowerCase() == "partof") {
-        interfaceTypeInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
-        interfaceTypeInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
-        interfaceTypeInstance.contextMenuPartOf.menuData = { 'cell': cell };
-        interfaceTypeInstance.contextMenuPartOf.menu.focusFirstItem('mouse');
-        interfaceTypeInstance.contextMenuPartOf.openMenu();
-      } else if (cell.value.nodeName.toLowerCase() == "interfacetypescale") {
-        interfaceTypeInstance.contextMenuInterfaceTypeScalePosition.x = event.clientX + 'px';
-        interfaceTypeInstance.contextMenuInterfaceTypeScalePosition.y = event.clientY + 'px';
-        interfaceTypeInstance.contextMenuInterfaceTypeScale.menuData = { 'cell': cell };
-        interfaceTypeInstance.contextMenuInterfaceTypeScale.menu.focusFirstItem('mouse');
-        interfaceTypeInstance.contextMenuInterfaceTypeScale.openMenu();
+      if (cell) {
+        if (cell.value.nodeName.toLowerCase() == "interfacetype") {
+          interfaceTypeInstance.contextMenuInterfaceTypePosition.x = event.clientX + 'px';
+          interfaceTypeInstance.contextMenuInterfaceTypePosition.y = event.clientY + 'px';
+          interfaceTypeInstance.contextMenuInterfaceType.menuData = { 'cell': cell };
+          interfaceTypeInstance.contextMenuInterfaceType.menu.focusFirstItem('mouse');
+          interfaceTypeInstance.contextMenuInterfaceType.openMenu();
+          return;
+        }
+        else if (cell.value.nodeName.toLowerCase() == "partof") {
+          interfaceTypeInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
+          interfaceTypeInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
+          interfaceTypeInstance.contextMenuPartOf.menuData = { 'cell': cell };
+          interfaceTypeInstance.contextMenuPartOf.menu.focusFirstItem('mouse');
+          interfaceTypeInstance.contextMenuPartOf.openMenu();
+          return;
+        } else if (cell.value.nodeName.toLowerCase() == "interfacetypescale") {
+          interfaceTypeInstance.contextMenuInterfaceTypeScalePosition.x = event.clientX + 'px';
+          interfaceTypeInstance.contextMenuInterfaceTypeScalePosition.y = event.clientY + 'px';
+          interfaceTypeInstance.contextMenuInterfaceTypeScale.menuData = { 'cell': cell };
+          interfaceTypeInstance.contextMenuInterfaceTypeScale.menu.focusFirstItem('mouse');
+          interfaceTypeInstance.contextMenuInterfaceTypeScale.openMenu();
+          return;
+        }
       }
     }
 
@@ -375,9 +396,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         evt.preventDefault();
         return false;
       };
-      if (cell != null) {
-        return createPopupMenu(cell, evt);
-      }
+      return createPopupMenu(cell, evt);
     };
   }
 
@@ -391,6 +410,15 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   onContextMenuInterfaceTypeRemove(cell: mxCell) {
     DiagramComponentHelper.modelService.removeEntityFromDiagram(Number(this.diagramId), Number(cell.getAttribute('entityId', '')));
     this.diagramManager.removeEntityInDiagram(this.diagramId, cell.getAttribute('entityId', ''));
+  }
+
+  onContextMenuMultipleInterfaceTypeRemove(cells: [mxCell]) {
+    let entitiesId = new Array();
+    for (let cell of cells) {
+      DiagramComponentHelper.modelService.removeEntityFromDiagram(Number(this.diagramId), Number(cell.getAttribute('entityId', '')));
+      entitiesId.push(cell.getAttribute('entityId', ''));
+    }
+    this.diagramManager.removeEntitiesInDiagram(this.diagramId, entitiesId);
   }
 
   onContextMenuPartOfForm(cell) {
@@ -418,12 +446,27 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       let cellsMoved: [mxCell] = event.properties.cells;
       for (let cell of cellsMoved) {
         if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
-          interfaceTypeInstance.diagramManager.changePostitionInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'),
+          interfaceTypeInstance.changePostitionInterfaceTypeInDiagram(interfaceTypeInstance, cell.getAttribute('entityId'),
             cell.geometry.x, cell.geometry.y);
         }
       }
     });
   }
+
+  changePostitionInterfaceTypeInDiagram(interfaceInstance : InterfacetypesDiagramComponentComponent, entityId, x, y) {
+    let diagramGraph = interfaceInstance.graph;
+    for (let cell of diagramGraph.getChildCells()) {
+        if (cell.getAttribute('entityId') == entityId) {
+            diagramGraph.getModel().beginUpdate();
+            let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
+            diagramGraph.getModel().setGeometry(cell, geometry);
+            diagramGraph.getModel().endUpdate();
+            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(interfaceInstance.diagramId), Number(cell.getAttribute("entityId", "")),
+                cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+            DiagramComponentHelper.updateGraphInModel(Number(interfaceInstance.diagramId), diagramGraph);
+        }
+    }
+}
 
 
   private eventCellsResizeGraph() {
@@ -432,36 +475,17 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       let cellsResize: [mxCell] = event.properties.cells;
       for (let cell of cellsResize) {
         if (cell.value.nodeName.toLowerCase() == 'interfacetype') {
-          let newGeometry = {
-            x: cell.geometry.x,
-            y: cell.geometry.y,
-            height: cell.geometry.height,
-            width: cell.geometry.width,
-          }
-          interfaceTypeInstance.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance.diagramId, cell.getAttribute('entityId'),
-            newGeometry);
+          interfaceTypeInstance.changeSizeInterfaceTypeInDiagram(interfaceTypeInstance, cell);
         }
       }
     });
   }
 
-  private changeSizeInterfaceTypeInDiagram(diagramId, entityId, newGeometry: GeometryCell) {
-    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
-    for (let cell of diagramGraph.getChildCells()) {
-      if (cell.getAttribute('entityId') == entityId) {
-        diagramGraph.getModel().beginUpdate();
-        let geometry = new mxGeometry(newGeometry.x, newGeometry.y, newGeometry.width, newGeometry.height);
-        diagramGraph.getModel().setGeometry(cell, geometry);
-        diagramGraph.getModel().endUpdate();
-        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
+  private changeSizeInterfaceTypeInDiagram(interfaceInstance : InterfacetypesDiagramComponentComponent, cell) {
+    let diagramGraph = interfaceInstance.graph;
+    DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(interfaceInstance.diagramId), Number(cell.getAttribute("entityId", "")),
           cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
-        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
-      }
-    }
-    DiagramComponentHelper.interfaceTypeSubject.next({
-      name: "refreshDiagram",
-      data: null,
-    });
+    DiagramComponentHelper.updateGraphInModel(Number(interfaceInstance.diagramId), diagramGraph);
   }
 
   private overrideRubberband() {
@@ -509,4 +533,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
       }
     }
   }
+
+
 }

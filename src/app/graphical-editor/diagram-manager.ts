@@ -25,6 +25,11 @@ interface CellsInterfacePositions {
     rightCenter: Array<any>;
 }
 
+interface cellPosition {
+    x;
+    y;
+}
+
 enum POSTION_INTERFACE_Y {
     TOP,
     BOTTOM,
@@ -598,6 +603,26 @@ export class DiagramManager {
         diagramGraph.getModel().beginUpdate();
         for (let cell of diagramGraph.getChildCells()) {
             if (cell.getAttribute("entityId") == entityId) {
+                diagramGraph.removeCells([cell], true);
+            };
+        }
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+        DiagramComponentHelper.interfaceTypeSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+        DiagramComponentHelper.processorSubject.next({
+            name: "refreshDiagram",
+            data: null,
+        });
+    }
+
+    removeEntitiesInDiagram(diagramId, entitiesId) {
+        let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
+        diagramGraph.getModel().beginUpdate();
+        for (let cell of diagramGraph.getChildCells()) {
+            if (entitiesId.includes(cell.getAttribute("entityId"))) {
                 diagramGraph.removeCells([cell], true);
             };
         }
