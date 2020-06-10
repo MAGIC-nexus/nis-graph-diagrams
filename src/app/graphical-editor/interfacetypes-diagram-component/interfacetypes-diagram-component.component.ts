@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, Input, Output, EventEmitter, ɵConsole } from '@angular/core';
 import {
   RelationshipType,
 } from '../../model-manager';
@@ -453,20 +453,20 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     });
   }
 
-  changePostitionInterfaceTypeInDiagram(interfaceInstance : InterfacetypesDiagramComponentComponent, entityId, x, y) {
+  changePostitionInterfaceTypeInDiagram(interfaceInstance: InterfacetypesDiagramComponentComponent, entityId, x, y) {
     let diagramGraph = interfaceInstance.graph;
     for (let cell of diagramGraph.getChildCells()) {
-        if (cell.getAttribute('entityId') == entityId) {
-            diagramGraph.getModel().beginUpdate();
-            let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
-            diagramGraph.getModel().setGeometry(cell, geometry);
-            diagramGraph.getModel().endUpdate();
-            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(interfaceInstance.diagramId), Number(cell.getAttribute("entityId", "")),
-                cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
-            DiagramComponentHelper.updateGraphInModel(Number(interfaceInstance.diagramId), diagramGraph);
-        }
+      if (cell.getAttribute('entityId') == entityId) {
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(interfaceInstance.diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(interfaceInstance.diagramId), diagramGraph);
+      }
     }
-}
+  }
 
 
   private eventCellsResizeGraph() {
@@ -481,25 +481,32 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
     });
   }
 
-  private changeSizeInterfaceTypeInDiagram(interfaceInstance : InterfacetypesDiagramComponentComponent, cell) {
+  private changeSizeInterfaceTypeInDiagram(interfaceInstance: InterfacetypesDiagramComponentComponent, cell) {
     let diagramGraph = interfaceInstance.graph;
     DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(interfaceInstance.diagramId), Number(cell.getAttribute("entityId", "")),
-          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+      cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
     DiagramComponentHelper.updateGraphInModel(Number(interfaceInstance.diagramId), diagramGraph);
   }
 
   private overrideRubberband() {
+
     let rb = new mxRubberband(this.graph);
-    rb.defaultOpacity = 100;
+    let active = false;
+    let shape: SVGRectElement;
+    let svg = this.graphContainer.nativeElement.getElementsByTagName("svg")[0];
+
     rb.createShape = function () {
-      if (this.sharedDiv == null) {
+      if (active == false) {
+        shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        shape.style.fill = '#4550FF33';
+        shape.style.stroke = 'blue';
+        shape.style.strokeWidth = '2';
+        console.log(this.first.x);
+        svg.append(shape);
+        active = true;
         this.sharedDiv = document.createElement('div');
         this.sharedDiv.className = 'mxRubberband';
-        (<HTMLDivElement>this.sharedDiv).style.backgroundColor = '#4550FF33';
-        (<HTMLDivElement>this.sharedDiv).style.border = '1px solid blue';
-        (<HTMLDivElement>this.sharedDiv).style.position = 'relative';
-        (<HTMLDivElement>this.sharedDiv).style.zIndex = '100';
-        mxUtils.setOpacity(this.sharedDiv, this.defaultOpacity);
+        this.sharedDiv.style.display = 'none';
       }
 
       this.graph.container.appendChild(this.sharedDiv);
@@ -511,10 +518,9 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
 
       return result;
     }
-    let container = this.graphContainer;
+
     rb.repaint = function () {
-      if (this.div != null) {
-        let containerHeight = container.nativeElement.getElementsByTagName("svg")[0].clientHeight;
+      if (active == true) {
         var x = this.currentX - this.graph.panDx;
         var y = this.currentY - this.graph.panDy;
 
@@ -523,15 +529,25 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         this.width = Math.max(this.first.x, x) - this.x;
         this.height = Math.max(this.first.y, y) - this.y;
 
-        var dx = (mxClient.IS_VML) ? this.graph.panDx : 0;
-        var dy = (mxClient.IS_VML) ? this.graph.panDy : 0;
-
-        this.div.style.left = (this.x + dx) + 'px';
-        this.div.style.top = (this.y + dy - containerHeight) + 'px';
-        this.div.style.width = Math.max(1, this.width) + 'px';
-        this.div.style.height = Math.max(1, this.height) + 'px';
+        shape.setAttribute("x", this.x.toString());
+        shape.setAttribute("y", this.y.toString());
+        shape.setAttribute("width", this.width.toString());
+        shape.setAttribute("height", this.height.toString());
       }
     }
+
+    rb.execute = function(evt)
+    {
+      shape.remove();
+      active = false;
+      var rect = new mxRectangle(this.x, this.y, this.width, this.height);
+      this.graph.selectRegion(rect, evt);
+    };
+    
+    rb.isActive = function(sender, me)
+    {
+      return active;
+    };
   }
 
 

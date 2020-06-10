@@ -156,4 +156,8 @@ declare class mxUtils {
   static setOpacity(node, value);
 }
 
+declare class mxRectangle {
+  constructor(x, y, width, height);
+}
+
 /******************      Util end      **************/

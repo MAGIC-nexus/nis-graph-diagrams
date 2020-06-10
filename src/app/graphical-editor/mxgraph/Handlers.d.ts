@@ -781,6 +781,9 @@ declare class mxRubberband {
   update(x, y);
   createShape();
   repaint();
+  mouseUp(sender, me);
+  execute(evt);
+  isActive(sender, me);
 
 }
 
