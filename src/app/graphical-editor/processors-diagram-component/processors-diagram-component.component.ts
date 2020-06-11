@@ -42,9 +42,16 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   @Output("partOfForm") partOfFormEmitter = new EventEmitter<PartOfFormDto>();
   @Output("scaleForm") scaleFormEmitter = new EventEmitter<CellDto>();
 
-  //ContextMenuProcessor
+  //ContextMenu Processor
   @ViewChild('contextMenuProcessorTrigger', { static: false }) contextMenuProcessor: MatMenuTrigger;
   contextMenuProcessorPosition = {
+    x: '0px',
+    y: '0px',
+  }
+
+  //ContextMenu Multiple Processor
+  @ViewChild('contextMenuMultipleProcessorTrigger', { static: false }) contextMenuMultipleProcessor: MatMenuTrigger;
+  contextMenuMultipleProcessorPosition = {
     x: '0px',
     y: '0px',
   }
@@ -77,7 +84,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
   sourceCellRelationship: mxCell;
 
-  constructor(private diagramManager : DiagramManager) { }
+  constructor(private diagramManager: DiagramManager) { }
 
   ngOnInit() {
 
@@ -353,12 +360,12 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         break;
       case RelationshipType.Exchange:
         let exchangeId = DiagramComponentHelper.modelService.createRelationship(RelationshipType.Exchange, Number(this.sourceCellRelationship.getAttribute("entityId", "")),
-        Number(cell.getAttribute("entityId", "")));
+          Number(cell.getAttribute("entityId", "")));
         this.diagramManager.printExchangeRelationship(exchangeId);
         break;
       case RelationshipType.InterfaceScale:
         let interfaceScaleId = DiagramComponentHelper.modelService.createRelationship(RelationshipType.InterfaceScale, Number(this.sourceCellRelationship.getAttribute("entityId", "")),
-        Number(cell.getAttribute("entityId", "")));
+          Number(cell.getAttribute("entityId", "")));
         this.diagramManager.printInterfaceScaleRelationship(interfaceScaleId);
         break;
     }
@@ -496,7 +503,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     graph.isCellLocked = function (cell) {
       return false;
     };
-    
+
   }
 
   private customLabel() {
@@ -559,30 +566,45 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     let processorInstance = this;
 
     function createPopupMenu(cell: mxCell, event: PointerEvent) {
-      if (cell.value.nodeName.toLowerCase() == "processor") {
-        processorInstance.contextMenuProcessorPosition.x = event.clientX + 'px';
-        processorInstance.contextMenuProcessorPosition.y = event.clientY + 'px';
-        processorInstance.contextMenuProcessor.menuData = { 'cell': cell };
-        processorInstance.contextMenuProcessor.menu.focusFirstItem('mouse');
-        processorInstance.contextMenuProcessor.openMenu();
-      } else if (cell.value.nodeName.toLowerCase() == "partof") {
-        processorInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
-        processorInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
-        processorInstance.contextMenuPartOf.menuData = { 'cell': cell };
-        processorInstance.contextMenuPartOf.menu.focusFirstItem('mouse');
-        processorInstance.contextMenuPartOf.openMenu();
-      } else if (cell.value.nodeName.toLowerCase() == "exchange") {
-        processorInstance.contextMenuExchangePosition.x = event.clientX + 'px';
-        processorInstance.contextMenuExchangePosition.y = event.clientY + 'px';
-        processorInstance.contextMenuExchange.menuData = { 'cell': cell };
-        processorInstance.contextMenuExchange.menu.focusFirstItem('mouse');
-        processorInstance.contextMenuExchange.openMenu();
-      } else if (cell.value.nodeName.toLowerCase() == "interfacescale") {
-        processorInstance.contextMenuInterfaceScalePosition.x = event.clientX + 'px';
-        processorInstance.contextMenuInterfaceScalePosition.y = event.clientY + 'px';
-        processorInstance.contextMenuInterfaceScale.menuData = { 'cell': cell };
-        processorInstance.contextMenuInterfaceScale.menu.focusFirstItem('mouse');
-        processorInstance.contextMenuInterfaceScale.openMenu();
+      let selectionCells = processorInstance.graph.getSelectionCells();
+      if (selectionCells.length > 1) {
+        processorInstance.contextMenuMultipleProcessorPosition.x = event.clientX + 'px';
+        processorInstance.contextMenuMultipleProcessorPosition.y = event.clientY + 'px';
+        processorInstance.contextMenuMultipleProcessor.menuData = { 'cells': selectionCells };
+        processorInstance.contextMenuMultipleProcessor.menu.focusFirstItem('mouse');
+        processorInstance.contextMenuMultipleProcessor.openMenu();
+        return;
+      }
+      if (cell) {
+        if (cell.value.nodeName.toLowerCase() == "processor") {
+          processorInstance.contextMenuProcessorPosition.x = event.clientX + 'px';
+          processorInstance.contextMenuProcessorPosition.y = event.clientY + 'px';
+          processorInstance.contextMenuProcessor.menuData = { 'cell': cell };
+          processorInstance.contextMenuProcessor.menu.focusFirstItem('mouse');
+          processorInstance.contextMenuProcessor.openMenu();
+          return;
+        } else if (cell.value.nodeName.toLowerCase() == "partof") {
+          processorInstance.contextMenuPartOfPosition.x = event.clientX + 'px';
+          processorInstance.contextMenuPartOfPosition.y = event.clientY + 'px';
+          processorInstance.contextMenuPartOf.menuData = { 'cell': cell };
+          processorInstance.contextMenuPartOf.menu.focusFirstItem('mouse');
+          processorInstance.contextMenuPartOf.openMenu();
+          return;
+        } else if (cell.value.nodeName.toLowerCase() == "exchange") {
+          processorInstance.contextMenuExchangePosition.x = event.clientX + 'px';
+          processorInstance.contextMenuExchangePosition.y = event.clientY + 'px';
+          processorInstance.contextMenuExchange.menuData = { 'cell': cell };
+          processorInstance.contextMenuExchange.menu.focusFirstItem('mouse');
+          processorInstance.contextMenuExchange.openMenu();
+          return;
+        } else if (cell.value.nodeName.toLowerCase() == "interfacescale") {
+          processorInstance.contextMenuInterfaceScalePosition.x = event.clientX + 'px';
+          processorInstance.contextMenuInterfaceScalePosition.y = event.clientY + 'px';
+          processorInstance.contextMenuInterfaceScale.menuData = { 'cell': cell };
+          processorInstance.contextMenuInterfaceScale.menu.focusFirstItem('mouse');
+          processorInstance.contextMenuInterfaceScale.openMenu();
+          return;
+        }
       }
     }
 
@@ -591,9 +613,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         evt.preventDefault();
         return false;
       };
-      if (cell != null) {
-        return createPopupMenu(cell, evt);
-      }
+      return createPopupMenu(cell, evt);
     };
   }
 
@@ -608,20 +628,29 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
     this.diagramManager.removeEntityInDiagram(this.diagramId, cell.getAttribute('entityId', ''));
   }
 
+  onContextMenuMultipleProcessorRemove(cells: [mxCell]) {
+    let entitiesId = new Array();
+    for (let cell of cells) {
+      DiagramComponentHelper.modelService.removeEntityFromDiagram(Number(this.diagramId), Number(cell.getAttribute('entityId', '')));
+      entitiesId.push(cell.getAttribute('entityId', ''));
+    }
+    this.diagramManager.removeEntitiesInDiagram(this.diagramId, entitiesId);
+  }
+
   onContextMenuPartOfForm(cell: mxCell) {
     let partOfDto: PartOfFormDto = { cellId: cell.getAttribute('idRelationship', '') };
     this.partOfFormEmitter.emit(partOfDto);
   }
 
   onContextMenuPartOfRemove(cell: mxCell) {
-    if ( DiagramComponentHelper.modelService.checkCanDeleteRelationshipPartof( Number(cell.getAttribute('idRelationship', '')))) {
+    if (DiagramComponentHelper.modelService.checkCanDeleteRelationshipPartof(Number(cell.getAttribute('idRelationship', '')))) {
       this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
       this.diagramManager.updateTree();
     } else {
       let relationshipErrorDto = new SnackErrorDto();
-        relationshipErrorDto.message = 'Cannot delete "partof" relationship';
-        this.snackBarErrorEmitter.emit(relationshipErrorDto);
-    } 
+      relationshipErrorDto.message = 'Cannot delete "partof" relationship';
+      this.snackBarErrorEmitter.emit(relationshipErrorDto);
+    }
   }
 
   onContextMenuInterfaceScaleForm(cell: mxCell) {
@@ -660,11 +689,26 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cellsMoved: [mxCell] = event.properties.cells;
       for (let cell of cellsMoved) {
         if (cell.value.nodeName.toLowerCase() == 'processor') {
-          processorInstance.diagramManager.changePostitionProcessorInDiagram(processorInstance.diagramId, cell.getAttribute('entityId'),
-          cell.geometry.x, cell.geometry.y);
+          processorInstance.changePostitionProcessorInDiagram(processorInstance, cell.getAttribute('entityId'),
+            cell.geometry.x, cell.geometry.y);
         }
       }
     });
+  }
+
+  private changePostitionProcessorInDiagram(processorInstance: ProcessorsDiagramComponentComponent, entityId, x, y) {
+    let diagramGraph = processorInstance.graph;
+    for (let cell of diagramGraph.getChildCells()) {
+      if (cell.getAttribute('entityId') == entityId) {
+        diagramGraph.getModel().beginUpdate();
+        let geometry = new mxGeometry(x, y, cell.geometry.width, cell.geometry.height);
+        diagramGraph.getModel().setGeometry(cell, geometry);
+        diagramGraph.getModel().endUpdate();
+        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(processorInstance.diagramId), Number(cell.getAttribute("entityId", "")),
+          cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+        DiagramComponentHelper.updateGraphInModel(Number(processorInstance.diagramId), diagramGraph);
+      }
+    }
   }
 
   private eventCellsResizeGraph() {
@@ -673,78 +717,69 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
       let cellsResize: [mxCell] = event.properties.cells;
       let cellsPreviousResize: [mxGeometry] = event.properties.previous;
       console.log(event.properties);
-      for (let i = 0; i < cellsResize.length ; i++) {
+      for (let i = 0; i < cellsResize.length; i++) {
         if (cellsResize[i].value.nodeName.toLowerCase() == 'processor') {
-          let newGeometryCell = {
-            x: cellsResize[i].geometry.x,
-            y: cellsResize[i].geometry.y,
-            height: cellsResize[i].geometry.height,
-            width: cellsResize[i].geometry.width,
-          }
           let prevoiousGeometryCell = {
             x: cellsPreviousResize[i].x,
             y: cellsPreviousResize[i].y,
             height: cellsPreviousResize[i].height,
             width: cellsPreviousResize[i].width,
           }
-          processorInstance.changeSizeProcessorInDiagram(processorInstance.diagramId, cellsResize[i].getAttribute('entityId'),
-            newGeometryCell, prevoiousGeometryCell);
+          processorInstance.changeSizeProcessorInDiagram(processorInstance, cellsResize[i], prevoiousGeometryCell);
         }
       }
     });
   }
 
-  /* In the "newGeometry" parameter just change the height and width, the old and new geometry are needed 
-  to correct the positioning when you change it in the editor */
-  private changeSizeProcessorInDiagram(diagramId, entityId, newGeometry : GeometryCell, previousGeometry: GeometryCell) {
-    let diagramGraph = DiagramComponentHelper.getDiagram(Number(diagramId));
-    for (let cell of diagramGraph.getChildCells()) {
-      if (cell.getAttribute('entityId') == entityId) {
-        let cellWidth = newGeometry.width;
-        let cellHeight = newGeometry.height;
-        let cellX = newGeometry.x;
-        let cellY = newGeometry.y;
-        if (cellWidth < Number(cell.getAttribute('minWidth'))) {
-          if(newGeometry.x > previousGeometry.x) {
-            let differenceWidth = Number(cell.getAttribute('minWidth')) - cellWidth;
-            cellX = cellX - differenceWidth;
-          }
-          cellWidth = Number(cell.getAttribute('minWidth'));
-        }
-        if (cellHeight < Number(cell.getAttribute('minHeight'))) {
-          if(newGeometry.y > previousGeometry.y) {
-            let differenceHeight = Number(cell.getAttribute('minHeight')) - cellHeight;
-            cellY = cellY - differenceHeight;
-          }
-          cellHeight = Number(cell.getAttribute('minHeight'));
-        }
-        diagramGraph.getModel().beginUpdate();
-        let geometry = new mxGeometry(cellX, cellY, cellWidth, cellHeight);
-        diagramGraph.getModel().setGeometry(cell, geometry);
-        diagramGraph.getModel().endUpdate();
-        DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cell.getAttribute("entityId", "")),
-          cell.geometry.x, cell.geometry.y, cell.geometry.width, cell.geometry.height);
-        DiagramComponentHelper.updateGraphInModel(Number(diagramId), diagramGraph);
+  private changeSizeProcessorInDiagram(processorInstance: ProcessorsDiagramComponentComponent, cell, previousGeometry) {
+    let diagramGraph = processorInstance.graph;
+    let cellWidth = cell.geometry.width;
+    let cellHeight = cell.geometry.height;
+    let cellX = cell.geometry.x;
+    let cellY = cell.geometry.y;
+    if (cellWidth < Number(cell.getAttribute('minWidth'))) {
+      cellWidth = Number(cell.getAttribute('minWidth'));
+      if (cell.geometry.x > previousGeometry.x) {
+        let differenceWidth = cellWidth - cell.geometry.width;
+        cellX = cellX - differenceWidth;
       }
     }
-    DiagramComponentHelper.processorSubject.next({
-      name: "refreshDiagram",
-      data: null,
-    });
+    if (cellHeight < Number(cell.getAttribute('minHeight'))) {
+      cellHeight = Number(cell.getAttribute('minHeight'));
+      if (cell.geometry.y > previousGeometry.y) {
+        let differenceHeight = cellHeight - cell.geometry.height;
+        cellX = cellX - differenceHeight;
+      }
+    }
+    console.log(cell.geometry.x);
+    console.log(previousGeometry.x);
+    diagramGraph.getModel().beginUpdate();
+    let geometry = new mxGeometry(cellX, cellY, cellWidth, cellHeight);
+    diagramGraph.getModel().setGeometry(cell, geometry);
+    diagramGraph.getModel().endUpdate();
+    DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(processorInstance.diagramId), Number(cell.getAttribute("entityId", "")),
+      cell.geometry.width, cell.geometry.height, cell.geometry.x, cell.geometry.y);
+    DiagramComponentHelper.updateGraphInModel(Number(processorInstance.diagramId), diagramGraph);
   }
 
   private overrideRubberband() {
+
     let rb = new mxRubberband(this.graph);
-    rb.defaultOpacity = 100;
+    let active = false;
+    let shape: SVGRectElement;
+    let svg = this.graphContainer.nativeElement.getElementsByTagName("svg")[0];
+
     rb.createShape = function () {
-      if (this.sharedDiv == null) {
+      if (active == false) {
+        shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        shape.style.fill = '#4550FF33';
+        shape.style.stroke = 'blue';
+        shape.style.strokeWidth = '2';
+        svg.append(shape);
+        active = true;
         this.sharedDiv = document.createElement('div');
         this.sharedDiv.className = 'mxRubberband';
-        (<HTMLDivElement>this.sharedDiv).style.backgroundColor = '#4550FF33';
-        (<HTMLDivElement>this.sharedDiv).style.border = '1px solid blue';
-        (<HTMLDivElement>this.sharedDiv).style.position = 'relative';
-        (<HTMLDivElement>this.sharedDiv).style.zIndex = '100';
-        mxUtils.setOpacity(this.sharedDiv, this.defaultOpacity);
+        this.sharedDiv.style.display = 'none';
       }
 
       this.graph.container.appendChild(this.sharedDiv);
@@ -756,10 +791,9 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
       return result;
     }
-    let container = this.graphContainer;
+
     rb.repaint = function () {
-      if (this.div != null) {
-        let containerHeight = container.nativeElement.getElementsByTagName("svg")[0].clientHeight;
+      if (active == true) {
         var x = this.currentX - this.graph.panDx;
         var y = this.currentY - this.graph.panDy;
 
@@ -768,15 +802,23 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
         this.width = Math.max(this.first.x, x) - this.x;
         this.height = Math.max(this.first.y, y) - this.y;
 
-        var dx = (mxClient.IS_VML) ? this.graph.panDx : 0;
-        var dy = (mxClient.IS_VML) ? this.graph.panDy : 0;
-
-        this.div.style.left = (this.x + dx) + 'px';
-        this.div.style.top = (this.y + dy - containerHeight) + 'px';
-        this.div.style.width = Math.max(1, this.width) + 'px';
-        this.div.style.height = Math.max(1, this.height) + 'px';
+        shape.setAttribute("x", this.x.toString());
+        shape.setAttribute("y", this.y.toString());
+        shape.setAttribute("width", this.width.toString());
+        shape.setAttribute("height", this.height.toString());
       }
     }
+
+    rb.execute = function (evt) {
+      shape.remove();
+      active = false;
+      var rect = new mxRectangle(this.x, this.y, this.width, this.height);
+      this.graph.selectRegion(rect, evt);
+    };
+
+    rb.isActive = function (sender, me) {
+      return active;
+    };
   }
 
 }

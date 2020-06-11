@@ -501,7 +501,6 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
         shape.style.fill = '#4550FF33';
         shape.style.stroke = 'blue';
         shape.style.strokeWidth = '2';
-        console.log(this.first.x);
         svg.append(shape);
         active = true;
         this.sharedDiv = document.createElement('div');

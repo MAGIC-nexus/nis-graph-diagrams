@@ -326,7 +326,7 @@ export class DiagramManager {
         if (minWidth > (cellProcessor.geometry.width / 2)) {
             let geometry = new mxGeometry(cellProcessor.geometry.x, cellProcessor.geometry.y, minWidth * 2, cellProcessor.geometry.height);
             graph.getModel().setGeometry(cellProcessor, geometry);
-            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), cellProcessor.getAttribute('entityId'),
+            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cellProcessor.getAttribute('entityId')),
                 minWidth * 2, cellProcessor.geometry.height, cellProcessor.geometry.x, cellProcessor.geometry.y);
         }
         let incInterface = (cellProcessor.geometry.width / 2) / (cellsInterface.length + 1);
@@ -350,7 +350,7 @@ export class DiagramManager {
         if (minHeight > cellProcessor.geometry.height) {
             let geometry = new mxGeometry(cellProcessor.geometry.x, cellProcessor.geometry.y, cellProcessor.geometry.width, minHeight);
             graph.getModel().setGeometry(cellProcessor, geometry);
-            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), cellProcessor.getAttribute('entityId'),
+            DiagramComponentHelper.modelService.updateEntityAppearanceInDiagram(Number(diagramId), Number(cellProcessor.getAttribute('entityId')),
                 cellProcessor.geometry.width, minHeight, cellProcessor.geometry.x, cellProcessor.geometry.y);
         }
         let incInterface = cellProcessor.geometry.height / (cellsInterface.length + 1);

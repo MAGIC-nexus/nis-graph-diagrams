@@ -37,6 +37,17 @@
   </ng-template>
 </mat-menu>
 
+<!-- Context Menu Multiple Processor-->
+<div #contextMenuMultipleProcessorTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
+  [style.left]="contextMenuMultipleProcessorPosition.x" [style.top]="contextMenuMultipleProcessorPosition.y"
+  [matMenuTriggerFor]="contextMenuMultipleProcessor">
+</div>
+<mat-menu #contextMenuMultipleProcessor="matMenu">
+  <ng-template matMenuContent let-cells="cells">
+    <button mat-menu-item (click)="onContextMenuMultipleProcessorRemove(cells)">Remove</button>
+  </ng-template>
+</mat-menu>
+
 <!-- Context Menu PartOf-->
 <div #contextMenuPartOfTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
   [style.left]="contextMenuPartOfPosition.x" [style.top]="contextMenuPartOfPosition.y"
