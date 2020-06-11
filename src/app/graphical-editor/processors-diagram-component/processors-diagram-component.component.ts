@@ -644,6 +644,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
 
   onContextMenuPartOfRemove(cell: mxCell) {
     if (DiagramComponentHelper.modelService.checkCanDeleteRelationshipPartof(Number(cell.getAttribute('idRelationship', '')))) {
+      DiagramComponentHelper.modelService.deleteRelationship(Number(cell.getAttribute('idRelationship', '')));
       this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
       this.diagramManager.updateTree();
     } else {
@@ -659,6 +660,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   onContextMenuInterfaceScaleRemove(cell: mxCell) {
+    DiagramComponentHelper.modelService.deleteRelationship(Number(cell.getAttribute('idRelationship', '')));
     this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 
@@ -668,6 +670,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   }
 
   onContextMenuExchangeRemove(cell: mxCell) {
+    DiagramComponentHelper.modelService.deleteRelationship(Number(cell.getAttribute('idRelationship', '')));
     this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 

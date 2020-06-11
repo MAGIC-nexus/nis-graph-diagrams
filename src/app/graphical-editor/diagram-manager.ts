@@ -70,6 +70,7 @@ export class DiagramManager {
 
     updateTree() {
         this.nodes = DiagramComponentHelper.modelService.getTreeModelView();
+        console.log(this.nodes);
     }
 
     printPartOfRelationship(relationshipId: number) {

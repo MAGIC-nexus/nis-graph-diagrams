@@ -427,6 +427,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   onContextMenuPartOfRemove(cell) {
+    DiagramComponentHelper.modelService.deleteRelationship(Number(cell.getAttribute('idRelationship', '')));
     this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
     this.diagramManager.updateTree();
   }
@@ -437,6 +438,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
   onContextMenuInterfaceScalRemove(cell) {
+    DiagramComponentHelper.modelService.deleteRelationship(Number(cell.getAttribute('idRelationship', '')));
     this.diagramManager.removeRelationship(cell.getAttribute('idRelationship', ''));
   }
 
