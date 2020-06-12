@@ -957,9 +957,25 @@ export class ModelService {
         }
     }
 
+    private checkIfExistRelationshipBetweenEntities(entityId1, entityId2) : boolean {
+        for(let relId of this.entitiesRelationships.get(entityId1)) {
+            let r = this.allObjects.get(relId);
+            if (r instanceof EntityRelationship ) {
+                if (r.destinationId == entityId2 || r.originId == entityId2) return false;
+            }
+        }
+        return true;
+    }
+
     private checkCanCreateRelationshipPartOf(originId, destinationId) : string {
+        let originEntity = this.readEntity(originId);
+        let destinationEntity = this.readEntity(destinationId);
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
+        }
+        if (originEntity instanceof InterfaceType && destinationEntity instanceof InterfaceType) {
+            if(!this.checkIfExistRelationshipBetweenEntities(originId, destinationId))
+                return "Cannot make a relation because there is already a relationship between it";
         }
         let circularHierarchy = { value : false };
         this.detectCircularHierarchy(destinationId, originId, circularHierarchy);
@@ -1020,7 +1036,8 @@ export class ModelService {
         let interfaceOrigin  = this.readEntity(originId);
         let interfaceDestination = this.readEntity(destinationId);
         if (interfaceOrigin instanceof InterfaceType && interfaceDestination instanceof InterfaceType) {
-            
+            if(!this.checkIfExistRelationshipBetweenEntities(originId, destinationId))
+                return "Cannot make a relation because there is already a relationship between it";
             return "";
         } else {
             return 'A relationship of type "interfaceTypeScale" should be the union between two entity of type "interfaceType"';
