@@ -971,16 +971,16 @@ export class ModelService {
         let originEntity = this.readEntity(originId);
         let destinationEntity = this.readEntity(destinationId);
         if (originId == destinationId) {
-            return "Cannot make a relationship of the same entity"
+            return "Cannot create a relationship of the same entity"
         }
         if (originEntity instanceof InterfaceType && destinationEntity instanceof InterfaceType) {
             if(!this.checkIfExistRelationshipBetweenEntities(originId, destinationId))
-                return "Cannot make a relation because there is already a relationship between it";
+                return "Cannot create a relationship since there is already a relationship between them";
         }
         let circularHierarchy = { value : false };
         this.detectCircularHierarchy(destinationId, originId, circularHierarchy);
         if (circularHierarchy.value) {
-            return "Cannot make relationship because it would become a circular hierarchy"
+            return "Cannot create a relationship because it would become a circular hierarchy"
         }
         return "";
     }
@@ -1009,7 +1009,7 @@ export class ModelService {
             if (interfaceOrigin.orientation == InterfaceOrientation.Output && interfaceDestination.orientation == InterfaceOrientation.Input) {
                 return '';
             }
-            return "Cannot make relationship";
+            return "Cannot create a relationship";
         } else {
             return 'A relationship of type "exchange" should be the union between two entity of type "interface"';
         }
@@ -1037,7 +1037,7 @@ export class ModelService {
         let interfaceDestination = this.readEntity(destinationId);
         if (interfaceOrigin instanceof InterfaceType && interfaceDestination instanceof InterfaceType) {
             if(!this.checkIfExistRelationshipBetweenEntities(originId, destinationId))
-                return "Cannot make a relation because there is already a relationship between it";
+                return "Cannot make a relation since there is already a relationship between them";
             return "";
         } else {
             return 'A relationship of type "interfaceTypeScale" should be the union between two entity of type "interfaceType"';
