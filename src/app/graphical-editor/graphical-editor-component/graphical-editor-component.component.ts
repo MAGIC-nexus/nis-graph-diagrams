@@ -959,7 +959,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
 
   showSnackBarError(event: SnackErrorDto) {
     this.snackBarService.open(event.message, null, {
-      duration: 2000,
+      duration: 5000,
     });
   }
 

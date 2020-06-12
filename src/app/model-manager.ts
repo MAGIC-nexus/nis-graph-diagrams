@@ -947,9 +947,24 @@ export class ModelService {
         }
     }
 
+    private detectCircularHierarchy(parentId, originId, circularHierarchy : {value : boolean}) {
+        for (let entityId of this.getEntityPartOfChildren(parentId)) {
+            if (entityId == originId) {
+                circularHierarchy.value = true;
+                return;
+            }
+            this.detectCircularHierarchy(entityId, originId, circularHierarchy);
+        }
+    }
+
     private checkCanCreateRelationshipPartOf(originId, destinationId) : string {
         if (originId == destinationId) {
             return "Cannot make a relationship of the same entity"
+        }
+        let circularHierarchy = { value : false };
+        this.detectCircularHierarchy(destinationId, originId, circularHierarchy);
+        if (circularHierarchy.value) {
+            return "Cannot make relationship because it would become a circular hierarchy"
         }
         return "";
     }
@@ -1161,4 +1176,5 @@ export class ModelService {
         }
         return parents;
     }
+
 }
