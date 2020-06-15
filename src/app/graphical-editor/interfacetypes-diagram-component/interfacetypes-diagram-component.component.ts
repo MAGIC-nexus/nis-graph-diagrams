@@ -71,7 +71,7 @@ export class InterfacetypesDiagramComponentComponent implements AfterViewInit, O
   }
 
 
-  constructor(private diagramManager: DiagramManager) { }
+  constructor(public diagramManager: DiagramManager) { }
 
   ngOnInit() {
 

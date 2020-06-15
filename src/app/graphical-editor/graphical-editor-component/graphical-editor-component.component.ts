@@ -230,7 +230,7 @@ export class GraphicalEditorComponentComponent implements OnInit, AfterViewInit 
     private nzModalService: NzModalService,
     private renderer: Renderer2,
     private snackBarService: MatSnackBar,
-    private diagramManager: DiagramManager) { }
+    public diagramManager: DiagramManager) { }
 
   ngOnInit() {
     DiagramComponentHelper.setProcessorSubject(this.proccesorSubject);

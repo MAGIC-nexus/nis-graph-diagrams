@@ -84,7 +84,7 @@ export class ProcessorsDiagramComponentComponent implements AfterViewInit, OnIni
   statusCreateRelationship = StatusCreatingRelationship.notCreating;
   sourceCellRelationship: mxCell;
 
-  constructor(private diagramManager: DiagramManager) { }
+  constructor(public diagramManager : DiagramManager) { }
 
   ngOnInit() {
 
